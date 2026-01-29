@@ -1,0 +1,16 @@
+{
+  "name": "ai-verify-contract",
+  "version": "1.0.0",
+  "description": "NEAR smart contract for storing AI verification proofs",
+  "type": "module",
+  "scripts": {
+    "build": "near-sdk-js build src/contract.ts build/contract.wasm"
+  },
+  "dependencies": {
+    "near-sdk-js": "^2.0.0"
+  },
+  "devDependencies": {
+    "near-cli-rs": "^0.23.5",
+    "typescript": "^5.7.2"
+  }
+}

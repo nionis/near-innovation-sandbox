@@ -1,0 +1,27 @@
+{
+  "name": "@repo/packages-attestations",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./crypto": "./src/crypto.ts",
+    "./generate": "./src/generate.ts",
+    "./verify": "./src/verify.ts"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.4",
+    "near-api-js": "^5.0.1",
+    "openai": "^4.77.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "eslint": "^9.25.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
