@@ -1,16 +1,12 @@
 import crypto from 'crypto';
 import { ethers } from 'ethers';
 
-/**
- * Compute SHA256 hash of a string
- */
+/** compute SHA256 hash of a string */
 export function sha256(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
-/**
- * Verify ECDSA signature matches the expected signing address
- */
+/** verify ECDSA signature matches the expected signing address */
 export function verifySignature(
   message: string,
   signature: string,
@@ -26,9 +22,7 @@ export function verifySignature(
   }
 }
 
-/**
- * Compare signature text with computed hashes
- */
+/** compare signature text with computed hashes */
 export function compareHashes(
   signatureText: string,
   requestHash: string,
@@ -38,9 +32,7 @@ export function compareHashes(
   return signatureText === expectedText;
 }
 
-/**
- * Compute combined proof hash for on-chain storage
- */
+/** compute combined proof hash for on-chain storage */
 export function computeProofHash(
   requestHash: string,
   responseHash: string,

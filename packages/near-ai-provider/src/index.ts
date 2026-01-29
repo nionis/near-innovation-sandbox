@@ -19,9 +19,7 @@ export function createNearAI(
   const apiKey = options.apiKey;
 
   if (!apiKey) {
-    throw new Error(
-      'NEAR AI API key is required. Pass it via options.apiKey or set NEARAI_API_KEY environment variable.'
-    );
+    throw new Error('NEAR AI API key is required.');
   }
 
   const baseURL = options.baseURL ?? NEARAI_BASE_URL;
@@ -100,5 +98,3 @@ export function createNearAI(
 
   return provider;
 }
-
-export const nearai = createNearAI();

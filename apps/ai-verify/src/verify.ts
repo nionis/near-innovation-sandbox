@@ -1,31 +1,25 @@
-import fs from "fs";
-import { Receipt } from "./generate.js";
-import { verifySignature, computeProofHash } from "./crypto.js";
-import { initNear, getProofFromChain, BlockchainConfig } from "./blockchain.js";
+import fs from 'fs';
 
-export interface VerificationResult {
-  valid: boolean;
-  checks: {
-    signatureValid: boolean;
-    recoveredAddress: string;
-    addressMatch: boolean;
-    onChainExists?: boolean;
-    onChainTimestamp?: number;
-    onChainStoredBy?: string;
-  };
-  errors: string[];
-}
+import {
+  verifySignature,
+  computeProofHash,
+} from '@repo/packages-attestations/crypto';
+import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
+import type {
+  Receipt,
+  VerificationResult,
+  VerifyOptions,
+  BlockchainConfig,
+} from './types.js';
 
-export interface VerifyOptions {
-  receiptFile: string;
-  skipOnChain?: boolean;
-}
+// Re-export types for convenience
+export type { VerificationResult, VerifyOptions } from './types.js';
 
 /**
  * Verify a receipt's authenticity
  */
 export async function verify(
-  options: VerifyOptions,
+  options: VerifyOptions
 ): Promise<VerificationResult> {
   const errors: string[] = [];
 
@@ -34,25 +28,25 @@ export async function verify(
     throw new Error(`Receipt file not found: ${options.receiptFile}`);
   }
 
-  const receiptData = fs.readFileSync(options.receiptFile, "utf-8");
+  const receiptData = fs.readFileSync(options.receiptFile, 'utf-8');
   const receipt: Receipt = JSON.parse(receiptData);
 
-  console.log("Verifying receipt...");
+  console.log('Verifying receipt...');
   console.log(`  Model: ${receipt.model}`);
   console.log(`  Timestamp: ${receipt.timestamp}`);
 
   // Verify the ECDSA signature
   const signatureText = `${receipt.requestHash}:${receipt.responseHash}`;
-  console.log("\nVerifying TEE signature...");
+  console.log('\nVerifying TEE signature...');
 
   const signatureResult = verifySignature(
     signatureText,
     receipt.signature,
-    receipt.signingAddress,
+    receipt.signingAddress
   );
 
   if (!signatureResult.valid) {
-    errors.push("Signature verification failed");
+    errors.push('Signature verification failed');
   }
 
   const addressMatch =
@@ -76,7 +70,7 @@ export async function verify(
 
   // Verify on-chain record if present and not skipped
   if (receipt.onChain && !options.skipOnChain) {
-    console.log("\nVerifying on-chain record...");
+    console.log('\nVerifying on-chain record...');
 
     const accountId = process.env.NEAR_ACCOUNT_ID;
     const privateKey = process.env.NEAR_PRIVATE_KEY;
@@ -90,63 +84,63 @@ export async function verify(
         contractId: receipt.onChain.contractId,
       };
 
-      await initNear(blockchainConfig);
+      const blockchain = new AttestationsBlockchain(blockchainConfig);
+      await blockchain.init();
 
       // Compute expected proof hash
       const expectedProofHash = computeProofHash(
         receipt.requestHash,
         receipt.responseHash,
-        receipt.signature,
+        receipt.signature
       );
 
       // Check if the proof hash matches
       if (expectedProofHash !== receipt.onChain.proofHash) {
-        errors.push("Proof hash mismatch");
+        errors.push('Proof hash mismatch');
         result.valid = false;
       }
 
       // Fetch the on-chain record
-      const proofRecord = await getProofFromChain(
-        receipt.onChain.contractId,
-        receipt.onChain.proofHash,
+      const attestation = await blockchain.getAttestation(
+        receipt.onChain.proofHash
       );
 
-      if (proofRecord) {
+      if (attestation) {
         result.checks.onChainExists = true;
-        result.checks.onChainTimestamp = proofRecord.timestamp;
-        result.checks.onChainStoredBy = proofRecord.stored_by;
+        result.checks.onChainTimestamp = attestation.timestamp;
+        result.checks.onChainStoredBy = attestation.stored_by;
         console.log(`  On-chain record found: Yes`);
         console.log(
-          `  Stored at: ${new Date(proofRecord.timestamp).toISOString()}`,
+          `  Stored at: ${new Date(attestation.timestamp).toISOString()}`
         );
-        console.log(`  Stored by: ${proofRecord.stored_by}`);
+        console.log(`  Stored by: ${attestation.stored_by}`);
       } else {
         result.checks.onChainExists = false;
-        errors.push("On-chain record not found");
+        errors.push('On-chain record not found');
         result.valid = false;
         console.log(`  On-chain record found: No`);
       }
     } else {
       console.log(
-        "  Skipping on-chain verification (NEAR credentials not set)",
+        '  Skipping on-chain verification (NEAR credentials not set)'
       );
     }
   } else if (receipt.onChain) {
-    console.log("\nOn-chain verification skipped");
+    console.log('\nOn-chain verification skipped');
   }
 
   // Summary
-  console.log("\n" + "=".repeat(50));
+  console.log('\n' + '='.repeat(50));
   if (result.valid) {
-    console.log("VERIFICATION RESULT: VALID");
+    console.log('VERIFICATION RESULT: VALID');
   } else {
-    console.log("VERIFICATION RESULT: INVALID");
+    console.log('VERIFICATION RESULT: INVALID');
     if (errors.length > 0) {
-      console.log("Errors:");
+      console.log('Errors:');
       errors.forEach((e) => console.log(`  - ${e}`));
     }
   }
-  console.log("=".repeat(50));
+  console.log('='.repeat(50));
 
   result.errors = errors;
   return result;

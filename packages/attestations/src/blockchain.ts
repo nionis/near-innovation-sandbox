@@ -1,115 +1,93 @@
+import type { BlockchainConfig } from './types.js';
+import type { AttestationRecord } from '@repo/contracts-attestations/types';
+import { AttestationsStorageContract } from './contract.js';
 import {
-  connect,
-  keyStores,
-  KeyPair,
-  Contract,
-  Near,
+  type KeyPairString,
+  JsonRpcProvider,
   Account,
+  KeyPairSigner,
 } from 'near-api-js';
-import type { ConnectConfig } from 'near-api-js';
 
-export interface ProofRecord {
-  timestamp: number;
-  stored_by: string;
-}
+export class AttestationsBlockchain {
+  private readonly config: BlockchainConfig;
+  private provider: JsonRpcProvider | null = null;
+  private account: Account | null = null;
+  private contract: AttestationsStorageContract | null = null;
 
-export interface BlockchainConfig {
-  networkId: string;
-  accountId: string;
-  privateKey: string;
-  contractId: string;
-}
-
-interface ProofContract {
-  storeProof: (args: {
-    proofHash: string;
-    timestamp: number;
-  }) => Promise<string>;
-  getProof: (args: { proofHash: string }) => Promise<ProofRecord | null>;
-}
-
-let nearConnection: Near | null = null;
-let account: Account | null = null;
-
-/**
- * Initialize NEAR connection
- */
-export async function initNear(config: BlockchainConfig): Promise<void> {
-  const keyStore = new keyStores.InMemoryKeyStore();
-  const keyPair = KeyPair.fromString(config.privateKey);
-  await keyStore.setKey(config.networkId, config.accountId, keyPair);
-
-  const nodeUrl =
-    config.networkId === 'mainnet'
-      ? 'https://rpc.mainnet.near.org'
-      : 'https://rpc.testnet.near.org';
-
-  // Type assertion needed due to near-api-js v5 type definition issues
-  nearConnection = await connect({
-    networkId: config.networkId,
-    keyStore,
-    nodeUrl,
-  } as ConnectConfig);
-  account = await nearConnection.account(config.accountId);
-}
-
-/**
- * Store a proof hash on-chain
- */
-export async function storeProofOnChain(
-  contractId: string,
-  proofHash: string
-): Promise<{ txHash: string }> {
-  if (!account) {
-    throw new Error('NEAR not initialized. Call initNear() first.');
+  constructor(config: BlockchainConfig) {
+    this.config = config;
   }
 
-  const contract = new Contract(account, contractId, {
-    viewMethods: ['getProof'],
-    changeMethods: ['storeProof'],
-  }) as unknown as ProofContract;
-
-  const timestamp = Date.now();
-
-  // Call the contract method
-  const result = await contract.storeProof({
-    proofHash,
-    timestamp,
-  });
-
-  // Get the transaction hash from the result
-  // Note: near-api-js returns the result directly, we need to get tx hash differently
-  const txHash = typeof result === 'string' ? result : proofHash;
-
-  return { txHash };
-}
-
-/**
- * Retrieve a proof record from chain
- */
-export async function getProofFromChain(
-  contractId: string,
-  proofHash: string
-): Promise<ProofRecord | null> {
-  if (!account) {
-    throw new Error('NEAR not initialized. Call initNear() first.');
+  public get initialized(): boolean {
+    return (
+      this.provider !== null && this.account !== null && this.contract !== null
+    );
   }
 
-  const contract = new Contract(account, contractId, {
-    viewMethods: ['getProof'],
-    changeMethods: ['storeProof'],
-  }) as unknown as ProofContract;
+  public async init(): Promise<void> {
+    const nodeUrl =
+      this.config.networkId === 'mainnet'
+        ? 'https://rpc.mainnet.near.org'
+        : 'https://rpc.testnet.near.org';
 
-  return contract.getProof({ proofHash });
-}
+    this.provider = new JsonRpcProvider({ url: nodeUrl });
+    const signer = KeyPairSigner.fromSecretKey(
+      this.config.privateKey as KeyPairString
+    );
 
-/**
- * Check if a proof exists on-chain
- */
-export async function proofExistsOnChain(
-  contractId: string,
-  proofHash: string
-): Promise<boolean> {
-  const proof = await getProofFromChain(contractId, proofHash);
-  return proof !== null;
+    this.account = new Account(this.config.accountId, this.provider, signer);
+
+    this.contract = new AttestationsStorageContract(
+      this.account,
+      this.provider,
+      this.config.contractId
+    );
+  }
+
+  /** store an attestation on-chain */
+  public async storeAttestation(
+    proofHash: string
+  ): Promise<{ txHash: string }> {
+    if (!this.initialized) {
+      throw new Error('NEAR not initialized. Call init() first.');
+    }
+
+    const contract = this.contract!;
+    const timestamp = Date.now();
+
+    console.log(`Storing attestation on-chain`, {
+      timestamp,
+      proofHash,
+    });
+
+    // Call the contract method
+    const result = await contract.store({
+      timestamp,
+      proofHash,
+    });
+
+    console.log(`Attestation stored on-chain`, result);
+
+    return { txHash: result };
+  }
+
+  /** retrieve an attestation from chain */
+  public async getAttestation(
+    proofHash: string
+  ): Promise<AttestationRecord | null> {
+    if (!this.initialized) {
+      throw new Error('NEAR not initialized. Call init() first.');
+    }
+    const contract = this.contract!;
+    return contract.get({ proofHash });
+  }
+
+  /** check if an attestation exists on-chain */
+  public async existsAttestation(proofHash: string): Promise<boolean> {
+    if (!this.initialized) {
+      throw new Error('NEAR not initialized. Call init() first.');
+    }
+    const contract = this.contract!;
+    return contract.exists({ proofHash });
+  }
 }

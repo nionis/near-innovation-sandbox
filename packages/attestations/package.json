@@ -4,19 +4,20 @@
   "type": "module",
   "private": true,
   "exports": {
+    "./blockchain": "./src/blockchain.ts",
+    "./contract": "./src/contract.ts",
     "./crypto": "./src/crypto.ts",
-    "./generate": "./src/generate.ts",
-    "./verify": "./src/verify.ts"
+    "./types": "./src/types.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
+    "@repo/packages-near-ai-provider": "*",
+    "@repo/contracts-attestations": "*",
     "ethers": "^6.13.4",
-    "near-api-js": "^5.0.1",
-    "openai": "^4.77.0"
+    "near-api-js": "^7.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

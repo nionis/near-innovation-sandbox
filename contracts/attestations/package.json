@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./deployment": "./src/deployment.ts",
     "./types": "./src/types.ts"
   },
   "scripts": {
-    "build": "near-sdk-js build src/contract.ts build/attestations.wasm",
-    "test": "ava -- ./build/attestations.wasm",
+    "build": "near-sdk-js build src/contract.ts build/contract.wasm",
+    "test": "ava -- ./build/contract.wasm",
     "lint": "eslint .",
     "check-types": "tsc --noEmit"
   },

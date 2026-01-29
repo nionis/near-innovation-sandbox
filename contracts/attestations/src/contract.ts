@@ -1,9 +1,9 @@
-import type { AttestationRecord } from "./types";
-import { NearBindgen, LookupMap, near, call, view } from "near-sdk-js";
+import type { AttestationRecord } from './types';
+import { NearBindgen, LookupMap, near, call, view } from 'near-sdk-js';
 
 @NearBindgen({})
-class AttestationStorage {
-  records: LookupMap<AttestationRecord> = new LookupMap<AttestationRecord>("a");
+class AttestationsStorage {
+  records: LookupMap<AttestationRecord> = new LookupMap<AttestationRecord>('a');
 
   @call({})
   store({

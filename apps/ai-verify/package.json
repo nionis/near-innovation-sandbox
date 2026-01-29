@@ -22,12 +22,11 @@
   "license": "MIT",
   "dependencies": {
     "@repo/packages-attestations": "*",
+    "@repo/contracts-attestations": "*",
     "@repo/packages-near-ai-provider": "*",
-    "ai": "^6.0.60",
+    "ai": "^6.0.61",
     "commander": "^12.1.0",
-    "dotenv": "^16.4.5",
-    "ethers": "^6.13.4",
-    "near-api-js": "^5.0.1"
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
