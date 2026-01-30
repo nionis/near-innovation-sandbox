@@ -8,6 +8,7 @@ import {
   KeyPairSigner,
 } from 'near-api-js';
 
+/** blockchain wrapper for NEAR AttestationsStorage contract */
 export class AttestationsBlockchain {
   private readonly config: BlockchainConfig;
   private provider: JsonRpcProvider | null = null;

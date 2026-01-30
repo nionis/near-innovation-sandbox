@@ -1,3 +1,4 @@
+import type { BlockchainConfig } from '@repo/packages-attestations/types';
 import fs from 'fs';
 import { generateText } from 'ai';
 import { createNearAI } from '@repo/packages-near-ai-provider';
@@ -12,12 +13,7 @@ import {
   compareHashes,
 } from '@repo/packages-attestations/crypto';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
-import type {
-  Receipt,
-  GenerateOptions,
-  ChatMessage,
-  BlockchainConfig,
-} from './types.js';
+import type { Receipt, GenerateOptions, ChatMessage } from './types.js';
 
 // Re-export types for convenience
 export type { Receipt, GenerateOptions } from './types.js';
@@ -115,7 +111,8 @@ export async function generateWithAttestation(
     const contractId = deployment.testnet.contractId;
     const accountId = process.env.NEAR_ACCOUNT_ID;
     const privateKey = process.env.NEAR_PRIVATE_KEY;
-    const network = process.env.NEAR_NETWORK || 'testnet';
+    const network =
+      (process.env.NEAR_NETWORK as 'testnet' | 'mainnet') || 'testnet';
 
     if (contractId && accountId && privateKey) {
       console.log('Storing proof on NEAR blockchain...');

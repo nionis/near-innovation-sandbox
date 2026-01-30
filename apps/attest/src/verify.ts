@@ -1,16 +1,11 @@
+import type { BlockchainConfig } from '@repo/packages-attestations/types';
 import fs from 'fs';
-
 import {
   verifySignature,
   computeProofHash,
 } from '@repo/packages-attestations/crypto';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
-import type {
-  Receipt,
-  VerificationResult,
-  VerifyOptions,
-  BlockchainConfig,
-} from './types.js';
+import type { Receipt, VerificationResult, VerifyOptions } from './types.js';
 
 // Re-export types for convenience
 export type { VerificationResult, VerifyOptions } from './types.js';
@@ -74,7 +69,7 @@ export async function verify(
 
     const accountId = process.env.NEAR_ACCOUNT_ID;
     const privateKey = process.env.NEAR_PRIVATE_KEY;
-    const network = receipt.onChain.network;
+    const network = receipt.onChain.network as 'testnet' | 'mainnet';
 
     if (accountId && privateKey) {
       const blockchainConfig: BlockchainConfig = {

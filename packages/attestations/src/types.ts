@@ -1,7 +1,7 @@
 /** NEAR blockchain configuration */
 export interface BlockchainConfig {
-  networkId: string;
-  accountId: string;
+  networkId: 'mainnet' | 'testnet';
   privateKey: string;
+  accountId: string;
   contractId: string;
 }

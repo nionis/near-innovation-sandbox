@@ -1,25 +1,17 @@
 {
-  "name": "ai-verify",
-  "version": "1.0.0",
-  "description": "CLI tool to verify AI-generated outputs with cryptographic receipts",
+  "name": "@attest/cli",
+  "version": "0.0.1",
+  "description": "CLI tool to generate and verify attestations for AI-generated outputs",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "ai-verify": "dist/index.js"
+    "attest": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts"
   },
-  "keywords": [
-    "ai",
-    "verification",
-    "near",
-    "tee",
-    "attestation"
-  ],
-  "license": "MIT",
   "dependencies": {
     "@repo/packages-attestations": "*",
     "@repo/contracts-attestations": "*",

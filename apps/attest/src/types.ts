@@ -65,16 +65,6 @@ export interface VerificationResult {
 }
 
 /**
- * NEAR blockchain configuration
- */
-export interface BlockchainConfig {
-  networkId: string;
-  accountId: string;
-  privateKey: string;
-  contractId: string;
-}
-
-/**
  * On-chain proof record
  */
 export interface ProofRecord {

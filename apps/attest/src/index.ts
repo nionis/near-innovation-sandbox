@@ -4,20 +4,16 @@ import { Command } from 'commander';
 import dotenv from 'dotenv';
 import { generate } from './generate.js';
 import { verify } from './verify.js';
+import pkg from '../package.json' with { type: 'json' };
 
-// Load environment variables
+// load environment variables
 dotenv.config();
 
 const program = new Command();
 
-program
-  .name('ai-verify')
-  .description(
-    'CLI tool to verify AI-generated outputs with cryptographic receipts'
-  )
-  .version('1.0.0');
+program.name('attest').description(pkg.description).version(pkg.version);
 
-// Generate command
+// generate command
 program
   .command('generate')
   .description('Generate AI output with a verifiable receipt')
@@ -57,7 +53,7 @@ program
     }
   });
 
-// Verify command
+// verify command
 program
   .command('verify')
   .description('Verify a receipt against TEE attestation and blockchain')
