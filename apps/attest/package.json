@@ -13,6 +13,7 @@
     "dev": "tsx src/index.ts"
   },
   "dependencies": {
+    "@repo/packages-near": "*",
     "@repo/packages-attestations": "*",
     "@repo/contracts-attestations": "*",
     "@repo/packages-near-ai-provider": "*",

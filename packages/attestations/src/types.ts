@@ -7,3 +7,21 @@ export interface BlockchainConfig {
   accountId: string;
   contractId: string;
 }
+
+/**
+ * A verifiable receipt for AI-generated content
+ */
+export interface Receipt {
+  version: string;
+  timestamp: string;
+  model: string;
+  prompt: string;
+  contentFile?: string;
+  requestHash: string;
+  responseHash: string;
+  signature: string;
+  signingAddress: string;
+  signingAlgo: string;
+  output: string;
+  // onChain?: OnChainRecord;
+}

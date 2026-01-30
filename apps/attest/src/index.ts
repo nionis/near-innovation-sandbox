@@ -9,9 +9,9 @@ import pkg from '../package.json' with { type: 'json' };
 // load environment variables
 dotenv.config();
 
-const nearApiKey = process.env.NEAR_API_KEY;
-if (!nearApiKey) {
-  console.error('NEAR_API_KEY is not set');
+const NEAR_AI_API_KEY = process.env.NEAR_AI_API_KEY;
+if (!NEAR_AI_API_KEY) {
+  console.error('NEAR_AI_API_KEY is not set');
   process.exit(1);
 }
 
@@ -46,7 +46,7 @@ program
           output: options.output,
           skipOnChain: options.skipOnChain,
         },
-        nearApiKey
+        NEAR_AI_API_KEY
       );
 
       if (!options.output) {

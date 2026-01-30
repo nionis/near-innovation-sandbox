@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "exports": {
+    ".": "./src/index.ts",
     "./blockchain": "./src/blockchain.ts",
     "./contract": "./src/contract.ts",
     "./crypto": "./src/crypto.ts",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
+    "ai": "^6.0.61",
     "eslint": "^9.25.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"

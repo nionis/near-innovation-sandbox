@@ -3,8 +3,8 @@ import { type NearAIChatModelId, NEAR_AI_BASE_URL } from '@repo/packages-near';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
 export function createNearAI(options: NearAIProviderSettings): NearAIProvider {
-  const apiKey = options.apiKey;
   const baseURL = options.baseURL ?? NEAR_AI_BASE_URL;
+  const apiKey = options.apiKey;
 
   return createOpenAICompatible<
     NearAIChatModelId,

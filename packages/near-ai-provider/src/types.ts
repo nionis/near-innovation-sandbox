@@ -11,7 +11,7 @@ export type NearAIProvider = OpenAICompatibleProvider<
 
 /** settings for the near.ai provider */
 export interface NearAIProviderSettings {
-  apiKey: string;
   baseURL?: string;
+  apiKey?: string;
   headers?: Record<string, string>;
 }
