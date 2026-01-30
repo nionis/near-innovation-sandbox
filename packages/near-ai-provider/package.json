@@ -18,6 +18,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "ai": "^6.0.61",
     "@types/node": "^22.10.5",
     "eslint": "^9.25.1",
     "tsx": "^4.19.2",

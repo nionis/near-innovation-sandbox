@@ -1,0 +1,1 @@
+The receipt proves "this exact input produced this exact output inside the TEE." It doesn't cryptographically bind the model name to the signature—you trust that the TEE is running the advertised model.
