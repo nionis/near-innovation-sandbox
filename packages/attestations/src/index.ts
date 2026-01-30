@@ -4,8 +4,8 @@ import type {
   ModelAttestationResponse,
 } from '@repo/packages-near';
 import type { GenerateTextResult, ModelMessage } from 'ai';
-import type { Receipt } from './types.js';
-import { sha256, compareHashes } from './crypto.js';
+import type { Receipt, VerificationResult } from './types.js';
+import { sha256, compareHashes, verifySignature } from './crypto.js';
 
 interface NearAiOps {
   baseURL: string;
@@ -69,9 +69,10 @@ async function fetchModelAttestation(
 export async function attest(
   result: GenerateTextResult<any, any>,
   ops: NearAiOps
-) {
+): Promise<Receipt> {
   const chatId = result.response.id;
-  const body = String(result.request.body);
+  const input = String(result.request.body);
+  const output = JSON.stringify(result.response.body);
 
   let model: NearAIChatModelId;
   let messages: ModelMessage[];
@@ -79,24 +80,21 @@ export async function attest(
 
   // parse the request body to get the model and messages
   try {
-    const parsed = JSON.parse(body);
+    const parsed = JSON.parse(input);
     model = parsed.model as NearAIChatModelId;
     messages = parsed.messages;
     prompt = (messages[messages.length - 1]?.content as string) || '';
   } catch (error) {
-    console.error('Failed to parse request body:', error);
+    console.error('failed to parse request body:', error);
     throw error;
   }
 
   // compute hashes for the request and response
-  const requestPayload = JSON.stringify(messages);
-  const requestHash = sha256(requestPayload);
-  const responseHash = sha256(result.text);
+  const requestHash = sha256(input);
+  const responseHash = sha256(output);
 
   // fetch the cryptographic signature using the provider's method
   const signatureData = await fetchSignature(chatId, model, ops);
-
-  console.log({ signatureData, requestHash, responseHash, model, prompt });
 
   // verify the signature text matches our computed hashes
   if (!compareHashes(signatureData.text, requestHash, responseHash)) {
@@ -121,4 +119,40 @@ export async function attest(
   return receipt;
 }
 
-// export async function verify();
+export async function verify(ops: NearAiOps, receipt: Receipt) {
+  const errors: string[] = [];
+
+  // verify the ECDSA signature
+  const signatureText = `${receipt.requestHash}:${receipt.responseHash}`;
+
+  const signatureResult = verifySignature(
+    signatureText,
+    receipt.signature,
+    receipt.signingAddress
+  );
+
+  if (!signatureResult.valid) {
+    errors.push('signature verification failed');
+  }
+
+  const addressMatch =
+    signatureResult.recoveredAddress.toLowerCase() ===
+    receipt.signingAddress.toLowerCase();
+
+  console.log(`  Signature valid: ${signatureResult.valid}`);
+  console.log(`  Expected address: ${receipt.signingAddress}`);
+  console.log(`  Recovered address: ${signatureResult.recoveredAddress}`);
+  console.log(`  Address match: ${addressMatch}`);
+
+  const result: VerificationResult = {
+    valid: signatureResult.valid && addressMatch,
+    checks: {
+      signatureValid: signatureResult.valid,
+      recoveredAddress: signatureResult.recoveredAddress,
+      addressMatch,
+    },
+    errors,
+  };
+
+  return result;
+}

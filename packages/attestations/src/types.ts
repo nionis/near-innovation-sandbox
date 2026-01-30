@@ -25,3 +25,24 @@ export interface Receipt {
   output: string;
   // onChain?: OnChainRecord;
 }
+
+/**
+ * Result of verification checks
+ */
+export interface VerificationChecks {
+  signatureValid: boolean;
+  recoveredAddress: string;
+  addressMatch: boolean;
+  onChainExists?: boolean;
+  onChainTimestamp?: number;
+  onChainStoredBy?: string;
+}
+
+/**
+ * Complete verification result
+ */
+export interface VerificationResult {
+  valid: boolean;
+  checks: VerificationChecks;
+  errors: string[];
+}
