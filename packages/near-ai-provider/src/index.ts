@@ -2,27 +2,18 @@
  * Create an openai compatible provider for near.ai API with signature and attestation methods
  */
 
-import type {
-  NearAIChatModelId,
-  NearAIProvider,
-  NearAIProviderSettings,
-  SignatureResponse,
-  ModelAttestationResponse,
-} from './types.js';
+import type { NearAIProvider, NearAIProviderSettings } from './types.js';
+import {
+  type NearAIChatModelId,
+  type SignatureResponse,
+  type ModelAttestationResponse,
+  NEAR_AI_BASE_URL,
+} from '@repo/packages-near';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
-const NEARAI_BASE_URL = 'https://cloud-api.near.ai/v1';
-
-export function createNearAI(
-  options: NearAIProviderSettings = {}
-): NearAIProvider {
+export function createNearAI(options: NearAIProviderSettings): NearAIProvider {
   const apiKey = options.apiKey;
-
-  if (!apiKey) {
-    throw new Error('NEAR AI API key is required.');
-  }
-
-  const baseURL = options.baseURL ?? NEARAI_BASE_URL;
+  const baseURL = options.baseURL ?? NEAR_AI_BASE_URL;
 
   const baseProvider = createOpenAICompatible<
     NearAIChatModelId,

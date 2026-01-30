@@ -1,6 +1,8 @@
+import type { NearBlockchainNetwork } from '@repo/packages-near';
+
 /** NEAR blockchain configuration */
 export interface BlockchainConfig {
-  networkId: 'mainnet' | 'testnet';
+  networkId: NearBlockchainNetwork;
   privateKey: string;
   accountId: string;
   contractId: string;

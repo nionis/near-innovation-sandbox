@@ -1,22 +1,16 @@
 {
-  "name": "@repo/packages-near-ai-provider",
+  "name": "@repo/packages-near",
   "version": "0.0.1",
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./types": "./src/types.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },
-  "dependencies": {
-    "@repo/packages-near": "*",
-    "@repo/packages-attestations": "*",
-    "@ai-sdk/openai-compatible": "^2.0.0",
-    "zod": "^4.3.6"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.10.5",
     "eslint": "^9.25.1",

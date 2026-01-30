@@ -9,6 +9,12 @@ import pkg from '../package.json' with { type: 'json' };
 // load environment variables
 dotenv.config();
 
+const nearApiKey = process.env.NEAR_API_KEY;
+if (!nearApiKey) {
+  console.error('NEAR_API_KEY is not set');
+  process.exit(1);
+}
+
 const program = new Command();
 
 program.name('attest').description(pkg.description).version(pkg.version);
@@ -31,14 +37,17 @@ program
   .option('--skip-on-chain', 'Skip storing proof on NEAR blockchain')
   .action(async (options) => {
     try {
-      const receipt = await generate({
-        model: options.model,
-        prompt: options.prompt,
-        content: options.content,
-        contentFile: options.contentFile,
-        output: options.output,
-        skipOnChain: options.skipOnChain,
-      });
+      const receipt = await generate(
+        {
+          model: options.model,
+          prompt: options.prompt,
+          content: options.content,
+          contentFile: options.contentFile,
+          output: options.output,
+          skipOnChain: options.skipOnChain,
+        },
+        nearApiKey
+      );
 
       if (!options.output) {
         console.log('\n--- Receipt ---');

@@ -3,10 +3,7 @@ import fs from 'fs';
 import { generateText } from 'ai';
 import { createNearAI } from '@repo/packages-near-ai-provider';
 import * as deployment from '@repo/contracts-attestations/deployment';
-import type {
-  NearAIProvider,
-  NearAIChatModelId,
-} from '@repo/packages-near-ai-provider/types';
+import type { NearAIProvider } from '@repo/packages-near-ai-provider/types';
 import {
   sha256,
   computeProofHash,
@@ -54,7 +51,7 @@ export async function generateWithAttestation(
 
   // Create the chat model - provider is callable directly
   // Cast to NearAIChatModelId to allow any model string
-  const model = provider(options.model as NearAIChatModelId);
+  const model = provider(options.model as any);
 
   // Send the chat completion request using the ai SDK
   const result = await generateText({
@@ -161,7 +158,10 @@ export async function generateWithAttestation(
  * Generate AI output with verifiable receipt (creates provider internally)
  * Convenience function that creates the provider from environment variables
  */
-export async function generate(options: GenerateOptions): Promise<Receipt> {
-  const provider = createNearAI({ apiKey: process.env.NEARAI_API_KEY });
+export async function generate(
+  options: GenerateOptions,
+  nearApiKey: string
+): Promise<Receipt> {
+  const provider = createNearAI({ apiKey: nearApiKey });
   return generateWithAttestation(provider, options);
 }
