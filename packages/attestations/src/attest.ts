@@ -1,17 +1,15 @@
-import type { Receipt } from './types.js';
-import type { GenerateTextResult, ModelMessage } from 'ai';
+import type { Receipt, Chat } from './types.js';
+import type { ModelMessage } from 'ai';
 import { type NearAIChatModelId } from '@repo/packages-near';
 import { sha256, compareHashes, computeProofHash } from './crypto.js';
 import { fetchSignature } from './verify-utils.js';
 
 /** attest model output */
 export async function attestChat(
-  result: GenerateTextResult<any, any>,
+  chat: Chat,
   nearAiApiKey: string
 ): Promise<Receipt> {
-  const chatId = result.response.id;
-  const input = String(result.request.body);
-  const output = JSON.stringify(result.response.body);
+  const { id, requestBody, responseBody, output } = chat;
 
   let model: NearAIChatModelId;
   let messages: ModelMessage[];
@@ -19,7 +17,7 @@ export async function attestChat(
 
   // parse the request body to get the model and messages
   try {
-    const parsed = JSON.parse(input);
+    const parsed = JSON.parse(requestBody);
     model = parsed.model as NearAIChatModelId;
     messages = parsed.messages;
     prompt = (messages[messages.length - 1]?.content as string) || '';
@@ -29,11 +27,11 @@ export async function attestChat(
   }
 
   // compute hashes for the request and response
-  const requestHash = sha256(input);
-  const responseHash = sha256(output);
+  const requestHash = sha256(requestBody);
+  const responseHash = sha256(responseBody);
 
   // fetch the cryptographic signature using the provider's method
-  const signatureData = await fetchSignature(chatId, model, nearAiApiKey);
+  const signatureData = await fetchSignature(id, model, nearAiApiKey);
 
   // verify the signature text matches our computed hashes
   if (!compareHashes(signatureData.text, requestHash, responseHash)) {
@@ -52,7 +50,7 @@ export async function attestChat(
     signature: signatureData.signature,
     signingAddress: signatureData.signing_address,
     signingAlgo: signatureData.signing_algo,
-    output: result.text,
+    output: output,
     proofHash: computeProofHash(
       requestHash,
       responseHash,

@@ -11,6 +11,13 @@ export interface BlockchainConfig {
   accountId?: string;
 }
 
+export interface Chat {
+  id: string;
+  requestBody: string;
+  responseBody: string;
+  output: string;
+}
+
 /** verifiable receipt for AI-generated content */
 export interface Receipt {
   version: string;

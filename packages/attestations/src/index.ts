@@ -1,5 +1,4 @@
-import type { Receipt, AllVerificationResults } from './types.js';
-import type { GenerateTextResult } from 'ai';
+import type { Chat, Receipt, AllVerificationResults } from './types.js';
 import { retry } from '@repo/packages-utils';
 import { attestChat } from './attest.js';
 import {
@@ -8,16 +7,15 @@ import {
 } from './verify.js';
 import { aggregateVerificationResults } from './verify-utils.js';
 import { AttestationsBlockchain } from './blockchain.js';
-import { nearAccountIdToAddress } from './crypto.js';
 
 export type * from './types.js';
 
 export async function attest(
-  result: GenerateTextResult<any, any>,
+  chat: Chat,
   nearAiApiKey: string,
   blockchain: AttestationsBlockchain
 ): Promise<Receipt> {
-  const receipt = await attestChat(result, nearAiApiKey);
+  const receipt = await attestChat(chat, nearAiApiKey);
   const { txHash } = await blockchain.storeAttestationRecord(
     receipt.proofHash,
     receipt.timestamp

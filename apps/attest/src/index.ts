@@ -128,7 +128,16 @@ program
       });
 
       console.log('Attesting AI output...');
-      const receipt = await attest(result, nearAiApiKey, blockchain);
+      const receipt = await attest(
+        {
+          id: result.response.id,
+          requestBody: String(result.request.body),
+          responseBody: JSON.stringify(result.response.body),
+          output: result.text,
+        },
+        nearAiApiKey,
+        blockchain
+      );
 
       if (options.output) {
         console.log(`Writing receipt to ${options.output}`);
