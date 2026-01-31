@@ -1,3 +1,3 @@
 export const testnet = {
-  contractId: 'nis-attestations-01.testnet',
+  contractId: 'nis-attestations-02.testnet',
 };

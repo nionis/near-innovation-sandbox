@@ -1,5 +1,5 @@
 import type { AttestationRecord } from './types';
-import { NearBindgen, LookupMap, near, call, view } from 'near-sdk-js';
+import { NearBindgen, LookupMap, near, call, view, bytes } from 'near-sdk-js';
 
 @NearBindgen({})
 class AttestationsStorage {
@@ -13,6 +13,17 @@ class AttestationsStorage {
     proofHash: string;
     timestamp: number;
   }): string {
+    const ONE_MIN = BigInt(1 * 60 * 1000);
+    const blockTimestampMs = Number(near.blockTimestamp() / BigInt(1_000_000));
+
+    if (timestamp > near.blockTimestamp() + ONE_MIN) {
+      near.panicUtf8(
+        bytes(
+          `Timestamp is too far in the future. Provided: ${timestamp}, current: ${blockTimestampMs}`
+        )
+      );
+    }
+
     const storedBy = near.signerAccountId();
 
     this.records.set(proofHash, {

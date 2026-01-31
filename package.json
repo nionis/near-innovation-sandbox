@@ -20,6 +20,7 @@
   "workspaces": {
     "packages": [
       "apps/attest-cli",
+      "apps/attest-web",
       "contracts/*",
       "packages/*"
     ],
