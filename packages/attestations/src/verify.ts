@@ -64,35 +64,16 @@ export async function verifyModelAndGatewayAttestation(
     );
   });
 
-  const modelVerifications = modelAttestation
-    ? await verifyModelAttestation(modelAttestation, nonce)
-    : {};
+  if (!modelAttestation) {
+    throw new Error('model attestation not found');
+  }
 
-  const gatewayVerifications = gatewayAttestation
-    ? await verifyGatewayAttestation(gatewayAttestation, nonce)
-    : {};
+  const [modelVerifications, gatewayVerifications] = await Promise.all([
+    verifyModelAttestation(modelAttestation, nonce),
+    verifyGatewayAttestation(gatewayAttestation, nonce),
+  ]);
 
   return {
-    model_gpu: {
-      valid: false,
-      message: undefined,
-    },
-    model_tdx: {
-      valid: false,
-      message: undefined,
-    },
-    model_compose: {
-      valid: false,
-      message: undefined,
-    },
-    gateway_tdx: {
-      valid: false,
-      message: undefined,
-    },
-    gateway_compose: {
-      valid: false,
-      message: undefined,
-    },
     ...modelVerifications,
     ...gatewayVerifications,
   };
@@ -196,12 +177,7 @@ async function verifyTdxQuote(
   expectedSigningAddress: string
 ): Promise<VerificationResult & { mrConfigId?: string }> {
   // Acceptable TCB statuses for attestation
-  const ACCEPTABLE_TCB_STATUSES: TcbStatus[] = [
-    'UpToDate',
-    'SWHardeningNeeded',
-    'ConfigurationNeeded',
-    'ConfigurationAndSWHardeningNeeded',
-  ];
+  const ACCEPTABLE_TCB_STATUSES: TcbStatus[] = ['UpToDate'];
 
   // Decode the base64 quote to bytes
   const quoteBytes = Buffer.from(quote, 'hex');
