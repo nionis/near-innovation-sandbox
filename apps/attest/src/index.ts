@@ -65,21 +65,42 @@ program
     '-o, --output <path>',
     'Output file for the receipt (default: prints to stdout)'
   )
+  .option(
+    '--api-key <key>',
+    'NEAR AI API key (defaults to NEAR_AI_API_KEY env var)',
+    process.env.NEAR_AI_API_KEY
+  )
+  .option(
+    '--account-id <id>',
+    'NEAR account ID (defaults to NEAR_ACCOUNT_ID env var)',
+    process.env.NEAR_ACCOUNT_ID
+  )
+  .option(
+    '--private-key <key>',
+    'NEAR private key (defaults to NEAR_PRIVATE_KEY env var)',
+    process.env.NEAR_PRIVATE_KEY
+  )
   .action(async (options) => {
     try {
-      const nearAiApiKey = process.env.NEAR_AI_API_KEY;
+      const nearAiApiKey = options.apiKey;
       if (!nearAiApiKey) {
-        console.error('NEAR_AI_API_KEY is not set');
+        console.error(
+          'NEAR_AI_API_KEY is required. Provide via --api-key or NEAR_AI_API_KEY env var'
+        );
         process.exit(1);
       }
-      const nearAccountId = process.env.NEAR_ACCOUNT_ID;
+      const nearAccountId = options.accountId;
       if (!nearAccountId) {
-        console.error('NEAR_ACCOUNT_ID is not set');
+        console.error(
+          'NEAR_ACCOUNT_ID is required. Provide via --account-id or NEAR_ACCOUNT_ID env var'
+        );
         process.exit(1);
       }
-      const nearPrivateKey = process.env.NEAR_PRIVATE_KEY;
+      const nearPrivateKey = options.privateKey;
       if (!nearPrivateKey) {
-        console.error('NEAR_PRIVATE_KEY is not set');
+        console.error(
+          'NEAR_PRIVATE_KEY is required. Provide via --private-key or NEAR_PRIVATE_KEY env var'
+        );
         process.exit(1);
       }
 
