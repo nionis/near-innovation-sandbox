@@ -13,9 +13,8 @@
     "dev": "tsx src/index.ts"
   },
   "dependencies": {
-    "@repo/packages-near": "*",
     "@repo/packages-attestations": "*",
-    "@repo/contracts-attestations": "*",
+    "@repo/packages-near": "*",
     "@repo/packages-near-ai-provider": "*",
     "ai": "^6.0.61",
     "commander": "^12.1.0",

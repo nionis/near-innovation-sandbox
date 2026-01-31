@@ -7,6 +7,7 @@ import type {
 import { randomBytes } from 'crypto';
 import { fetchAttestation } from './verify-utils.js';
 import { verifySignature } from './crypto.js';
+import { getCollateralAndVerify, type TcbStatus } from '@phala/dcap-qvl';
 
 /** verify model attestation */
 export async function verifyChatAttestation(
@@ -61,10 +62,14 @@ export async function verifyModelAndGatewayAttestation(
     );
   });
 
-  const { model_gpu } = modelAttestation
+  const { model_gpu, model_tdx } = modelAttestation
     ? await verifyModelAttestation(receipt, nonce, modelAttestation)
     : {
         model_gpu: {
+          valid: false,
+          message: 'model attestation not found',
+        },
+        model_tdx: {
           valid: false,
           message: 'model attestation not found',
         },
@@ -72,10 +77,7 @@ export async function verifyModelAndGatewayAttestation(
 
   return {
     model_gpu,
-    model_tdx: {
-      valid: false,
-      message: undefined,
-    },
+    model_tdx,
     model_compose: {
       valid: false,
       message: undefined,
@@ -98,15 +100,22 @@ export async function verifyModelAndGatewayAttestation(
 async function verifyModelAttestation(
   receipt: Receipt,
   nonce: string,
-  modelAttestation: ModelAttestation
-): Promise<Pick<ModelAndGatewayVerificationResult, 'model_gpu'>> {
+  attestation: ModelAttestation
+): Promise<Pick<ModelAndGatewayVerificationResult, 'model_gpu' | 'model_tdx'>> {
   const model_gpu = await verifyGpuAttestation(
-    modelAttestation.nvidia_payload,
+    attestation.nvidia_payload,
     nonce
+  );
+
+  const model_tdx = await verifyTdxQuote(
+    attestation.intel_quote,
+    nonce,
+    attestation.signing_address
   );
 
   return {
     model_gpu,
+    model_tdx,
   };
 }
 
@@ -176,8 +185,80 @@ async function verifyGpuAttestation(
   }
 }
 
-// async function verifyTdxQuote(
-//   intelQuote: unknown,
-//   expectedNonce: string,
-//   expectedSigningAddress?: string
-// ): Promise<VerificationResult> {}
+async function verifyTdxQuote(
+  quote: string,
+  expectedNonce: string,
+  expectedSigningAddress: string
+): Promise<VerificationResult> {
+  // Acceptable TCB statuses for attestation
+  const ACCEPTABLE_TCB_STATUSES: TcbStatus[] = [
+    'UpToDate',
+    'SWHardeningNeeded',
+    'ConfigurationNeeded',
+    'ConfigurationAndSWHardeningNeeded',
+  ];
+
+  try {
+    // Decode the base64 quote to bytes
+    const quoteBytes = Buffer.from(quote, 'hex');
+
+    // Verify the quote using Intel's attestation infrastructure
+    const verifiedReport = await getCollateralAndVerify(quoteBytes);
+
+    // Check TCB status
+    if (!ACCEPTABLE_TCB_STATUSES.includes(verifiedReport.status)) {
+      return {
+        valid: false,
+        message: `TCB status not acceptable: ${verifiedReport.status}`,
+      };
+    }
+
+    // Extract the TDX report (supports both TD10 and TD15 formats)
+    const tdReport =
+      verifiedReport.report.asTd10() ?? verifiedReport.report.asTd15()?.base;
+
+    if (!tdReport) {
+      return {
+        valid: false,
+        message: 'Quote is not a valid TDX quote',
+      };
+    }
+
+    // The report data (64 bytes) contains:
+    // - First 32 bytes: keccak256 hash of the signing address
+    // - Last 32 bytes: the nonce
+    const reportData = Buffer.from(tdReport.reportData);
+    const addressHash = reportData.subarray(0, 32).toString('hex');
+    const embeddedNonce = reportData.subarray(32, 64).toString('hex');
+
+    // Verify the nonce matches
+    if (embeddedNonce !== expectedNonce) {
+      return {
+        valid: false,
+        message: `Nonce mismatch: expected ${expectedNonce}, got ${embeddedNonce}`,
+      };
+    }
+
+    const signingAddress = '0x' + addressHash.slice(0, 40);
+
+    if (
+      signingAddress.toLocaleLowerCase() !==
+      expectedSigningAddress.toLocaleLowerCase()
+    ) {
+      return {
+        valid: false,
+        message: `Signing address binding mismatch`,
+      };
+    }
+
+    return {
+      valid: true,
+      message: undefined,
+    };
+  } catch (error) {
+    return {
+      valid: false,
+      message: `TDX quote verification error: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}

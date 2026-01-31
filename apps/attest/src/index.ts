@@ -4,7 +4,12 @@ import type { ModelMessage } from 'ai';
 import pkg from '../package.json' with { type: 'json' };
 import { createNearAI } from '@repo/packages-near-ai-provider';
 import { type NearAIChatModelId, NEAR_AI_BASE_URL } from '@repo/packages-near';
-import { type Receipt, attest, verify } from '@repo/packages-attestations';
+import {
+  type Receipt,
+  type VerificationResult,
+  attest,
+  verify,
+} from '@repo/packages-attestations';
 import { generateText } from 'ai';
 import { Command } from 'commander';
 import dotenv from 'dotenv';
@@ -91,22 +96,23 @@ program
         gateway_compose,
         gateway_sigstore,
       } = await verify(receipt);
-      console.log('Chat verification:', chat.valid ? '✅' : '❌');
-      console.log('Model GPU verification:', model_gpu.valid ? '✅' : '❌');
-      console.log('Model TDX verification:', model_tdx.valid ? '✅' : '❌');
-      console.log(
-        'Model Compose verification:',
-        model_compose.valid ? '✅' : '❌'
-      );
-      console.log('Gateway TDX verification:', gateway_tdx.valid ? '✅' : '❌');
-      console.log(
-        'Gateway Compose verification:',
-        gateway_compose.valid ? '✅' : '❌'
-      );
-      console.log(
-        'Gateway Sigstore verification:',
-        gateway_sigstore.valid ? '✅' : '❌'
-      );
+
+      function printVerificationResult(
+        name: string,
+        result: VerificationResult
+      ) {
+        console.log(
+          `${name}:`,
+          result.valid ? '✅' : '❌ ' + (result.message ?? 'unknown error')
+        );
+      }
+      printVerificationResult('chat', chat);
+      printVerificationResult('model_gpu', model_gpu);
+      printVerificationResult('model_tdx', model_tdx);
+      printVerificationResult('model_compose', model_compose);
+      printVerificationResult('gateway_tdx', gateway_tdx);
+      printVerificationResult('gateway_compose', gateway_compose);
+      printVerificationResult('gateway_sigstore', gateway_sigstore);
       process.exit(result.valid ? 0 : 1);
     } catch (error) {
       console.error('Error:', error instanceof Error ? error.message : error);
