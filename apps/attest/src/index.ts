@@ -81,10 +81,33 @@ program
     ) as Receipt;
 
     try {
-      const result = await verify(receipt);
-      console.log('Verification is:', result.verified ? 'valid' : 'invalid');
-      console.log('errors:', result.errors);
-      process.exit(result.verified ? 0 : 1);
+      const {
+        result,
+        chat,
+        model_gpu,
+        model_tdx,
+        model_compose,
+        gateway_tdx,
+        gateway_compose,
+        gateway_sigstore,
+      } = await verify(receipt);
+      console.log('Chat verification:', chat.valid ? '✅' : '❌');
+      console.log('Model GPU verification:', model_gpu.valid ? '✅' : '❌');
+      console.log('Model TDX verification:', model_tdx.valid ? '✅' : '❌');
+      console.log(
+        'Model Compose verification:',
+        model_compose.valid ? '✅' : '❌'
+      );
+      console.log('Gateway TDX verification:', gateway_tdx.valid ? '✅' : '❌');
+      console.log(
+        'Gateway Compose verification:',
+        gateway_compose.valid ? '✅' : '❌'
+      );
+      console.log(
+        'Gateway Sigstore verification:',
+        gateway_sigstore.valid ? '✅' : '❌'
+      );
+      process.exit(result.valid ? 0 : 1);
     } catch (error) {
       console.error('Error:', error instanceof Error ? error.message : error);
       process.exit(1);

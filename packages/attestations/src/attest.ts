@@ -1,10 +1,11 @@
 import type { Receipt } from './types.js';
 import type { GenerateTextResult, ModelMessage } from 'ai';
-import { type NearAIChatModelId, fetchSignature } from '@repo/packages-near';
+import { type NearAIChatModelId } from '@repo/packages-near';
 import { sha256, compareHashes } from './crypto.js';
+import { fetchSignature } from './verify-utils.js';
 
 /** attest model output */
-export async function attestModel(
+export async function attestChat(
   result: GenerateTextResult<any, any>,
   nearAiApiKey: string
 ): Promise<Receipt> {
