@@ -105,11 +105,11 @@ program
   .description('Verify a receipt against TEE attestation and blockchain')
   .requiredOption('-r, --receipt <path>', 'Path to the receipt JSON file')
   .action(async (options) => {
-    const receipt = JSON.parse(
-      fs.readFileSync(options.receipt, 'utf-8')
-    ) as Receipt;
-
     try {
+      const receipt = JSON.parse(
+        fs.readFileSync(options.receipt, 'utf-8')
+      ) as Receipt;
+
       const {
         result,
         chat,
@@ -129,12 +129,25 @@ program
           result.valid ? '✅' : '❌ ' + (result.message ?? 'unknown error')
         );
       }
+
+      console.log('Verifying AI output...');
       printVerificationResult('chat', chat);
       printVerificationResult('model_gpu', model_gpu);
       printVerificationResult('model_tdx', model_tdx);
       printVerificationResult('model_compose', model_compose);
       printVerificationResult('gateway_tdx', gateway_tdx);
       printVerificationResult('gateway_compose', gateway_compose);
+
+      if (result.valid) {
+        console.log('Verified AI output!');
+        console.log(`  Model: ${receipt.model}`);
+        console.log(`  Prompt: ${receipt.prompt}`);
+        console.log(`  Output: ${receipt.output}`);
+      } else {
+        console.log('Verification failed!');
+        console.log(`  Reason: ${result.message}`);
+      }
+
       process.exit(result.valid ? 0 : 1);
     } catch (error) {
       console.error(error);
