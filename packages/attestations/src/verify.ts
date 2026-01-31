@@ -2,6 +2,7 @@ import type {
   Receipt,
   ModelAndGatewayVerificationResult,
   ModelAttestation,
+  GatewayAttestation,
   AttestationInfo,
   VerificationResult,
 } from './types.js';
@@ -63,8 +64,12 @@ export async function verifyModelAndGatewayAttestation(
     );
   });
 
-  const verifications = modelAttestation
-    ? await verifyModelAttestation(receipt, nonce, modelAttestation)
+  const modelVerifications = modelAttestation
+    ? await verifyModelAttestation(modelAttestation, nonce)
+    : {};
+
+  const gatewayVerifications = gatewayAttestation
+    ? await verifyGatewayAttestation(gatewayAttestation, nonce)
     : {};
 
   return {
@@ -88,18 +93,14 @@ export async function verifyModelAndGatewayAttestation(
       valid: false,
       message: undefined,
     },
-    gateway_sigstore: {
-      valid: false,
-      message: undefined,
-    },
-    ...verifications,
+    ...modelVerifications,
+    ...gatewayVerifications,
   };
 }
 
 async function verifyModelAttestation(
-  receipt: Receipt,
-  nonce: string,
-  attestation: ModelAttestation
+  attestation: ModelAttestation,
+  nonce: string
 ): Promise<
   Pick<
     ModelAndGatewayVerificationResult,
@@ -275,7 +276,7 @@ async function verifyTdxQuote(
   }
 }
 
-export function verifyComposeManifest(
+function verifyComposeManifest(
   composeManifest: AttestationInfo,
   expectedMrConfig: string
 ): VerificationResult {
@@ -286,5 +287,29 @@ export function verifyComposeManifest(
   return {
     valid,
     message: valid ? undefined : `compose manifest hash mismatch`,
+  };
+}
+
+async function verifyGatewayAttestation(
+  attestation: GatewayAttestation,
+  expectedNonce: string
+): Promise<
+  Pick<ModelAndGatewayVerificationResult, 'gateway_tdx' | 'gateway_compose'>
+> {
+  const gateway_tdx = await verifyTdxQuote(
+    attestation.intel_quote,
+    expectedNonce,
+    attestation.signing_address
+  );
+
+  const expectedMrConfig = gateway_tdx.mrConfigId!;
+  const gateway_compose = verifyComposeManifest(
+    attestation.info,
+    expectedMrConfig
+  );
+
+  return {
+    gateway_tdx,
+    gateway_compose,
   };
 }

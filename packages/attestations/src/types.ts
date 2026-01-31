@@ -32,7 +32,7 @@ export interface Attestation {
   model_attestations: ModelAttestation[];
 }
 
-interface GatewayAttestation {
+export interface GatewayAttestation {
   signing_address: string;
   signing_algo: string;
   intel_quote: string;
@@ -106,7 +106,6 @@ export type ModelAndGatewayVerificationResult = {
   model_compose: VerificationResult;
   gateway_tdx: VerificationResult;
   gateway_compose: VerificationResult;
-  gateway_sigstore: VerificationResult;
 };
 
 /** all verification results */
