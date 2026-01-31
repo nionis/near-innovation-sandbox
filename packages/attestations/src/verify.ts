@@ -8,7 +8,7 @@ import type {
 } from './types.js';
 import { randomBytes } from 'crypto';
 import { fetchAttestation } from './verify-utils.js';
-import { verifySignature, sha256 } from './crypto.js';
+import { verifySignature } from './crypto.js';
 import { getCollateralAndVerify, type TcbStatus } from '@phala/dcap-qvl';
 
 /** verify model attestation */
@@ -75,11 +75,11 @@ export async function verifyModelAndGatewayAttestation(
   return {
     model_gpu: {
       valid: false,
-      message: 'model attestation not found',
+      message: undefined,
     },
     model_tdx: {
       valid: false,
-      message: 'model attestation not found',
+      message: undefined,
     },
     model_compose: {
       valid: false,
@@ -137,64 +137,57 @@ async function verifyGpuAttestation(
 ): Promise<VerificationResult> {
   const NRAS_URL = 'https://nras.attestation.nvidia.com/v3/attest/gpu';
 
-  try {
-    const response = await fetch(NRAS_URL, {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-      },
-      body: payload,
-    });
+  const response = await fetch(NRAS_URL, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+    },
+    body: payload,
+  });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`NVIDIA NRAS returned ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-
-    // NVIDIA returns an array with JWT tokens
-    // The first element is ["JWT", "token_string"]
-    // We need to decode the JWT to check the attestation result
-    if (!Array.isArray(result) || result.length < 1) {
-      throw new Error('Invalid NRAS response format');
-    }
-
-    const [jwtType, jwtToken] = result[0];
-    if (jwtType !== 'JWT' || !jwtToken) {
-      throw new Error('Missing JWT in NRAS response');
-    }
-
-    // Decode JWT payload (base64url encoded, second part of the token)
-    if (typeof jwtToken !== 'string') {
-      throw new Error('JWT token is not a string');
-    }
-    const parts = jwtToken.split('.');
-    if (parts.length !== 3 || typeof parts[1] !== 'string') {
-      throw new Error('Invalid JWT format');
-    }
-
-    const output = JSON.parse(
-      Buffer.from(parts[1], 'base64url').toString('utf-8')
-    );
-
-    const overallResult = output['x-nvidia-overall-att-result'] === true;
-    const nonceMatch = output['eat_nonce'] === expectedNonce;
-    const valid = overallResult && nonceMatch;
-
-    return {
-      valid: valid,
-      message: valid
-        ? undefined
-        : `overallResult: ${overallResult}, nonceMatch: ${nonceMatch}`,
-    };
-  } catch (error) {
-    return {
-      valid: false,
-      message: `GPU attestation error: ${error instanceof Error ? error.message : String(error)}`,
-    };
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`NVIDIA NRAS returned ${response.status}: ${errorText}`);
   }
+
+  const result = await response.json();
+
+  // NVIDIA returns an array with JWT tokens
+  // The first element is ["JWT", "token_string"]
+  // We need to decode the JWT to check the attestation result
+  if (!Array.isArray(result) || result.length < 1) {
+    throw new Error('Invalid NRAS response format');
+  }
+
+  const [jwtType, jwtToken] = result[0];
+  if (jwtType !== 'JWT' || !jwtToken) {
+    throw new Error('Missing JWT in NRAS response');
+  }
+
+  // Decode JWT payload (base64url encoded, second part of the token)
+  if (typeof jwtToken !== 'string') {
+    throw new Error('JWT token is not a string');
+  }
+  const parts = jwtToken.split('.');
+  if (parts.length !== 3 || typeof parts[1] !== 'string') {
+    throw new Error('Invalid JWT format');
+  }
+
+  const output = JSON.parse(
+    Buffer.from(parts[1], 'base64url').toString('utf-8')
+  );
+
+  const overallResult = output['x-nvidia-overall-att-result'] === true;
+  const nonceMatch = output['eat_nonce'] === expectedNonce;
+  const valid = overallResult && nonceMatch;
+
+  return {
+    valid: valid,
+    message: valid
+      ? undefined
+      : `overallResult: ${overallResult}, nonceMatch: ${nonceMatch}`,
+  };
 }
 
 async function verifyTdxQuote(
@@ -210,70 +203,63 @@ async function verifyTdxQuote(
     'ConfigurationAndSWHardeningNeeded',
   ];
 
-  try {
-    // Decode the base64 quote to bytes
-    const quoteBytes = Buffer.from(quote, 'hex');
+  // Decode the base64 quote to bytes
+  const quoteBytes = Buffer.from(quote, 'hex');
 
-    // Verify the quote using Intel's attestation infrastructure
-    const verifiedReport = await getCollateralAndVerify(quoteBytes);
+  // Verify the quote using Intel's attestation infrastructure
+  const verifiedReport = await getCollateralAndVerify(quoteBytes);
 
-    // Check TCB status
-    if (!ACCEPTABLE_TCB_STATUSES.includes(verifiedReport.status)) {
-      return {
-        valid: false,
-        message: `TCB status not acceptable: ${verifiedReport.status}`,
-      };
-    }
-
-    // Extract the TDX report (supports both TD10 and TD15 formats)
-    const tdReport =
-      verifiedReport.report.asTd10() ?? verifiedReport.report.asTd15()?.base;
-
-    if (!tdReport) {
-      return {
-        valid: false,
-        message: 'Quote is not a valid TDX quote',
-      };
-    }
-
-    // The report data (64 bytes) contains:
-    // - First 32 bytes: keccak256 hash of the signing address
-    // - Last 32 bytes: the nonce
-    const reportData = Buffer.from(tdReport.reportData);
-    const addressHash = reportData.subarray(0, 32).toString('hex');
-    const embeddedNonce = reportData.subarray(32, 64).toString('hex');
-
-    // Verify the nonce matches
-    if (embeddedNonce !== expectedNonce) {
-      return {
-        valid: false,
-        message: `Nonce mismatch: expected ${expectedNonce}, got ${embeddedNonce}`,
-      };
-    }
-
-    const signingAddress = '0x' + addressHash.slice(0, 40);
-
-    if (
-      signingAddress.toLocaleLowerCase() !==
-      expectedSigningAddress.toLocaleLowerCase()
-    ) {
-      return {
-        valid: false,
-        message: `Signing address binding mismatch`,
-      };
-    }
-
-    return {
-      valid: true,
-      mrConfigId: Buffer.from(tdReport.mrConfigId).toString('hex'),
-      message: undefined,
-    };
-  } catch (error) {
+  // Check TCB status
+  if (!ACCEPTABLE_TCB_STATUSES.includes(verifiedReport.status)) {
     return {
       valid: false,
-      message: `TDX quote verification error: ${error instanceof Error ? error.message : String(error)}`,
+      message: `TCB status not acceptable: ${verifiedReport.status}`,
     };
   }
+
+  // Extract the TDX report (supports both TD10 and TD15 formats)
+  const tdReport =
+    verifiedReport.report.asTd10() ?? verifiedReport.report.asTd15()?.base;
+
+  if (!tdReport) {
+    return {
+      valid: false,
+      message: 'Quote is not a valid TDX quote',
+    };
+  }
+
+  // The report data (64 bytes) contains:
+  // - First 32 bytes: keccak256 hash of the signing address
+  // - Last 32 bytes: the nonce
+  const reportData = Buffer.from(tdReport.reportData);
+  const addressHash = reportData.subarray(0, 32).toString('hex');
+  const embeddedNonce = reportData.subarray(32, 64).toString('hex');
+
+  // Verify the nonce matches
+  if (embeddedNonce !== expectedNonce) {
+    return {
+      valid: false,
+      message: `Nonce mismatch: expected ${expectedNonce}, got ${embeddedNonce}`,
+    };
+  }
+
+  const signingAddress = '0x' + addressHash.slice(0, 40);
+
+  if (
+    signingAddress.toLocaleLowerCase() !==
+    expectedSigningAddress.toLocaleLowerCase()
+  ) {
+    return {
+      valid: false,
+      message: `Signing address binding mismatch`,
+    };
+  }
+
+  return {
+    valid: true,
+    mrConfigId: Buffer.from(tdReport.mrConfigId).toString('hex'),
+    message: undefined,
+  };
 }
 
 function verifyComposeManifest(
@@ -302,11 +288,9 @@ async function verifyGatewayAttestation(
     attestation.signing_address
   );
 
-  const expectedMrConfig = gateway_tdx.mrConfigId!;
-  const gateway_compose = verifyComposeManifest(
-    attestation.info,
-    expectedMrConfig
-  );
+  const gateway_compose = gateway_tdx.valid
+    ? verifyComposeManifest(attestation.info, gateway_tdx.mrConfigId!)
+    : gateway_tdx;
 
   return {
     gateway_tdx,

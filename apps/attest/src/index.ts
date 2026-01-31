@@ -94,7 +94,6 @@ program
         model_compose,
         gateway_tdx,
         gateway_compose,
-        gateway_sigstore,
       } = await verify(receipt);
 
       function printVerificationResult(
@@ -112,9 +111,9 @@ program
       printVerificationResult('model_compose', model_compose);
       printVerificationResult('gateway_tdx', gateway_tdx);
       printVerificationResult('gateway_compose', gateway_compose);
-      printVerificationResult('gateway_sigstore', gateway_sigstore);
       process.exit(result.valid ? 0 : 1);
     } catch (error) {
+      console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);
       process.exit(1);
     }
