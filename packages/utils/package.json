@@ -1,0 +1,19 @@
+{
+  "name": "@repo/packages-utils",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "eslint": "^9.25.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

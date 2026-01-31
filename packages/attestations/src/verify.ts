@@ -7,9 +7,9 @@ import type {
   VerificationResult,
 } from './types.js';
 import { randomBytes } from 'crypto';
+import { getCollateralAndVerify, type TcbStatus } from '@phala/dcap-qvl';
 import { fetchAttestation } from './verify-utils.js';
 import { verifySignature } from './crypto.js';
-import { getCollateralAndVerify, type TcbStatus } from '@phala/dcap-qvl';
 
 /** verify model attestation */
 export async function verifyChatAttestation(
@@ -52,7 +52,11 @@ export async function verifyModelAndGatewayAttestation(
   receipt: Receipt
 ): Promise<ModelAndGatewayVerificationResult> {
   const nonce = randomBytes(32).toString('hex');
-  const attestation = await fetchAttestation(receipt.model, nonce);
+  const attestation = await fetchAttestation(
+    receipt.model,
+    nonce,
+    receipt.signingAddress
+  );
 
   const {
     gateway_attestation: gatewayAttestation,

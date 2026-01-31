@@ -1,4 +1,8 @@
-import type { Attestation, SignatureResponse } from './types.js';
+import type {
+  Attestation,
+  SignatureResponse,
+  VerificationResult,
+} from './types.js';
 import { type NearAIChatModelId, NEAR_AI_BASE_URL } from '@repo/packages-near';
 
 /** fetch signature from near.ai API */
@@ -30,13 +34,9 @@ export async function fetchSignature(
 export async function fetchAttestation(
   model: NearAIChatModelId,
   requestNonce: string,
-  signingAddress?: string
+  signingAddress: string
 ): Promise<Attestation> {
-  let url = `${NEAR_AI_BASE_URL}/attestation/report?model=${encodeURIComponent(model)}&signing_algo=ecdsa&nonce=${requestNonce}`;
-  if (signingAddress) {
-    url += `&signing_address=${encodeURIComponent(signingAddress)}`;
-  }
-
+  const url = `${NEAR_AI_BASE_URL}/attestation/report?model=${encodeURIComponent(model)}&signing_algo=ecdsa&nonce=${requestNonce}&signing_address=${encodeURIComponent(signingAddress)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -52,4 +52,21 @@ export async function fetchAttestation(
   }
 
   return response.json();
+}
+
+/** aggregate verification results */
+export function aggregateVerificationResults(
+  results: VerificationResult[]
+): VerificationResult {
+  const notOk = results.filter((r) => !r.valid);
+  return {
+    valid: notOk.length === 0,
+    message:
+      notOk.length === 0
+        ? undefined
+        : notOk
+            .filter((r) => r.message)
+            .map((r) => r.message)
+            .join(', '),
+  };
 }
