@@ -6,15 +6,15 @@ import type {
 /** NEAR blockchain configuration */
 export interface BlockchainConfig {
   networkId: NearBlockchainNetwork;
-  privateKey: string;
-  accountId: string;
   contractId: string;
+  privateKey?: string;
+  accountId?: string;
 }
 
 /** verifiable receipt for AI-generated content */
 export interface Receipt {
   version: string;
-  timestamp: string;
+  timestamp: number;
   model: NearAIChatModelId;
   prompt: string;
   content?: string;
@@ -24,6 +24,8 @@ export interface Receipt {
   signingAddress: string;
   signingAlgo: string;
   output: string;
+  proofHash: string;
+  txHash: string;
 }
 
 /** attestation response from NEAR AI Cloud */
@@ -111,5 +113,6 @@ export type ModelAndGatewayVerificationResult = {
 /** all verification results */
 export type AllVerificationResults = {
   chat: VerificationResult;
+  notorized: VerificationResult;
   result: VerificationResult;
 } & ModelAndGatewayVerificationResult;

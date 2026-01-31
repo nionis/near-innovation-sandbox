@@ -3,7 +3,12 @@
 import type { ModelMessage } from 'ai';
 import pkg from '../package.json' with { type: 'json' };
 import { createNearAI } from '@repo/packages-near-ai-provider';
-import { type NearAIChatModelId, NEAR_AI_BASE_URL } from '@repo/packages-near';
+import {
+  NearBlockchainNetwork,
+  type NearAIChatModelId,
+} from '@repo/packages-near';
+import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
+import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 import {
   type Receipt,
   type VerificationResult,
@@ -42,14 +47,9 @@ const banner = `
 
 console.log(banner);
 
-const NEAR_AI_API_KEY = process.env.NEAR_AI_API_KEY;
-if (!NEAR_AI_API_KEY) {
-  console.error('NEAR_AI_API_KEY is not set');
-  process.exit(1);
-}
+const NEAR_NETWORK: NearBlockchainNetwork = 'testnet';
 
 const program = new Command();
-
 program.name('attest').description(pkg.description).version(pkg.version);
 
 // generate command
@@ -67,7 +67,30 @@ program
   )
   .action(async (options) => {
     try {
-      const provider = createNearAI({ apiKey: NEAR_AI_API_KEY });
+      const nearAiApiKey = process.env.NEAR_AI_API_KEY;
+      if (!nearAiApiKey) {
+        console.error('NEAR_AI_API_KEY is not set');
+        process.exit(1);
+      }
+      const nearAccountId = process.env.NEAR_ACCOUNT_ID;
+      if (!nearAccountId) {
+        console.error('NEAR_ACCOUNT_ID is not set');
+        process.exit(1);
+      }
+      const nearPrivateKey = process.env.NEAR_PRIVATE_KEY;
+      if (!nearPrivateKey) {
+        console.error('NEAR_PRIVATE_KEY is not set');
+        process.exit(1);
+      }
+
+      const provider = createNearAI({ apiKey: nearAiApiKey });
+      const blockchain = new AttestationsBlockchain({
+        networkId: NEAR_NETWORK,
+        contractId: SMART_CONTRACTS.testnet.contractId,
+        accountId: nearAccountId,
+        privateKey: nearPrivateKey,
+      });
+
       const messages: ModelMessage[] = [];
       messages.push({
         role: 'user',
@@ -84,7 +107,7 @@ program
       });
 
       console.log('Attesting AI output...');
-      const receipt = await attest(result, NEAR_AI_API_KEY);
+      const receipt = await attest(result, nearAiApiKey, blockchain);
 
       if (options.output) {
         console.log(`Writing receipt to ${options.output}`);
@@ -110,6 +133,11 @@ program
         fs.readFileSync(options.receipt, 'utf-8')
       ) as Receipt;
 
+      const blockchain = new AttestationsBlockchain({
+        networkId: NEAR_NETWORK,
+        contractId: SMART_CONTRACTS.testnet.contractId,
+      });
+
       const {
         result,
         chat,
@@ -118,7 +146,8 @@ program
         model_compose,
         gateway_tdx,
         gateway_compose,
-      } = await verify(receipt);
+        notorized,
+      } = await verify(receipt, blockchain);
 
       function printVerificationResult(
         name: string,
@@ -137,6 +166,7 @@ program
       printVerificationResult('model_compose', model_compose);
       printVerificationResult('gateway_tdx', gateway_tdx);
       printVerificationResult('gateway_compose', gateway_compose);
+      printVerificationResult('notorized', notorized);
 
       if (result.valid) {
         console.log('Verified AI output!');

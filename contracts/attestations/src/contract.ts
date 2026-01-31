@@ -13,7 +13,7 @@ class AttestationsStorage {
     proofHash: string;
     timestamp: number;
   }): string {
-    const storedBy = near.predecessorAccountId();
+    const storedBy = near.signerAccountId();
 
     this.records.set(proofHash, {
       timestamp,

@@ -1,7 +1,7 @@
 import type { Receipt } from './types.js';
 import type { GenerateTextResult, ModelMessage } from 'ai';
 import { type NearAIChatModelId } from '@repo/packages-near';
-import { sha256, compareHashes } from './crypto.js';
+import { sha256, compareHashes, computeProofHash } from './crypto.js';
 import { fetchSignature } from './verify-utils.js';
 
 /** attest model output */
@@ -43,7 +43,7 @@ export async function attestChat(
   // build the receipt
   const receipt: Receipt = {
     version: '1.0',
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().getTime(),
     model: model,
     prompt: prompt,
     content: undefined,
@@ -53,6 +53,12 @@ export async function attestChat(
     signingAddress: signatureData.signing_address,
     signingAlgo: signatureData.signing_algo,
     output: result.text,
+    proofHash: computeProofHash(
+      requestHash,
+      responseHash,
+      signatureData.signature
+    ),
+    txHash: '',
   };
 
   return receipt;

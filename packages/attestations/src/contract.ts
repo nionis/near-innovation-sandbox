@@ -7,13 +7,15 @@ import type { Account, JsonRpcProvider } from 'near-api-js';
  */
 export class AttestationsStorageContract {
   constructor(
-    private readonly account: Account,
     private readonly provider: JsonRpcProvider,
-    private readonly contractId: string
+    private readonly contractId: string,
+    private readonly account?: Account
   ) {}
 
   /** View method: retrieve an attestation by proofHash */
-  async get(args: { proofHash: string }): Promise<AttestationRecord | null> {
+  public async get(args: {
+    proofHash: string;
+  }): Promise<AttestationRecord | null> {
     const result = await this.provider.callFunction<AttestationRecord>({
       contractId: this.contractId,
       method: 'get',
@@ -23,7 +25,7 @@ export class AttestationsStorageContract {
   }
 
   /** View method: check if an attestation exists */
-  async exists(args: { proofHash: string }): Promise<boolean> {
+  public async exists(args: { proofHash: string }): Promise<boolean> {
     const result = await this.provider.callFunction<boolean>({
       contractId: this.contractId,
       method: 'exists',
@@ -33,12 +35,16 @@ export class AttestationsStorageContract {
   }
 
   /** Change method: store an attestation on-chain */
-  async store(args: { proofHash: string; timestamp: number }): Promise<string> {
-    const result = await this.account.callFunction<string>({
+  public async store(args: {
+    proofHash: string;
+    timestamp: number;
+  }): Promise<string> {
+    if (!this.account) throw new Error('account not set');
+    const response = await this.account.callFunctionRaw({
       contractId: this.contractId,
       methodName: 'store',
       args,
     });
-    return result;
+    return response.transaction.hash;
   }
 }

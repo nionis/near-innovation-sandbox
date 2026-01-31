@@ -6,6 +6,13 @@ export function sha256(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
+/** convert a NEAR account ID to an Ethereum-like address */
+export function nearAccountIdToAddress(accountId: string): string {
+  const hash = ethers.keccak256(ethers.toUtf8Bytes(accountId));
+  // take last 20 bytes (40 hex chars) and return as checksummed address
+  return ethers.getAddress('0x' + hash.slice(-40));
+}
+
 /** verify ECDSA signature matches the expected signing address */
 export function verifySignature(
   message: string,
