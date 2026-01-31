@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 
+import type { ModelMessage } from 'ai';
+import pkg from '../package.json' with { type: 'json' };
+import { createNearAI } from '@repo/packages-near-ai-provider';
+import { type NearAIChatModelId, NEAR_AI_BASE_URL } from '@repo/packages-near';
+import { type Receipt, attest, verify } from '@repo/packages-attestations';
+import { generateText } from 'ai';
 import { Command } from 'commander';
 import dotenv from 'dotenv';
-import { generate } from './generate.js';
-import { verify } from './verify.js';
-import pkg from '../package.json' with { type: 'json' };
+import fs from 'fs';
 
 // load environment variables
 dotenv.config();
@@ -28,33 +32,37 @@ program
     'Model to use (e.g., deepseek-ai/DeepSeek-V3.1)'
   )
   .requiredOption('-p, --prompt <prompt>', 'Prompt to send to the model')
-  .option('-c, --content <text>', 'Content/context to include with the prompt')
-  .option('-f, --content-file <path>', 'File containing content/context')
   .option(
     '-o, --output <path>',
     'Output file for the receipt (default: prints to stdout)'
   )
-  .option('--skip-on-chain', 'Skip storing proof on NEAR blockchain')
   .action(async (options) => {
     try {
-      const receipt = await generate(
-        {
-          model: options.model,
-          prompt: options.prompt,
-          content: options.content,
-          contentFile: options.contentFile,
-          output: options.output,
-          skipOnChain: options.skipOnChain,
-        },
-        NEAR_AI_API_KEY
-      );
+      const provider = createNearAI({ apiKey: NEAR_AI_API_KEY });
+      const messages: ModelMessage[] = [];
+      messages.push({
+        role: 'user',
+        content: options.prompt,
+      });
 
-      if (!options.output) {
-        console.log('\n--- Receipt ---');
-        console.log(JSON.stringify(receipt, null, 2));
+      console.log('Generating AI output...');
+      console.log(`  Model: ${options.model}`);
+      console.log(`  Prompt: ${options.prompt}`);
+      const model = provider(options.model as NearAIChatModelId);
+      const result = await generateText({
+        model,
+        messages,
+      });
+
+      console.log('Attesting AI output...');
+      const receipt = await attest(result, NEAR_AI_API_KEY);
+
+      if (options.output) {
+        console.log(`Writing receipt to ${options.output}`);
+        fs.writeFileSync(options.output, JSON.stringify(receipt, null, 2));
       }
-
-      console.log('\n--- AI Output ---');
+      console.log('Receipt');
+      console.log(`  Signature: ${receipt.signature}`);
       console.log(receipt.output);
     } catch (error) {
       console.error('Error:', error instanceof Error ? error.message : error);
@@ -67,15 +75,16 @@ program
   .command('verify')
   .description('Verify a receipt against TEE attestation and blockchain')
   .requiredOption('-r, --receipt <path>', 'Path to the receipt JSON file')
-  .option('--skip-on-chain', 'Skip on-chain verification')
   .action(async (options) => {
-    try {
-      const result = await verify({
-        receiptFile: options.receipt,
-        skipOnChain: options.skipOnChain,
-      });
+    const receipt = JSON.parse(
+      fs.readFileSync(options.receipt, 'utf-8')
+    ) as Receipt;
 
-      process.exit(result.valid ? 0 : 1);
+    try {
+      const result = await verify(receipt);
+      console.log('Verification is:', result.verified ? 'valid' : 'invalid');
+      console.log('errors:', result.errors);
+      process.exit(result.verified ? 0 : 1);
     } catch (error) {
       console.error('Error:', error instanceof Error ? error.message : error);
       process.exit(1);

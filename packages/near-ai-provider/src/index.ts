@@ -2,6 +2,8 @@ import type { NearAIProvider, NearAIProviderSettings } from './types.js';
 import { type NearAIChatModelId, NEAR_AI_BASE_URL } from '@repo/packages-near';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
+export type * from './types.js';
+
 export function createNearAI(options: NearAIProviderSettings): NearAIProvider {
   const baseURL = options.baseURL ?? NEAR_AI_BASE_URL;
   const apiKey = options.apiKey;

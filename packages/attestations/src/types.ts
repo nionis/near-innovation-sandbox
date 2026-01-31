@@ -1,4 +1,7 @@
-import type { NearBlockchainNetwork } from '@repo/packages-near';
+import type {
+  NearBlockchainNetwork,
+  NearAIChatModelId,
+} from '@repo/packages-near';
 
 /** NEAR blockchain configuration */
 export interface BlockchainConfig {
@@ -8,41 +11,17 @@ export interface BlockchainConfig {
   contractId: string;
 }
 
-/**
- * A verifiable receipt for AI-generated content
- */
+/** verifiable receipt for AI-generated content */
 export interface Receipt {
   version: string;
   timestamp: string;
-  model: string;
+  model: NearAIChatModelId;
   prompt: string;
-  contentFile?: string;
+  content?: string;
   requestHash: string;
   responseHash: string;
   signature: string;
   signingAddress: string;
   signingAlgo: string;
   output: string;
-  // onChain?: OnChainRecord;
-}
-
-/**
- * Result of verification checks
- */
-export interface VerificationChecks {
-  signatureValid: boolean;
-  recoveredAddress: string;
-  addressMatch: boolean;
-  onChainExists?: boolean;
-  onChainTimestamp?: number;
-  onChainStoredBy?: string;
-}
-
-/**
- * Complete verification result
- */
-export interface VerificationResult {
-  valid: boolean;
-  checks: VerificationChecks;
-  errors: string[];
 }
