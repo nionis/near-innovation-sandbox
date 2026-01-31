@@ -43,7 +43,7 @@ interface GatewayAttestation {
   vpc: VpcInfo;
 }
 
-interface AttestationInfo {
+export interface AttestationInfo {
   app_cert: string;
   app_id: string;
   app_name: string;

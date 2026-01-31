@@ -2,11 +2,12 @@ import type {
   Receipt,
   ModelAndGatewayVerificationResult,
   ModelAttestation,
+  AttestationInfo,
   VerificationResult,
 } from './types.js';
 import { randomBytes } from 'crypto';
 import { fetchAttestation } from './verify-utils.js';
-import { verifySignature } from './crypto.js';
+import { verifySignature, sha256 } from './crypto.js';
 import { getCollateralAndVerify, type TcbStatus } from '@phala/dcap-qvl';
 
 /** verify model attestation */
@@ -62,22 +63,19 @@ export async function verifyModelAndGatewayAttestation(
     );
   });
 
-  const { model_gpu, model_tdx } = modelAttestation
+  const verifications = modelAttestation
     ? await verifyModelAttestation(receipt, nonce, modelAttestation)
-    : {
-        model_gpu: {
-          valid: false,
-          message: 'model attestation not found',
-        },
-        model_tdx: {
-          valid: false,
-          message: 'model attestation not found',
-        },
-      };
+    : {};
 
   return {
-    model_gpu,
-    model_tdx,
+    model_gpu: {
+      valid: false,
+      message: 'model attestation not found',
+    },
+    model_tdx: {
+      valid: false,
+      message: 'model attestation not found',
+    },
     model_compose: {
       valid: false,
       message: undefined,
@@ -94,6 +92,7 @@ export async function verifyModelAndGatewayAttestation(
       valid: false,
       message: undefined,
     },
+    ...verifications,
   };
 }
 
@@ -101,7 +100,12 @@ async function verifyModelAttestation(
   receipt: Receipt,
   nonce: string,
   attestation: ModelAttestation
-): Promise<Pick<ModelAndGatewayVerificationResult, 'model_gpu' | 'model_tdx'>> {
+): Promise<
+  Pick<
+    ModelAndGatewayVerificationResult,
+    'model_gpu' | 'model_tdx' | 'model_compose'
+  >
+> {
   const model_gpu = await verifyGpuAttestation(
     attestation.nvidia_payload,
     nonce
@@ -113,9 +117,16 @@ async function verifyModelAttestation(
     attestation.signing_address
   );
 
+  const expectedMrConfig = model_tdx.mrConfigId!;
+  const model_compose = verifyComposeManifest(
+    attestation.info,
+    expectedMrConfig
+  );
+
   return {
     model_gpu,
     model_tdx,
+    model_compose,
   };
 }
 
@@ -189,7 +200,7 @@ async function verifyTdxQuote(
   quote: string,
   expectedNonce: string,
   expectedSigningAddress: string
-): Promise<VerificationResult> {
+): Promise<VerificationResult & { mrConfigId?: string }> {
   // Acceptable TCB statuses for attestation
   const ACCEPTABLE_TCB_STATUSES: TcbStatus[] = [
     'UpToDate',
@@ -253,6 +264,7 @@ async function verifyTdxQuote(
 
     return {
       valid: true,
+      mrConfigId: Buffer.from(tdReport.mrConfigId).toString('hex'),
       message: undefined,
     };
   } catch (error) {
@@ -261,4 +273,18 @@ async function verifyTdxQuote(
       message: `TDX quote verification error: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
+}
+
+export function verifyComposeManifest(
+  composeManifest: AttestationInfo,
+  expectedMrConfig: string
+): VerificationResult {
+  const valid = expectedMrConfig
+    .toLowerCase()
+    .includes(composeManifest.compose_hash.toLowerCase());
+
+  return {
+    valid,
+    message: valid ? undefined : `compose manifest hash mismatch`,
+  };
 }
