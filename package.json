@@ -19,7 +19,7 @@
   "packageManager": "yarn@1.22.22",
   "workspaces": {
     "packages": [
-      "apps/attest",
+      "apps/attest-cli",
       "contracts/*",
       "packages/*"
     ],
