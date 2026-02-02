@@ -13,6 +13,7 @@ import {
   type Receipt,
   type VerificationResult,
   attest,
+  storeAttestationRecordWithBlockchain,
   verify,
 } from '@repo/packages-attestations';
 import { generateText } from 'ai';
@@ -135,9 +136,15 @@ program
           responseBody: JSON.stringify(result.response.body),
           output: result.text,
         },
-        nearAiApiKey,
-        blockchain
+        nearAiApiKey
       );
+
+      console.log('Storing attestation record on blockchain...');
+      const { txHash } = await storeAttestationRecordWithBlockchain(
+        blockchain,
+        { proofHash: receipt.proofHash, timestamp: receipt.timestamp }
+      );
+      receipt.txHash = txHash;
 
       if (options.output) {
         console.log(`Writing receipt to ${options.output}`);
@@ -147,6 +154,7 @@ program
       console.log(`  Signature: ${receipt.signature}`);
       console.log(receipt.output);
     } catch (error) {
+      console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);
       process.exit(1);
     }

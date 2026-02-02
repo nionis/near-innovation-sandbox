@@ -12,16 +12,34 @@ export type * from './types.js';
 
 export async function attest(
   chat: Chat,
-  nearAiApiKey: string,
-  blockchain: AttestationsBlockchain
+  nearAiApiKey: string
 ): Promise<Receipt> {
   const receipt = await attestChat(chat, nearAiApiKey);
-  const { txHash } = await blockchain.storeAttestationRecord(
-    receipt.proofHash,
-    receipt.timestamp
-  );
-  receipt.txHash = txHash;
   return receipt;
+}
+
+export async function storeAttestationRecordWithBlockchain(
+  blockchain: AttestationsBlockchain,
+  record: { proofHash: string; timestamp: number }
+): Promise<{ txHash: string }> {
+  return blockchain.storeAttestationRecord(record.proofHash, record.timestamp);
+}
+
+export async function storeAttestationRecordWithAPI(
+  apiUrl: string,
+  record: { proofHash: string; timestamp: number }
+): Promise<{ txHash: string }> {
+  const response = await fetch(`${apiUrl}/api/store`, {
+    method: 'POST',
+    body: JSON.stringify({
+      proofHash: record.proofHash,
+      timestamp: record.timestamp,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to store attestation record');
+  }
+  return response.json();
 }
 
 export async function verify(

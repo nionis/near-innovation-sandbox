@@ -32,7 +32,7 @@ export interface Receipt {
   signingAlgo: string;
   output: string;
   proofHash: string;
-  txHash: string;
+  txHash?: string;
 }
 
 /** attestation response from NEAR AI Cloud */

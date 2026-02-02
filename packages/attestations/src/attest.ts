@@ -56,7 +56,7 @@ export async function attestChat(
       responseHash,
       signatureData.signature
     ),
-    txHash: '',
+    txHash: undefined,
   };
 
   return receipt;
