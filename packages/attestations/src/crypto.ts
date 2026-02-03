@@ -1,9 +1,13 @@
-import crypto from 'crypto';
 import { ethers } from 'ethers';
 
-/** compute SHA256 hash of a string */
+/** generate a random nonce (browser-compatible via ethers) */
+export function randomNonce(): string {
+  return ethers.hexlify(ethers.randomBytes(32)).slice(2);
+}
+
+/** compute SHA256 hash of a string (browser-compatible via ethers) */
 export function sha256(data: string): string {
-  return crypto.createHash('sha256').update(data).digest('hex');
+  return ethers.sha256(ethers.toUtf8Bytes(data)).slice(2);
 }
 
 /** convert a NEAR account ID to an Ethereum-like address */
