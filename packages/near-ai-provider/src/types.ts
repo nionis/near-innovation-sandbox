@@ -9,9 +9,19 @@ export type NearAIProvider = OpenAICompatibleProvider<
   string
 >;
 
+/** E2EE encryption settings */
+export interface E2EESettings {
+  /** Enable end-to-end encryption for chat completions */
+  enabled: boolean;
+  /** Encryption algorithm (currently only 'ecdsa' is supported) */
+  algorithm?: 'ecdsa';
+}
+
 /** settings for the near.ai provider */
 export interface NearAIProviderSettings {
   baseURL?: string;
   apiKey?: string;
   headers?: Record<string, string>;
+  /** End-to-end encryption settings */
+  e2ee?: E2EESettings;
 }

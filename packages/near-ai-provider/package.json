@@ -17,6 +17,9 @@
   "dependencies": {
     "@repo/packages-near": "*",
     "@ai-sdk/openai-compatible": "^2.0.0",
+    "@noble/ciphers": "^1.2.1",
+    "@noble/curves": "^1.8.1",
+    "@noble/hashes": "^1.7.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

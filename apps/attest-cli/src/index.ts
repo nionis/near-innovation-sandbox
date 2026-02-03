@@ -2,7 +2,11 @@
 
 import type { ModelMessage } from 'ai';
 import pkg from '../package.json' with { type: 'json' };
-import { createNearAI } from '@repo/packages-near-ai-provider';
+import {
+  createNearAI,
+  getE2EECapturePromise,
+  clearE2EECapture,
+} from '@repo/packages-near-ai-provider';
 import {
   NearBlockchainNetwork,
   type NearAIChatModelId,
@@ -105,7 +109,11 @@ program
         process.exit(1);
       }
 
-      const provider = createNearAI({ apiKey: nearAiApiKey });
+      const provider = createNearAI({
+        apiKey: nearAiApiKey,
+        e2ee: { enabled: true },
+      });
+
       const blockchain = new AttestationsBlockchain({
         networkId: NEAR_NETWORK,
         contractId: SMART_CONTRACTS.testnet.contractId,
@@ -122,18 +130,26 @@ program
       console.log('Generating AI output...');
       console.log(`  Model: ${options.model}`);
       console.log(`  Prompt: ${options.prompt}`);
+
+      // Clear any previous E2EE capture
+      clearE2EECapture();
+
       const model = provider(options.model as NearAIChatModelId);
       const result = await generateText({
         model,
         messages,
       });
 
+      // Get captured E2EE data (encrypted request/response for attestation)
+      const capturedData = await getE2EECapturePromise();
+
       console.log('Attesting AI output...');
       const receipt = await attest(
         {
-          id: result.response.id,
-          requestBody: String(result.request.body),
-          responseBody: JSON.stringify(result.response.body),
+          id: capturedData?.id ?? result.response.id,
+          requestBody: capturedData?.requestBody ?? String(result.request.body),
+          responseBody:
+            capturedData?.responseBody ?? JSON.stringify(result.response.body),
           output: result.text,
         },
         nearAiApiKey
