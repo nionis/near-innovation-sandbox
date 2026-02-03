@@ -6,10 +6,8 @@ import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 const NETWORK_ID: NearBlockchainNetwork = 'testnet';
 const CONTRACT_ID = SMART_CONTRACTS[NETWORK_ID].contractId;
 
-const ACCOUNT_ID = process.env.NEAR_ACCOUNT_ID;
-if (!ACCOUNT_ID) throw new Error('NEAR_ACCOUNT_ID is not set');
-const PRIV_KEY = process.env.NEAR_PRIVATE_KEY;
-if (!PRIV_KEY) throw new Error('NEAR_PRIVATE_KEY is not set');
+const ACCOUNT_ID = process.env.NEAR_ACCOUNT_ID!;
+const PRIV_KEY = process.env.NEAR_PRIVATE_KEY!;
 
 // CORS headers for cross-origin requests
 const corsHeaders = {
