@@ -1,27 +1,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Buffer } from 'buffer';
 import type {
   Receipt,
   AllVerificationResults,
   VerificationResult,
 } from '@repo/packages-attestations';
-import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
-import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
-import { verify } from '@repo/packages-attestations';
-
-// Extend Window interface for Buffer polyfill
-declare global {
-  interface Window {
-    Buffer: typeof Buffer;
-  }
-}
-
-// Polyfill Buffer for browser
-if (typeof window !== 'undefined') {
-  window.Buffer = Buffer;
-}
 
 type VerifyState =
   | { status: 'idle' }
@@ -42,18 +26,21 @@ export function ReceiptVerifier({
   });
 
   const verifyReceipt = useCallback(async (receipt: Receipt) => {
-    const NETWORK_ID = 'testnet' as const;
-    const CONTRACT_ID = SMART_CONTRACTS[NETWORK_ID].contractId;
-
-    // Initialize blockchain client (read-only)
-    const blockchain = new AttestationsBlockchain({
-      networkId: NETWORK_ID,
-      contractId: CONTRACT_ID,
+    const response = await fetch('/api/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(receipt),
     });
 
-    // Verify the receipt
-    const results = await verify(receipt, blockchain);
-    return results;
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Verification failed');
+    }
+
+    return data as AllVerificationResults;
   }, []);
 
   const handleVerify = async () => {

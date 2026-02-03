@@ -8,14 +8,6 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-const nextConfig: NextConfig = {
-  // Turbopack configuration (Next.js 16 default)
-  turbopack: {
-    resolveAlias: {
-      // Polyfill Buffer for browser
-      buffer: 'buffer',
-    },
-  },
-};
+const nextConfig: NextConfig = {};
 
 export default nextConfig;
