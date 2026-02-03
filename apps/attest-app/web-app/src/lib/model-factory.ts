@@ -30,7 +30,15 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { invoke } from '@tauri-apps/api/core'
 import { SessionInfo } from '@janhq/core'
-import { createAttestationCaptureFetch } from './near-ai-attestation-capture'
+import {
+  createNearAI,
+  getE2EECapturePromise,
+  clearE2EECapture,
+} from '@repo/packages-near-ai-provider'
+import type { NearAIChatModelId } from '@repo/packages-near'
+
+// Re-export E2EE capture utilities for attestation
+export { getE2EECapturePromise, clearE2EECapture }
 
 /**
  * Llama.cpp timings structure from the response
@@ -115,6 +123,10 @@ export class ModelFactory {
 
       case 'openai':
         return this.createOpenAIModel(modelId, provider)
+
+      case 'near-ai':
+        return this.createNearAIModel(modelId, provider)
+
       case 'google':
       case 'gemini':
       case 'azure':
@@ -126,7 +138,6 @@ export class ModelFactory {
       case 'cohere':
       case 'perplexity':
       case 'moonshot':
-      case 'near-ai':
       default:
         return this.createOpenAICompatibleModel(modelId, provider)
     }
@@ -233,6 +244,51 @@ export class ModelFactory {
   }
 
   /**
+   * Create a NEAR AI model using the near-ai-provider with E2EE support
+   *
+   * Uses end-to-end encryption for secure communication with NEAR AI TEE.
+   * The E2EE capture functions (getE2EECapturePromise, clearE2EECapture) can be
+   * used to capture encrypted request/response data for attestation.
+   *
+   * @example
+   * ```typescript
+   * import { clearE2EECapture, getE2EECapturePromise } from './model-factory'
+   *
+   * // Clear previous capture before generating
+   * clearE2EECapture()
+   *
+   * const model = await ModelFactory.createModel(modelId, provider)
+   * const result = await generateText({ model, messages })
+   *
+   * // Get captured E2EE data for attestation
+   * const capturedData = await getE2EECapturePromise()
+   * ```
+   */
+  private static createNearAIModel(
+    modelId: string,
+    provider: ProviderObject
+  ): LanguageModel {
+    const headers: Record<string, string> = {}
+
+    // Add custom headers if specified
+    if (provider.custom_header) {
+      provider.custom_header.forEach((customHeader) => {
+        headers[customHeader.header] = customHeader.value
+      })
+    }
+
+    const nearAI = createNearAI({
+      apiKey: provider.api_key,
+      baseURL: provider.base_url,
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
+      e2ee: { enabled: true },
+    })
+
+    // Cast to LanguageModel for compatibility - generateText accepts both v2 and v3
+    return nearAI(modelId as NearAIChatModelId) as unknown as LanguageModel
+  }
+
+  /**
    * Create an OpenAI-compatible model for providers that support the OpenAI API format
    */
   private static createOpenAICompatibleModel(
@@ -253,16 +309,11 @@ export class ModelFactory {
       headers['Authorization'] = `Bearer ${provider.api_key}`
     }
 
-    const isNearAi = provider.provider.toLowerCase() === 'near-ai'
-
     const openAICompatible = createOpenAICompatible({
       name: provider.provider,
       baseURL: provider.base_url || 'https://api.openai.com/v1',
       headers,
       includeUsage: true,
-      // Use attestation capture fetch for NEAR AI to capture raw request/response
-      // This enables proper hash verification for attestation
-      fetch: isNearAi ? createAttestationCaptureFetch() : undefined,
     })
 
     return openAICompatible.languageModel(modelId)

@@ -18,10 +18,7 @@ import {
   useAttestationStore,
   type AttestationChatData,
 } from '@/stores/attestation-store'
-import {
-  getCapturePromise,
-  clearLatestCapture,
-} from './near-ai-attestation-capture'
+import { getE2EECapturePromise, clearE2EECapture } from './model-factory'
 
 export type TokenUsageCallback = (
   usage: LanguageModelUsage,
@@ -244,9 +241,9 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
     // Check if this is a NEAR AI provider for attestation capture
     const isNearAiProvider = providerId === 'near-ai'
 
-    // Clear any previous attestation capture before starting
+    // Clear any previous E2EE capture before starting
     if (isNearAiProvider) {
-      clearLatestCapture()
+      clearE2EECapture()
     }
 
     const result = streamText({
@@ -268,22 +265,22 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
 
     if (isNearAiProvider) {
       console.debug(
-        '[Attestation] NEAR AI provider detected, will capture attestation data'
+        '[Attestation] NEAR AI provider detected, will capture E2EE attestation data'
       )
-      // Create a promise that captures the attestation data from the fetch wrapper
-      // The fetch wrapper captures the raw request/response bodies for proper hash verification
-      attestationDataPromise = (async () => {
+      // Create a promise that captures the E2EE attestation data from the fetch wrapper
+      // The fetch wrapper captures the encrypted request/response bodies for proper hash verification
+      attestationDataPromise = (async (): Promise<AttestationChatData | null> => {
         try {
           // Wait for the stream to complete first
           await result.text
 
-          // Get the captured attestation data from the fetch wrapper
+          // Get the captured E2EE data from the fetch wrapper
           // This promise resolves when the fetch wrapper finishes reading the response
-          const capturedData = await getCapturePromise()
+          const capturedData = await getE2EECapturePromise()
 
-          if (capturedData) {
+          if (capturedData && capturedData.id) {
             console.debug(
-              '[Attestation] Response captured from fetch wrapper:',
+              '[Attestation] E2EE response captured from fetch wrapper:',
               {
                 responseId: capturedData.id,
                 requestBodyLength: capturedData.requestBody.length,
@@ -291,14 +288,20 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
                 outputLength: capturedData.output.length,
               }
             )
-            return capturedData
+            // Convert E2EECapturedData to AttestationChatData
+            return {
+              id: capturedData.id,
+              requestBody: capturedData.requestBody,
+              responseBody: capturedData.responseBody,
+              output: capturedData.output,
+            }
           } else {
-            console.warn('[Attestation] No data captured from fetch wrapper')
+            console.warn('[Attestation] No E2EE data captured from fetch wrapper')
             return null
           }
         } catch (error) {
           console.warn(
-            '[Attestation] Failed to capture attestation data:',
+            '[Attestation] Failed to capture E2EE attestation data:',
             error
           )
           return null
