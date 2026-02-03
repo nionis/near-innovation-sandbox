@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@repo/contracts-attestations": "*",
+    "@repo/packages-near": "*",
     "@repo/packages-utils": "*",
     "@phala/dcap-qvl": "^0.3.9",
     "ethers": "^6.13.4",
