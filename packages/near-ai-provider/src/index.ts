@@ -25,9 +25,7 @@ export type {
   E2EECapturedData,
 } from './e2ee/index.js';
 
-/**
- * Create a lazy E2EE fetch wrapper that fetches the model's public key on first request
- */
+/** a lazy E2EE fetch wrapper that fetches the model's public key on first request */
 function createLazyE2EEFetch(): typeof fetch {
   // Cache for model-specific E2EE fetch instances
   const e2eeFetchCache = new Map<string, typeof fetch>();
@@ -37,7 +35,7 @@ function createLazyE2EEFetch(): typeof fetch {
 
     // Only apply E2EE to chat completions endpoint
     if (!url.includes('/chat/completions') || typeof init?.body !== 'string') {
-      return fetch(input, init);
+      throw new Error('E2EE is only supported for chat completions endpoint');
     }
 
     // Extract model from request body
@@ -45,13 +43,10 @@ function createLazyE2EEFetch(): typeof fetch {
     try {
       const parsed = JSON.parse(init.body);
       model = parsed.model;
-    } catch {
-      // If parsing fails, proceed without E2EE
-      return fetch(input, init);
-    }
+    } catch {}
 
     if (!model) {
-      return fetch(input, init);
+      throw new Error('Failed to parse request body');
     }
 
     // Get or create E2EE fetch for this model
@@ -68,31 +63,12 @@ function createLazyE2EEFetch(): typeof fetch {
   };
 }
 
-/**
- * Create a NEAR AI provider
- *
- * @param options - Provider settings including optional E2EE configuration
- * @returns OpenAI-compatible provider for NEAR AI models
- *
- * @example
- * ```typescript
- * // Without E2EE
- * const provider = createNearAI({ apiKey: '...' });
- *
- * // With E2EE enabled
- * const secureProvider = createNearAI({
- *   apiKey: '...',
- *   e2ee: { enabled: true }
- * });
- *
- * const model = secureProvider('deepseek-ai/DeepSeek-V3.1');
- * ```
- */
+/** create a NEAR AI provider, optionally with E2EE enabled */
 export function createNearAI(options: NearAIProviderSettings): NearAIProvider {
   const baseURL = options.baseURL ?? NEAR_AI_BASE_URL;
   const apiKey = options.apiKey;
 
-  // Create custom fetch if E2EE is enabled
+  // create custom fetch if E2EE is enabled
   const customFetch = options.e2ee?.enabled ? createLazyE2EEFetch() : undefined;
 
   return createOpenAICompatible<
