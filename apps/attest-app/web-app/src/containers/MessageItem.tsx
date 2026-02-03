@@ -18,13 +18,19 @@ import {
 } from '@/components/ai-elements/tool'
 import { CopyButton } from './CopyButton'
 import { useModelProvider } from '@/hooks/useModelProvider'
-import { IconRefresh, IconPaperclip } from '@tabler/icons-react'
+import {
+  IconRefresh,
+  IconPaperclip,
+  IconShieldCheck,
+  IconLoader2,
+} from '@tabler/icons-react'
 import { EditMessageDialog } from '@/containers/dialogs/EditMessageDialog'
 import { DeleteMessageDialog } from '@/containers/dialogs/DeleteMessageDialog'
 import TokenSpeedIndicator from '@/containers/TokenSpeedIndicator'
 import { extractFilesFromPrompt, FileMetadata } from '@/lib/fileMetadata'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
+import { useAttestationStore } from '@/stores/attestation-store'
 
 const CHAT_STATUS = {
   STREAMING: 'streaming',
@@ -46,6 +52,7 @@ export type MessageItemProps = {
   onRegenerate?: (messageId: string) => void
   onEdit?: (messageId: string, newText: string) => void
   onDelete?: (messageId: string) => void
+  onGenerateProof?: (messageId: string) => void
   assistant?: { avatar?: React.ReactNode; name?: string }
   showAssistant?: boolean
 }
@@ -59,12 +66,36 @@ export const MessageItem = memo(
     onRegenerate,
     onEdit,
     onDelete,
+    onGenerateProof,
   }: MessageItemProps) => {
     const selectedModel = useModelProvider((state) => state.selectedModel)
+    const selectedProvider = useModelProvider((state) => state.selectedProvider)
     const [previewImage, setPreviewImage] = useState<{
       url: string
       filename?: string
     } | null>(null)
+
+    // Attestation state for this message
+    // Use direct state access for proper reactivity (not function calls)
+    const attestationState = useAttestationStore(
+      (state) => state.messageStates[message.id]
+    )
+    const hasAttestationData = !!attestationState?.chatData
+
+    // Only show proof button for NEAR AI provider
+    const isNearAiProvider = selectedProvider === 'near-ai'
+    const canGenerateProof =
+      isNearAiProvider && hasAttestationData && !attestationState?.receipt
+    const isAttesting = attestationState?.isAttesting ?? false
+    const hasReceipt = !!attestationState?.receipt
+
+    // console.debug('[MessageItem] Attestation state:', {
+    //   isNearAiProvider,
+    //   hasAttestationData,
+    //   canGenerateProof,
+    //   isAttesting,
+    //   hasReceipt,
+    // })
 
     const handleRegenerate = useCallback(() => {
       onRegenerate?.(message.id)
@@ -81,12 +112,20 @@ export const MessageItem = memo(
       onDelete?.(message.id)
     }, [onDelete, message.id])
 
+    const handleGenerateProof = useCallback(() => {
+      onGenerateProof?.(message.id)
+    }, [onGenerateProof, message.id])
+
     // Get image URLs from file parts for the edit dialog
     const imageUrls = useMemo(() => {
       return message.parts
         .filter((part) => {
           if (part.type !== 'file') return false
-          const filePart = part as { type: 'file'; url?: string; mediaType?: string }
+          const filePart = part as {
+            type: 'file'
+            url?: string
+            mediaType?: string
+          }
           return filePart.url && filePart.mediaType?.startsWith('image/')
         })
         .map((part) => (part as { url: string }).url)
@@ -325,7 +364,6 @@ export const MessageItem = memo(
 
     return (
       <div className="w-full mb-4">
-
         {/* Render message parts */}
         {message.parts.map((part, i) => {
           switch (part.type) {
@@ -385,14 +423,45 @@ export const MessageItem = memo(
                   <DeleteMessageDialog onDelete={handleDelete} />
                 )}
 
-                {selectedModel && onRegenerate && !isStreaming && isLastMessage && (
+                {selectedModel &&
+                  onRegenerate &&
+                  !isStreaming &&
+                  isLastMessage && (
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={handleRegenerate}
+                      title="Regenerate response"
+                    >
+                      <IconRefresh size={16} />
+                    </Button>
+                  )}
+
+                {/* Generate Proof button - only for NEAR AI provider */}
+                {isNearAiProvider && onGenerateProof && !isStreaming && (
                   <Button
-                    variant="ghost"
+                    variant={hasReceipt ? 'ghost' : 'ghost'}
                     size="icon-xs"
-                    onClick={handleRegenerate}
-                    title="Regenerate response"
+                    onClick={handleGenerateProof}
+                    disabled={isAttesting || !canGenerateProof}
+                    title={
+                      hasReceipt
+                        ? 'Proof generated'
+                        : isAttesting
+                          ? 'Generating proof...'
+                          : canGenerateProof
+                            ? 'Generate verifiable proof'
+                            : 'Proof not available'
+                    }
+                    className={cn(
+                      hasReceipt && 'text-green-500 hover:text-green-600'
+                    )}
                   >
-                    <IconRefresh size={16} />
+                    {isAttesting ? (
+                      <IconLoader2 size={16} className="animate-spin" />
+                    ) : (
+                      <IconShieldCheck size={16} />
+                    )}
                   </Button>
                 )}
               </div>

@@ -11,6 +11,18 @@ if (!ACCOUNT_ID) throw new Error('NEAR_ACCOUNT_ID is not set');
 const PRIV_KEY = process.env.NEAR_PRIVATE_KEY;
 if (!PRIV_KEY) throw new Error('NEAR_PRIVATE_KEY is not set');
 
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+// Handle preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(
   request: Request
 ): Promise<NextResponse<{ txHash: string } | { error: string }>> {
@@ -24,7 +36,7 @@ export async function POST(
     if (!body?.proofHash || !body?.timestamp) {
       return NextResponse.json(
         { error: 'proofHash and timestamp are required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -46,7 +58,7 @@ export async function POST(
       {
         txHash: result.txHash,
       },
-      { status: 200 }
+      { status: 200, headers: corsHeaders }
     );
   } catch (error) {
     console.error('Failed to store attestation:', error);
@@ -55,7 +67,7 @@ export async function POST(
         error:
           error instanceof Error ? error.message : 'Unknown error occurred',
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

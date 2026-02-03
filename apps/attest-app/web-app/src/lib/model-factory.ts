@@ -10,7 +10,7 @@
  * - anthropic: Claude models via Anthropic API (@ai-sdk/anthropic v2.0)
  * - google/gemini: Gemini models via Google Generative AI API (@ai-sdk/google v2.0)
  * - openai: OpenAI models via OpenAI API (@ai-sdk/openai)
- * - OpenAI-compatible: Azure, Groq, Together, Fireworks, DeepSeek, Mistral, Cohere, etc.
+ * - OpenAI-compatible: Azure, Groq, Together, Fireworks, DeepSeek, Mistral, Cohere, NEAR AI, etc.
  *
  * Usage:
  * ```typescript
@@ -30,6 +30,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { invoke } from '@tauri-apps/api/core'
 import { SessionInfo } from '@janhq/core'
+import { createAttestationCaptureFetch } from './near-ai-attestation-capture'
 
 /**
  * Llama.cpp timings structure from the response
@@ -125,6 +126,7 @@ export class ModelFactory {
       case 'cohere':
       case 'perplexity':
       case 'moonshot':
+      case 'near-ai':
       default:
         return this.createOpenAICompatibleModel(modelId, provider)
     }
@@ -251,11 +253,16 @@ export class ModelFactory {
       headers['Authorization'] = `Bearer ${provider.api_key}`
     }
 
+    const isNearAi = provider.provider.toLowerCase() === 'near-ai'
+
     const openAICompatible = createOpenAICompatible({
       name: provider.provider,
       baseURL: provider.base_url || 'https://api.openai.com/v1',
       headers,
       includeUsage: true,
+      // Use attestation capture fetch for NEAR AI to capture raw request/response
+      // This enables proper hash verification for attestation
+      fetch: isNearAi ? createAttestationCaptureFetch() : undefined,
     })
 
     return openAICompatible.languageModel(modelId)

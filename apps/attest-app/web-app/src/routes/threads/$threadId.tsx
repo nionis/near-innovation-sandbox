@@ -16,6 +16,8 @@ import { useAppState } from '@/hooks/useAppState'
 import { SESSION_STORAGE_PREFIX } from '@/constants/chat'
 import { useChat } from '@/hooks/use-chat'
 import { useModelProvider } from '@/hooks/useModelProvider'
+import { useAttestation } from '@/hooks/useAttestation'
+import { useAttestationStore } from '@/stores/attestation-store'
 import { renderInstructions } from '@/lib/instructionTemplate'
 import {
   Conversation,
@@ -70,6 +72,9 @@ function ThreadDetail() {
   const currentThread = useRef<string | undefined>(undefined)
 
   useTools()
+
+  // Attestation hook for generating proofs
+  const { generateProof } = useAttestation()
 
   // Get attachments for this thread
   const attachmentsKey = threadId ?? NEW_THREAD_ATTACHMENT_KEY
@@ -141,6 +146,17 @@ function ThreadDetail() {
             string,
             unknown
           >
+
+          // Assign pending attestation data to this message ID (for NEAR AI)
+          const attestationStore = useAttestationStore.getState()
+          const pendingData = attestationStore.getPendingChatData()
+          if (pendingData) {
+            console.debug(
+              '[Attestation] Assigning pending chat data to message:',
+              message.id
+            )
+            attestationStore.assignPendingToMessage(message.id)
+          }
 
           // Create assistant message with content parts (including tool calls) and metadata
           const assistantMessage: ThreadMessage = {
@@ -639,6 +655,14 @@ function ThreadDetail() {
     [threadId, deleteMessage, chatMessages, setChatMessages]
   )
 
+  // Handle generate proof for NEAR AI attestation
+  const handleGenerateProof = useCallback(
+    (messageId: string) => {
+      generateProof(messageId)
+    },
+    [generateProof]
+  )
+
   // Handler for increasing context size
   const handleContextSizeIncrease = useCallback(async () => {
     if (!selectedModel) return
@@ -721,6 +745,7 @@ function ThreadDetail() {
                     onRegenerate={handleRegenerate}
                     onEdit={handleEditMessage}
                     onDelete={handleDeleteMessage}
+                    onGenerateProof={handleGenerateProof}
                   />
                 )
               })}

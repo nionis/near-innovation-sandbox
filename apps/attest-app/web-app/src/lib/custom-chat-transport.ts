@@ -14,6 +14,14 @@ import { useServiceStore } from '@/hooks/useServiceHub'
 import { useToolAvailable } from '@/hooks/useToolAvailable'
 import { ModelFactory } from './model-factory'
 import { useModelProvider } from '@/hooks/useModelProvider'
+import {
+  useAttestationStore,
+  type AttestationChatData,
+} from '@/stores/attestation-store'
+import {
+  getCapturePromise,
+  clearLatestCapture,
+} from './near-ai-attestation-capture'
 
 export type TokenUsageCallback = (
   usage: LanguageModelUsage,
@@ -55,10 +63,7 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
   private serviceHub: ServiceHub | null
   private threadId?: string
 
-  constructor(
-    systemMessage?: string,
-    threadId?: string
-  ) {
+  constructor(systemMessage?: string, threadId?: string) {
     this.systemMessage = systemMessage
     this.threadId = threadId
     this.serviceHub = useServiceStore.getState().serviceHub
@@ -194,7 +199,6 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
       messageId: string | undefined
     } & ChatRequestOptions
   ): Promise<ReadableStream<UIMessageChunk>> {
-
     // Ensure tools updated before sending messages
     await this.refreshTools()
 
@@ -237,6 +241,14 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
     let streamStartTime: number | undefined
     let textDeltaCount = 0
 
+    // Check if this is a NEAR AI provider for attestation capture
+    const isNearAiProvider = providerId === 'near-ai'
+
+    // Clear any previous attestation capture before starting
+    if (isNearAiProvider) {
+      clearLatestCapture()
+    }
+
     const result = streamText({
       model: this.model,
       messages: modelMessages,
@@ -245,6 +257,54 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
       toolChoice: shouldEnableTools ? 'auto' : undefined,
       system: this.systemMessage,
     })
+
+    // Promise to capture attestation data - will be awaited in onFinish
+    let attestationDataPromise: Promise<AttestationChatData | null> | null =
+      null
+
+    console.debug('[CustomChatTransport] Attestation data promise:', {
+      isNearAiProvider,
+    })
+
+    if (isNearAiProvider) {
+      console.debug(
+        '[Attestation] NEAR AI provider detected, will capture attestation data'
+      )
+      // Create a promise that captures the attestation data from the fetch wrapper
+      // The fetch wrapper captures the raw request/response bodies for proper hash verification
+      attestationDataPromise = (async () => {
+        try {
+          // Wait for the stream to complete first
+          await result.text
+
+          // Get the captured attestation data from the fetch wrapper
+          // This promise resolves when the fetch wrapper finishes reading the response
+          const capturedData = await getCapturePromise()
+
+          if (capturedData) {
+            console.debug(
+              '[Attestation] Response captured from fetch wrapper:',
+              {
+                responseId: capturedData.id,
+                requestBodyLength: capturedData.requestBody.length,
+                responseBodyLength: capturedData.responseBody.length,
+                outputLength: capturedData.output.length,
+              }
+            )
+            return capturedData
+          } else {
+            console.warn('[Attestation] No data captured from fetch wrapper')
+            return null
+          }
+        } catch (error) {
+          console.warn(
+            '[Attestation] Failed to capture attestation data:',
+            error
+          )
+          return null
+        }
+      })()
+    }
 
     return result.toUIMessageStream({
       messageMetadata: ({ part }) => {
@@ -332,7 +392,7 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
         }
         return JSON.stringify(error)
       },
-      onFinish: ({ responseMessage }) => {
+      onFinish: async ({ responseMessage }) => {
         // Call the token usage callback with usage data when stream completes
         if (responseMessage) {
           const metadata = responseMessage.metadata as
@@ -341,6 +401,33 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
           const usage = metadata?.usage as LanguageModelUsage | undefined
           if (usage) {
             this.onTokenUsage?.(usage, responseMessage.id)
+          }
+
+          // Store attestation data as pending for NEAR AI provider
+          // It will be assigned to the actual message ID by the thread component
+          if (isNearAiProvider && attestationDataPromise) {
+            try {
+              // Await the attestation data promise
+              const chatData = await attestationDataPromise
+
+              if (chatData) {
+                console.debug(
+                  '[Attestation] Storing pending chat data (API response ID:',
+                  chatData.id,
+                  ')'
+                )
+                // Store as pending - will be assigned to message ID by thread component
+                useAttestationStore.getState().setPendingChatData(chatData)
+                console.debug('[Attestation] Pending chat data stored')
+              } else {
+                console.warn('[Attestation] No chat data captured')
+              }
+            } catch (error) {
+              console.warn(
+                '[Attestation] Failed to store attestation data:',
+                error
+              )
+            }
           }
         }
       },

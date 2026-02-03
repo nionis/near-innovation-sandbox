@@ -28,6 +28,29 @@ export const predefinedProviders = [
   {
     active: true,
     api_key: '',
+    base_url: 'https://cloud-api.near.ai/v1',
+    explore_models_url: 'https://docs.near.ai/cloud',
+    provider: 'near-ai',
+    settings: [
+      {
+        key: 'api-key',
+        title: 'API Key',
+        description:
+          'Your NEAR AI API key. Visit [NEAR AI](https://app.near.ai) to get your API key.',
+        controller_type: 'input',
+        controller_props: {
+          placeholder: 'Insert API Key',
+          value: '',
+          type: 'password',
+          input_actions: ['unobscure', 'copy'],
+        },
+      },
+    ],
+    models: [],
+  },
+  {
+    active: true,
+    api_key: '',
     base_url: 'https://api.openai.com/v1',
     explore_models_url: 'https://platform.openai.com/docs/models',
     provider: 'openai',
@@ -130,13 +153,13 @@ export const predefinedProviders = [
     custom_header: [
       {
         header: 'anthropic-version',
-        value: '2023-06-01'
+        value: '2023-06-01',
       },
       {
         header: 'anthropic-dangerous-direct-browser-access',
-        value: 'true'
-      }
-    ]
+        value: 'true',
+      },
+    ],
   },
   {
     active: true,

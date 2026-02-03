@@ -33,6 +33,12 @@ export async function attestChat(
   // fetch the cryptographic signature using the provider's method
   const signatureData = await fetchSignature(id, model, nearAiApiKey);
 
+  console.debug('[attestChat] Signature data:', {
+    requestHash,
+    responseHash,
+    signatureDatatext: signatureData.text,
+  });
+
   // verify the signature text matches our computed hashes
   if (!compareHashes(signatureData.text, requestHash, responseHash)) {
     throw new Error('signature mismatch');

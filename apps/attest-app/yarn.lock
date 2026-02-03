@@ -211,6 +211,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@attest/app@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@attest/app@workspace:."
+  dependencies:
+    "@tauri-apps/cli": "npm:^2.7.0"
+    "@vitest/coverage-v8": "npm:^3.1.3"
+    attestations: "link:../../../packages/attestations"
+    cpx: "npm:^1.5.0"
+    cross-env: "npm:^7.0.3"
+    husky: "npm:^9.1.5"
+    jsdom: "npm:^26.1.0"
+    rimraf: "npm:^3.0.2"
+    run-script-os: "npm:^1.1.6"
+    tar: "npm:^4.4.19"
+    unzipper: "npm:^0.12.3"
+    vitest: "npm:^3.1.3"
+  languageName: unknown
+  linkType: soft
+
 "@aws-crypto/crc32@npm:3.0.0":
   version: 3.0.0
   resolution: "@aws-crypto/crc32@npm:3.0.0"
@@ -9572,6 +9591,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"attestations@link:../../../packages/attestations::locator=%40attest%2Fapp%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "attestations@link:../../../packages/attestations::locator=%40attest%2Fapp%40workspace%3A."
+  languageName: node
+  linkType: soft
+
 "available-typed-arrays@npm:^1.0.7":
   version: 1.0.7
   resolution: "available-typed-arrays@npm:1.0.7"
@@ -14977,24 +15002,6 @@ __metadata:
   checksum: 10c0/bb52f000340d4a32f1a3893b9abe56ef2b77c25da4dbf2c0c874a8159d082dddda50a5ad10e26060198bd645b928ba8dba3b362710f46a247e335321188c5a9c
   languageName: node
   linkType: hard
-
-"jan-app@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "jan-app@workspace:."
-  dependencies:
-    "@tauri-apps/cli": "npm:^2.7.0"
-    "@vitest/coverage-v8": "npm:^3.1.3"
-    cpx: "npm:^1.5.0"
-    cross-env: "npm:^7.0.3"
-    husky: "npm:^9.1.5"
-    jsdom: "npm:^26.1.0"
-    rimraf: "npm:^3.0.2"
-    run-script-os: "npm:^1.1.6"
-    tar: "npm:^4.4.19"
-    unzipper: "npm:^0.12.3"
-    vitest: "npm:^3.1.3"
-  languageName: unknown
-  linkType: soft
 
 "jiti@npm:^2.4.2":
   version: 2.4.2
