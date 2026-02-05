@@ -2,6 +2,7 @@
   "name": "near-innovation-sandbox",
   "private": true,
   "scripts": {
+    "clean": "find . -type d \\( -name '.turbo' -o -name 'dist' -o -name 'build' -o -name 'node_modules' \\) -exec rm -rf {} +",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",

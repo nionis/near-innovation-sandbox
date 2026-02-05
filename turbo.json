@@ -13,7 +13,8 @@
       "outputs": [
         ".next/**",
         "!.next/cache/**",
-        "dist/**"
+        "dist/**",
+        "build/**"
       ],
       "passThroughEnv": [
         "NEAR_ACCOUNT_ID",
