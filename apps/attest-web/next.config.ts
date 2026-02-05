@@ -8,6 +8,8 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  /** nextjs config */
+};
 
 export default nextConfig;

@@ -9,7 +9,7 @@ import type {
 import { getCollateralAndVerify, type TcbStatus } from '@phala/dcap-qvl';
 import { fetchAttestation } from './verify-utils.js';
 import { verifySignature } from './crypto.js';
-import { randomNonce } from '@repo/packages-utils/crypto';
+import { randomNonce, base64UrlToBase64 } from '@repo/packages-utils/crypto';
 
 /** verify model attestation */
 export async function verifyChatAttestation(
@@ -102,17 +102,28 @@ async function verifyModelAttestation(
     nrasUrl
   );
 
-  const model_tdx = await verifyTdxQuote(
-    attestation.intel_quote,
-    nonce,
-    attestation.signing_address
-  );
+  const model_tdx = model_gpu.valid
+    ? await verifyTdxQuote(
+        attestation.intel_quote,
+        nonce,
+        attestation.signing_address
+      )
+    : {
+        valid: false,
+        message:
+          'could not verify model_tdx because model_gpu verification failed',
+      };
 
   const expectedMrConfig = model_tdx.mrConfigId!;
-  const model_compose = verifyComposeManifest(
-    attestation.info,
-    expectedMrConfig
-  );
+
+  const model_compose =
+    model_gpu && model_tdx.valid
+      ? verifyComposeManifest(attestation.info, expectedMrConfig)
+      : {
+          valid: false,
+          message:
+            'could not verify model_compose because model_gpu or model_tdx verification failed',
+        };
 
   return {
     model_gpu,
@@ -163,11 +174,10 @@ async function verifyGpuAttestation(
     throw new Error('Invalid JWT format');
   }
 
-  // Convert base64url to standard base64 for browser compatibility
-  // base64url uses '-' instead of '+', '_' instead of '/', and no padding
-  const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-  const output = JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'));
+  // convert base64url to base64 for browser compatibility
+  const base64 = base64UrlToBase64(parts[1]);
+  // decode base64 to utf-8
+  const output = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
 
   const overallResult = output['x-nvidia-overall-att-result'] === true;
   const nonceMatch = output['eat_nonce'] === expectedNonce;
@@ -276,7 +286,11 @@ async function verifyGatewayAttestation(
 
   const gateway_compose = gateway_tdx.valid
     ? verifyComposeManifest(attestation.info, gateway_tdx.mrConfigId!)
-    : gateway_tdx;
+    : {
+        valid: false,
+        message:
+          'could not verify gateway_compose because gateway_tdx verification failed',
+      };
 
   return {
     gateway_tdx,

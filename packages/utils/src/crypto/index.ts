@@ -57,3 +57,16 @@ export function sha256_utf8_str(data: string): string {
 export function sha256_hex_str(data: string): string {
   return bytesToHex(sha256(hexToBytes(data)));
 }
+
+/** convert base64url to base64 for browser compatibility */
+export function base64UrlToBase64(base64url: string): string {
+  // 1. Replace URL-safe characters with standard Base64 characters
+  let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+
+  // 2. Add padding (==) if necessary based on string length
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+
+  return base64;
+}

@@ -58,6 +58,14 @@ async function requestFactory(
       );
     }
 
+    // Append any extra query parameters that were incorrectly parsed as separate params
+    // This happens when the inner URL's query string isn't properly URL-encoded
+    for (const [key, value] of request.nextUrl.searchParams.entries()) {
+      if (key !== 'url') {
+        targetUrl.searchParams.set(key, value);
+      }
+    }
+
     const fetchOptions: RequestInit = {
       method,
       headers: {
