@@ -150,10 +150,6 @@ program
       // Get captured E2EE data (encrypted request/response for attestation)
       const capturedData = await getE2EECapturePromise();
 
-      // console.log('capturedData', capturedData);
-      // console.log('requestBody', typeof result.request.body);
-      // console.log('responseBody', typeof result.response.body);
-
       console.log('Attesting AI output...');
       const receipt = await attest(
         {

@@ -231,7 +231,6 @@ export function createE2EEFetch(modelPublicKey: string): {
   context: E2EEContext;
 } {
   const passphrase = generatePassphrase(12);
-  console.log('passphrase', passphrase);
   const clientKeyPair = generateKeyPair(passphrase);
 
   const context: E2EEContext = {
