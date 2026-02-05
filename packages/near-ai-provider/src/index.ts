@@ -9,6 +9,7 @@ import { ModelPublicKeys, createE2EEFetch } from './e2ee/index.js';
 export type * from './types.js';
 
 export { getE2EECapturePromise, clearE2EECapture } from './e2ee/middleware.js';
+export { fetchAvailableModels } from './list-models.js';
 
 /** a lazy E2EE fetch wrapper that fetches the model's public key on first request */
 function createLazyE2EEFetch(): typeof fetch {

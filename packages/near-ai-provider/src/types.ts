@@ -17,3 +17,13 @@ export interface NearAIProviderSettings {
   headers?: Record<string, string>;
   e2ee?: E2EESettings;
 }
+
+export interface ListModelsResponse {
+  object: 'list';
+  data: {
+    id: string;
+    object: 'model';
+    created: number;
+    owned_by: string;
+  }[];
+}

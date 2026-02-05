@@ -6,6 +6,7 @@ import {
   createNearAI,
   getE2EECapturePromise,
   clearE2EECapture,
+  fetchAvailableModels,
 } from '@repo/packages-near-ai-provider';
 import {
   NearBlockchainNetwork,
@@ -67,10 +68,6 @@ program
   )
   .requiredOption('-p, --prompt <prompt>', 'Prompt to send to the model')
   .option(
-    '-o, --output <path>',
-    'Output file for the receipt (default: prints to stdout)'
-  )
-  .option(
     '--api-key <key>',
     'NEAR AI API key (defaults to NEAR_AI_API_KEY env var)',
     process.env.NEAR_AI_API_KEY
@@ -85,13 +82,17 @@ program
     'NEAR private key (defaults to NEAR_PRIVATE_KEY env var)',
     process.env.NEAR_PRIVATE_KEY
   )
+  .option('--disable-e2ee', 'Disable E2EE (defaults to false)')
   .option(
-    '--e2ee <boolean>',
-    'Enable E2EE (defaults to false)',
-    process.env.E2EE ?? true
+    '-o, --output <path>',
+    'Output file for the receipt (default: prints to stdout)'
   )
   .action(async (options) => {
     try {
+      // --disable-e2ee flag takes precedence, then env var, then default to false
+      const disableE2ee =
+        options.disableE2ee ?? process.env.DISABLE_E2EE === 'true';
+
       const nearAiApiKey = options.apiKey;
       if (!nearAiApiKey) {
         console.error(
@@ -116,7 +117,7 @@ program
 
       const provider = createNearAI({
         apiKey: nearAiApiKey,
-        // e2ee: { enabled: options.e2ee },
+        e2ee: { enabled: !disableE2ee },
       });
 
       const blockchain = new AttestationsBlockchain({
@@ -133,6 +134,7 @@ program
       });
 
       console.log('Generating AI output...');
+      console.log(`  E2EE: ${!disableE2ee}`);
       console.log(`  Model: ${options.model}`);
       console.log(`  Prompt: ${options.prompt}`);
 
@@ -148,9 +150,9 @@ program
       // Get captured E2EE data (encrypted request/response for attestation)
       const capturedData = await getE2EECapturePromise();
 
-      console.log('capturedData', capturedData);
-      console.log('requestBody', typeof result.request.body);
-      console.log('responseBody', typeof result.response.body);
+      // console.log('capturedData', capturedData);
+      // console.log('requestBody', typeof result.request.body);
+      // console.log('responseBody', typeof result.response.body);
 
       console.log('Attesting AI output...');
       const receipt = await attest(
@@ -242,6 +244,37 @@ program
       }
 
       process.exit(result.valid ? 0 : 1);
+    } catch (error) {
+      console.error(error);
+      console.error('Error:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// models command
+program
+  .command('list-models')
+  .description('List available models')
+  .option(
+    '--api-key <key>',
+    'NEAR AI API key (defaults to NEAR_AI_API_KEY env var)',
+    process.env.NEAR_AI_API_KEY
+  )
+  .action(async (options) => {
+    const nearAiApiKey = options.apiKey;
+    if (!nearAiApiKey) {
+      console.error(
+        'NEAR_AI_API_KEY is required. Provide via --api-key or NEAR_AI_API_KEY env var'
+      );
+      process.exit(1);
+    }
+
+    try {
+      const response = await fetchAvailableModels(nearAiApiKey);
+      for (const model of response.data) {
+        console.log(`- ${model.id} (${model.owned_by})`);
+      }
+      process.exit(0);
     } catch (error) {
       console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);
