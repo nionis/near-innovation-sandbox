@@ -1,6 +1,6 @@
 import type { Receipt, Chat } from './types.js';
 import type { ModelMessage } from 'ai';
-import { type NearAIChatModelId } from '@repo/packages-near';
+import { type NearAIChatModelId } from '@repo/packages-utils/near';
 import { sha256_utf8_str, compareHashes, computeProofHash } from './crypto.js';
 import { fetchSignature } from './verify-utils.js';
 

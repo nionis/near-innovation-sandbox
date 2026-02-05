@@ -1,4 +1,4 @@
-import type { NearBlockchainNetwork } from '@repo/packages-near';
+import type { NearBlockchainNetwork } from '@repo/packages-utils/near';
 import { NextResponse } from 'next/server';
 import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';

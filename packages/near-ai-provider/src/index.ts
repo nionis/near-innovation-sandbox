@@ -1,7 +1,10 @@
 import type { NearAIProvider, NearAIProviderSettings } from './types.js';
-import { type NearAIChatModelId, NEAR_AI_BASE_URL } from '@repo/packages-near';
+import {
+  type NearAIChatModelId,
+  NEAR_AI_BASE_URL,
+} from '@repo/packages-utils/near';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { getModelPublicKey, createE2EEFetch } from './e2ee/index.js';
+import { ModelPublicKeys, createE2EEFetch } from './e2ee/index.js';
 
 export type * from './types.js';
 
@@ -9,6 +12,8 @@ export { getE2EECapturePromise, clearE2EECapture } from './e2ee/middleware.js';
 
 /** a lazy E2EE fetch wrapper that fetches the model's public key on first request */
 function createLazyE2EEFetch(): typeof fetch {
+  const modelPublicKeys = new ModelPublicKeys();
+
   // cache for model-specific E2EE fetch instances
   const e2eeFetchCache = new Map<string, typeof fetch>();
 
@@ -23,7 +28,7 @@ function createLazyE2EEFetch(): typeof fetch {
     }
 
     // extract model from request body
-    let model: string | undefined;
+    let model: NearAIChatModelId | undefined;
     try {
       const parsed = JSON.parse(init.body);
       model = parsed.model;
@@ -39,9 +44,11 @@ function createLazyE2EEFetch(): typeof fetch {
     // create E2EE fetch if not already cached
     if (!e2eeFetch) {
       // fetch model's public key
-      const modelKeyInfo = await getModelPublicKey(model);
+      const modelKeyInfo = await modelPublicKeys.get(model);
       // create E2EE fetch for this model
-      const { fetch: wrappedFetch } = createE2EEFetch(modelKeyInfo.publicKey);
+      const { fetch: wrappedFetch } = createE2EEFetch(
+        modelKeyInfo.signingPublicKey
+      );
       e2eeFetchCache.set(model, wrappedFetch);
       e2eeFetch = wrappedFetch;
     }

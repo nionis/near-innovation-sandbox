@@ -5,3 +5,28 @@ export interface E2EESettings {
   /** Encryption algorithm (currently only 'ecdsa' is supported) */
   algorithm?: 'ecdsa';
 }
+
+/** a record of a model's public key */
+export interface ModelPublicKeyRecord {
+  signingPublicKey: string;
+  signingAddress: string;
+  updatedAt: number;
+}
+
+/** a report of a model's attestation */
+export interface AttestationReport {
+  gateway_attestation: {
+    signing_address: string;
+    signing_algo: string;
+  };
+  model_attestations: Array<{
+    signing_address: string;
+    signing_algo: string;
+    signing_public_key: string;
+  }>;
+}
+
+export interface KeyPair {
+  publicKey: Uint8Array;
+  privateKey: Uint8Array;
+}

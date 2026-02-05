@@ -1,5 +1,5 @@
 import type { OpenAICompatibleProvider } from '@ai-sdk/openai-compatible';
-import type { NearAIChatModelId } from '@repo/packages-near';
+import type { NearAIChatModelId } from '@repo/packages-utils/near';
 import type { E2EESettings } from './e2ee/types.js';
 
 /** extended near.ai provider with signature and attestation methods */

@@ -6,7 +6,7 @@ import {
   Account,
   KeyPairSigner,
 } from 'near-api-js';
-import { NEAR_BLOCKCHAIN_RPC_URLS } from '@repo/packages-near';
+import { NEAR_BLOCKCHAIN_RPC_URLS } from '@repo/packages-utils/near';
 import { AttestationsStorageContract } from './contract.js';
 
 /** blockchain wrapper for NEAR AttestationsStorage contract */

@@ -1,6 +1,9 @@
-import type { NearBlockchainNetwork } from '@repo/packages-near';
+import type { NearBlockchainNetwork } from '@repo/packages-utils/near';
 import { NextResponse } from 'next/server';
-import type { Receipt, AllVerificationResults } from '@repo/packages-attestations';
+import type {
+  Receipt,
+  AllVerificationResults,
+} from '@repo/packages-attestations';
 import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 import { verify } from '@repo/packages-attestations';
@@ -65,8 +68,7 @@ export async function POST(
     console.error('Verification failed:', error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : 'Verification failed',
+        error: error instanceof Error ? error.message : 'Verification failed',
       },
       { status: 500, headers: corsHeaders }
     );

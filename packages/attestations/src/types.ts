@@ -1,7 +1,7 @@
 import type {
   NearBlockchainNetwork,
   NearAIChatModelId,
-} from '@repo/packages-near';
+} from '@repo/packages-utils/near';
 
 /** NEAR blockchain configuration */
 export interface BlockchainConfig {

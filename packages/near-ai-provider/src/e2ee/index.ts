@@ -1,15 +1,10 @@
 /** E2EE (End-to-End Encryption) module for NEAR AI Provider */
 
-export { generateKeyPair, eciesEncrypt, eciesDecrypt } from './crypto.js';
-export type { KeyPair } from './crypto.js';
+export type { KeyPair } from './types.js';
 
-export {
-  fetchModelPublicKey,
-  getModelPublicKey,
-  clearModelKeyCache,
-  invalidateModelKey,
-} from './model-key.js';
-export type { ModelKeyInfo } from './model-key.js';
+export { generateKeyPair, eciesEncrypt, eciesDecrypt } from './crypto.js';
+
+export { ModelPublicKeys } from './model-public-keys.js';
 
 export {
   createE2EEFetch,

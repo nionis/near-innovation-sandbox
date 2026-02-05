@@ -1,49 +1,43 @@
-/**
- * ECIES (Elliptic Curve Integrated Encryption Scheme) implementation
- * using secp256k1 for key exchange and AES-256-GCM for symmetric encryption.
- *
- * This module provides end-to-end encryption for NEAR AI chat messages.
- * Compatible with browsers and Node.js.
- */
+import { secp256k1 } from '@noble/curves/secp256k1.js';
+import {
+  asciiToBytes,
+  hexToBytes,
+  randomBytes,
+  bytesToHex,
+} from '@noble/curves/utils.js';
+import { randomNumber } from '@repo/packages-utils/crypto';
+import { hkdf } from '@noble/hashes/hkdf.js';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { EEFLongWordList } from './words.js';
+import type { KeyPair } from './types.js';
+import { gcm } from '@noble/ciphers/aes.js';
 
-import { secp256k1 } from '@noble/curves/secp256k1';
-import { gcm } from '@noble/ciphers/aes';
-import { hkdf } from '@noble/hashes/hkdf';
-import { sha256 } from '@noble/hashes/sha256';
-import { randomBytes } from '@noble/ciphers/webcrypto';
+/* generate a passphrase that includes random numbers */
+export function generatePassphrase(numWords: number): string[] {
+  const words = new Array(numWords);
 
-/** Key pair for ECIES encryption */
-export interface KeyPair {
-  /** Private key as hex string (32 bytes = 64 hex chars) */
-  privateKey: string;
-  /** Public key as hex string (uncompressed, 64 bytes = 128 hex chars, no 04 prefix) */
-  publicKey: string;
+  for (let i = 0; i < numWords; i++) {
+    const wordIndex = randomNumber(0, EEFLongWordList.length - 1);
+    let word = EEFLongWordList[wordIndex];
+    word += randomNumber(0, 9).toString();
+    words.push(word);
+  }
+
+  return words;
 }
 
-/**
- * Generate a new ephemeral key pair for ECIES
- */
-export function generateKeyPair(): KeyPair {
-  const privateKeyBytes = secp256k1.utils.randomPrivateKey();
-  const publicKeyBytes = secp256k1.getPublicKey(privateKeyBytes, false); // uncompressed
-
-  return {
-    privateKey: bytesToHex(privateKeyBytes),
-    // Keep the 04 prefix for uncompressed public key (65 bytes = 130 hex)
-    publicKey: bytesToHex(publicKeyBytes),
-  };
+/** generate a key pair from a passphrase */
+export function generateKeyPair(passphrase: string[]): KeyPair {
+  const seed = asciiToBytes(passphrase.join('-'));
+  const { secretKey: privateKey, publicKey } = secp256k1.keygen(seed);
+  return { privateKey, publicKey };
 }
 
-/** HKDF info parameter required by NEAR AI */
-const HKDF_INFO = 'ecdsa_encryption';
+const HKDF_INFO = asciiToBytes('ecdsa_encryption');
 
-/**
- * Derive a shared secret using ECDH and HKDF
- */
-function deriveSharedSecret(
-  privateKey: Uint8Array,
-  publicKey: Uint8Array
-): Uint8Array {
+export function deriveSharedSecret(keyPair: KeyPair): Uint8Array {
+  const { privateKey, publicKey } = keyPair;
+
   // Perform ECDH
   const sharedPoint = secp256k1.getSharedSecret(privateKey, publicKey);
 
@@ -72,8 +66,8 @@ export function eciesEncrypt(
   recipientPublicKey: string
 ): string {
   // Generate ephemeral key pair for this encryption
-  const ephemeralPrivateKey = secp256k1.utils.randomPrivateKey();
-  const ephemeralPublicKey = secp256k1.getPublicKey(ephemeralPrivateKey, false);
+  const { secretKey: ephemeralPrivateKey, publicKey: ephemeralPublicKey } =
+    secp256k1.keygen();
 
   // Handle recipient public key - add 04 prefix if not present
   let recipientPubKeyHex = recipientPublicKey;
@@ -84,10 +78,10 @@ export function eciesEncrypt(
   const recipientPubKeyBytes = hexToBytes(recipientPubKeyHex);
 
   // Derive shared secret
-  const sharedSecret = deriveSharedSecret(
-    ephemeralPrivateKey,
-    recipientPubKeyBytes
-  );
+  const sharedSecret = deriveSharedSecret({
+    privateKey: ephemeralPrivateKey,
+    publicKey: recipientPubKeyBytes,
+  });
 
   // Generate random IV (12 bytes for AES-GCM)
   const iv = randomBytes(12);
@@ -128,31 +122,14 @@ export function eciesDecrypt(
 
   // Derive shared secret using our private key and the ephemeral public key
   const privateKeyBytes = hexToBytes(privateKey);
-  const sharedSecret = deriveSharedSecret(privateKeyBytes, ephemeralPublicKey);
+  const sharedSecret = deriveSharedSecret({
+    privateKey: privateKeyBytes,
+    publicKey: ephemeralPublicKey,
+  });
 
   // Decrypt using AES-256-GCM
   const cipher = gcm(sharedSecret, iv);
   const plaintextBytes = cipher.decrypt(ciphertext);
 
   return new TextDecoder().decode(plaintextBytes);
-}
-
-/**
- * Convert bytes to hex string
- */
-export function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-/**
- * Convert hex string to bytes
- */
-export function hexToBytes(hex: string): Uint8Array {
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-  }
-  return bytes;
 }

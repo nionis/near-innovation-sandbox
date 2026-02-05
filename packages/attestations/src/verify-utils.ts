@@ -3,7 +3,10 @@ import type {
   SignatureResponse,
   VerificationResult,
 } from './types.js';
-import { type NearAIChatModelId, NEAR_AI_BASE_URL } from '@repo/packages-near';
+import {
+  type NearAIChatModelId,
+  NEAR_AI_BASE_URL,
+} from '@repo/packages-utils/near';
 
 /** fetch signature from near.ai API */
 export async function fetchSignature(

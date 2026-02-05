@@ -7,12 +7,24 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./near": {
+      "types": "./dist/near/index.d.ts",
+      "import": "./dist/near/index.js"
+    },
+    "./crypto": {
+      "types": "./dist/crypto/index.d.ts",
+      "import": "./dist/crypto/index.js"
     }
   },
   "scripts": {
     "build": "tsc",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@noble/ciphers": "^2.1.1",
+    "@noble/hashes": "^2.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

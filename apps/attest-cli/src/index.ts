@@ -10,7 +10,7 @@ import {
 import {
   NearBlockchainNetwork,
   type NearAIChatModelId,
-} from '@repo/packages-near';
+} from '@repo/packages-utils/near';
 import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 import {

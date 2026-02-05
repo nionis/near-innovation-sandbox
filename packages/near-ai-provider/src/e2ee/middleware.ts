@@ -8,12 +8,14 @@
  * - Captures encrypted wire content for attestation
  */
 
+import type { KeyPair } from './types.js';
 import {
   generateKeyPair,
   eciesEncrypt,
   eciesDecrypt,
-  type KeyPair,
+  generatePassphrase,
 } from './crypto.js';
+import { bytesToHex } from '@noble/ciphers/utils.js';
 
 /** E2EE context for a request */
 export interface E2EEContext {
@@ -254,8 +256,9 @@ export function createE2EEFetch(modelPublicKey: string): {
   fetch: typeof fetch;
   context: E2EEContext;
 } {
-  // Generate ephemeral key pair for this session
-  const clientKeyPair = generateKeyPair();
+  const passphrase = generatePassphrase(12);
+  console.log('passphrase', passphrase);
+  const clientKeyPair = generateKeyPair(passphrase);
 
   const context: E2EEContext = {
     clientKeyPair,
@@ -289,7 +292,7 @@ export function createE2EEFetch(modelPublicKey: string): {
     // Add E2EE headers (NEAR AI expected header names)
     const headers = new Headers(init?.headers);
     headers.set('X-Signing-Algo', 'ecdsa');
-    headers.set('X-Client-Pub-Key', clientKeyPair.publicKey);
+    headers.set('X-Client-Pub-Key', bytesToHex(clientKeyPair.publicKey));
     headers.set('X-Model-Pub-Key', modelPublicKey);
 
     // Clear previous capture and set up new one
@@ -333,9 +336,13 @@ export function createE2EEFetch(modelPublicKey: string): {
               try {
                 const data = line.slice(6);
                 const parsed = JSON.parse(data);
-                const decrypted = decryptChunk(parsed, clientKeyPair.privateKey);
+                const decrypted = decryptChunk(
+                  parsed,
+                  bytesToHex(clientKeyPair.privateKey)
+                );
                 const decryptedLine = 'data: ' + JSON.stringify(decrypted);
-                decryptedOutput += extractContentFromDecryptedChunk(decryptedLine);
+                decryptedOutput +=
+                  extractContentFromDecryptedChunk(decryptedLine);
               } catch {
                 // Skip chunks that fail to parse/decrypt
               }
@@ -354,7 +361,9 @@ export function createE2EEFetch(modelPublicKey: string): {
       })();
 
       // Return response with decrypting stream
-      const decryptingStream = createDecryptingStream(clientKeyPair.privateKey);
+      const decryptingStream = createDecryptingStream(
+        bytesToHex(clientKeyPair.privateKey)
+      );
       const decryptedBody = decryptStream.pipeThrough(decryptingStream);
 
       return new Response(decryptedBody, {
@@ -371,7 +380,10 @@ export function createE2EEFetch(modelPublicKey: string): {
         try {
           const rawResponseBody = await response.text();
           const body = JSON.parse(rawResponseBody);
-          const decrypted = decryptResponseBody(body, clientKeyPair.privateKey);
+          const decrypted = decryptResponseBody(
+            body,
+            bytesToHex(clientKeyPair.privateKey)
+          );
 
           // Extract ID and output from decrypted response
           let extractedId: string | null = null;

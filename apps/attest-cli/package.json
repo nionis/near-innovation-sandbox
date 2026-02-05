@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@repo/packages-attestations": "*",
-    "@repo/packages-near": "*",
+    "@repo/packages-utils": "*",
     "@repo/packages-near-ai-provider": "*",
     "ai": "^6.0.61",
     "commander": "^12.1.0",

@@ -35,7 +35,7 @@ import {
   getE2EECapturePromise,
   clearE2EECapture,
 } from '@repo/packages-near-ai-provider'
-import type { NearAIChatModelId } from '@repo/packages-near'
+import type { NearAIChatModelId } from '@repo/packages-utils/near'
 
 // Re-export E2EE capture utilities for attestation
 export { getE2EECapturePromise, clearE2EECapture }
