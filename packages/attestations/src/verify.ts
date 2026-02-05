@@ -8,7 +8,8 @@ import type {
 } from './types.js';
 import { getCollateralAndVerify, type TcbStatus } from '@phala/dcap-qvl';
 import { fetchAttestation } from './verify-utils.js';
-import { randomNonce, verifySignature } from './crypto.js';
+import { verifySignature } from './crypto.js';
+import { randomNonce } from '@repo/packages-utils/crypto';
 
 /** verify model attestation */
 export async function verifyChatAttestation(

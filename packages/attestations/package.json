@@ -31,8 +31,6 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@noble/ciphers": "^2.1.1",
-    "@noble/hashes": "^2.0.1",
     "@phala/dcap-qvl": "^0.3.9",
     "@repo/contracts-attestations": "*",
     "@repo/packages-utils": "*",

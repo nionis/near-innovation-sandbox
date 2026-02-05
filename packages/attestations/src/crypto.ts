@@ -1,34 +1,5 @@
-import { sha256 } from '@noble/hashes/sha2.js';
-import { keccak_256 } from '@noble/hashes/sha3.js';
 import { eip191Signer } from 'micro-eth-signer';
-import {
-  randomBytes,
-  bytesToHex,
-  hexToBytes,
-  utf8ToBytes,
-} from '@noble/hashes/utils.js';
-
-/** generate a random nonce */
-export function randomNonce(): string {
-  return bytesToHex(randomBytes(32));
-}
-
-/** compute SHA256 hash of a UTF-8 string */
-export function sha256_utf8_str(data: string): string {
-  return bytesToHex(sha256(utf8ToBytes(data)));
-}
-
-/** compute SHA256 hash of a hex string */
-export function sha256_hex_str(data: string): string {
-  return bytesToHex(sha256(hexToBytes(data)));
-}
-
-/** convert a NEAR account ID to an Ethereum-like address */
-export function nearAccountIdToAddress(accountId: string): string {
-  const hash = keccak_256(hexToBytes(accountId));
-  // take last 20 bytes (40 hex chars) and return as checksummed address
-  return '0x' + bytesToHex(hash.slice(-40));
-}
+import { sha256_utf8_str } from '@repo/packages-utils/crypto';
 
 /** verify ECDSA signature matches the expected signing address */
 export function verifySignature(
