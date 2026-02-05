@@ -1,5 +1,9 @@
 import type { ListModelsResponse } from './types.js';
-import { NEAR_AI_BASE_URL } from '@repo/packages-utils/near';
+import {
+  type NearAIChatModelId,
+  NEAR_AI_BASE_URL,
+  NEAR_AI_CHAT_MODEL_IDS,
+} from '@repo/packages-utils/near';
 
 /** fetch available models from near.ai API */
 export async function fetchAvailableModels(
@@ -7,7 +11,7 @@ export async function fetchAvailableModels(
   options?: {
     nearAiBaseUrl?: string;
   }
-): Promise<ListModelsResponse> {
+): Promise<string[]> {
   const response = await fetch(
     `${options?.nearAiBaseUrl ?? NEAR_AI_BASE_URL}/models`,
     {
@@ -24,5 +28,7 @@ export async function fetchAvailableModels(
   }
 
   const data = (await response.json()) as ListModelsResponse;
-  return data;
+  return data.data
+    .map((model) => model.id)
+    .filter((id) => NEAR_AI_CHAT_MODEL_IDS.includes(id as NearAIChatModelId));
 }

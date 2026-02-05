@@ -266,9 +266,10 @@ program
     }
 
     try {
-      const response = await fetchAvailableModels(nearAiApiKey);
-      for (const model of response.data) {
-        console.log(`- ${model.id} (${model.owned_by})`);
+      const models = await fetchAvailableModels(nearAiApiKey);
+      console.log('Available NEAR AI E2EE models:');
+      for (const modelId of models) {
+        console.log(`- ${modelId}`);
       }
       process.exit(0);
     } catch (error) {
