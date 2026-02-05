@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { ReceiptVerifier } from "./components/ReceiptVerifier";
+import { ReceiptVerifier } from './components/ReceiptVerifier';
 
 export default function Home() {
   return (
@@ -12,7 +12,8 @@ export default function Home() {
             Receipt Verifier
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400">
-            Verify the authenticity of AI-generated content receipts
+            Verify on your device the authenticity of AI-generated content
+            receipts.
           </p>
         </div>
 
