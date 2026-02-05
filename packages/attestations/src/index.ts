@@ -42,9 +42,14 @@ export async function storeAttestationRecordWithAPI(
   return response.json();
 }
 
+const DEFAULT_NRAS_URL = 'https://nras.attestation.nvidia.com/v3/attest/gpu';
+
 export async function verify(
   receipt: Receipt,
-  blockchain: AttestationsBlockchain
+  blockchain: AttestationsBlockchain,
+  options?: {
+    nrasUrl?: string;
+  }
 ): Promise<AllVerificationResults> {
   const [chat, modelAndGateway, notorized] = await Promise.all([
     // verify the chat attestation
@@ -59,7 +64,11 @@ export async function verify(
             console.log(
               `Verify model and gateway attestation (attempt ${count + 1} of ${max})...`
             );
-            result = await verifyModelAndGatewayAttestation(receipt);
+            result = await verifyModelAndGatewayAttestation(
+              receipt,
+              options?.nrasUrl ?? DEFAULT_NRAS_URL
+            );
+            console.log('result', result);
             const total = aggregateVerificationResults(Object.values(result));
             if (total.valid) return result;
             throw new Error(
@@ -69,7 +78,9 @@ export async function verify(
           },
           { retries: 3, delay: 1000 }
         );
-      } catch {}
+      } catch (error) {
+        console.error('error verifying model and gateway attestation:', error);
+      }
 
       return result!;
     })(),

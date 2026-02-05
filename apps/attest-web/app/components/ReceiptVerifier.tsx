@@ -6,6 +6,13 @@ import type {
   AllVerificationResults,
   VerificationResult,
 } from '@repo/packages-attestations';
+import { verify } from '@repo/packages-attestations';
+import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
+import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
+import type { NearBlockchainNetwork } from '@repo/packages-utils/near';
+
+const NETWORK_ID: NearBlockchainNetwork = 'testnet';
+const CONTRACT_ID = SMART_CONTRACTS[NETWORK_ID].contractId;
 
 type VerifyState =
   | { status: 'idle' }
@@ -26,21 +33,16 @@ export function ReceiptVerifier({
   });
 
   const verifyReceipt = useCallback(async (receipt: Receipt) => {
-    const response = await fetch('/api/verify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(receipt),
+    const blockchain = new AttestationsBlockchain({
+      networkId: NETWORK_ID,
+      contractId: CONTRACT_ID,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Verification failed');
-    }
-
-    return data as AllVerificationResults;
+    // Use local NRAS proxy to bypass CORS
+    return verify(receipt, blockchain, {
+      // use local nras
+      nrasUrl: '/api/nras',
+    });
   }, []);
 
   const handleVerify = async () => {

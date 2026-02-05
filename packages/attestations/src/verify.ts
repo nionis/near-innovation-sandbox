@@ -49,7 +49,8 @@ export async function verifyChatAttestation(
 }
 
 export async function verifyModelAndGatewayAttestation(
-  receipt: Receipt
+  receipt: Receipt,
+  nrasUrl: string
 ): Promise<ModelAndGatewayVerificationResult> {
   const nonce = randomNonce();
   const attestation = await fetchAttestation(
@@ -73,7 +74,7 @@ export async function verifyModelAndGatewayAttestation(
   }
 
   const [modelVerifications, gatewayVerifications] = await Promise.all([
-    verifyModelAttestation(modelAttestation, nonce),
+    verifyModelAttestation(modelAttestation, nonce, nrasUrl),
     verifyGatewayAttestation(gatewayAttestation, nonce),
   ]);
 
@@ -85,7 +86,8 @@ export async function verifyModelAndGatewayAttestation(
 
 async function verifyModelAttestation(
   attestation: ModelAttestation,
-  nonce: string
+  nonce: string,
+  nrasUrl: string
 ): Promise<
   Pick<
     ModelAndGatewayVerificationResult,
@@ -94,7 +96,8 @@ async function verifyModelAttestation(
 > {
   const model_gpu = await verifyGpuAttestation(
     attestation.nvidia_payload,
-    nonce
+    nonce,
+    nrasUrl
   );
 
   const model_tdx = await verifyTdxQuote(
@@ -118,11 +121,10 @@ async function verifyModelAttestation(
 
 async function verifyGpuAttestation(
   payload: string,
-  expectedNonce: string
+  expectedNonce: string,
+  nrasUrl: string
 ): Promise<VerificationResult> {
-  const NRAS_URL = 'https://nras.attestation.nvidia.com/v3/attest/gpu';
-
-  const response = await fetch(NRAS_URL, {
+  const response = await fetch(nrasUrl, {
     method: 'POST',
     headers: {
       accept: 'application/json',
@@ -159,9 +161,11 @@ async function verifyGpuAttestation(
     throw new Error('Invalid JWT format');
   }
 
-  const output = JSON.parse(
-    Buffer.from(parts[1], 'base64url').toString('utf-8')
-  );
+  // Convert base64url to standard base64 for browser compatibility
+  // base64url uses '-' instead of '+', '_' instead of '/', and no padding
+  const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+  const output = JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'));
 
   const overallResult = output['x-nvidia-overall-att-result'] === true;
   const nonceMatch = output['eat_nonce'] === expectedNonce;
