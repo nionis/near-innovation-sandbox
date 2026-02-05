@@ -4,8 +4,8 @@ export interface E2EESettings {
   enabled: boolean;
   /** Encryption algorithm (currently only 'ecdsa' is supported) */
   algorithm?: 'ecdsa';
-  /** base URL for NVIDIA NRAS API */
-  nrasBaseURL?: string;
+  /** for attestation reports only */
+  nearAiBaseURL?: string;
 }
 
 /** a record of a model's public key */

@@ -9,13 +9,13 @@ export class ModelPublicKeys {
   private cacheTTL: number = 5 * 60 * 1000; // 5 minutes
   private cache: Map<string, Record> = new Map();
 
-  constructor(private nrasBaseURL: string) {
-    this.nrasBaseURL = nrasBaseURL;
+  constructor(private nearAiBaseURL: string) {
+    this.nearAiBaseURL = nearAiBaseURL;
   }
 
   private async fetchPublicKey(model: NearAIChatModelId): Promise<Record> {
     const nonce = randomNonce();
-    const url = new URL(`${this.nrasBaseURL}/attestation/report`);
+    const url = new URL(`${this.nearAiBaseURL}/attestation/report`);
     url.searchParams.set('model', model);
     url.searchParams.set('signing_algo', 'ecdsa');
     url.searchParams.set('nonce', nonce);

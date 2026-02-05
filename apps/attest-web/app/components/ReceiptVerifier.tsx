@@ -304,18 +304,17 @@ function VerificationRow({
 
 const EXAMPLE_RECEIPT = `{
   "version": "1.0",
-  "timestamp": 1234567890000,
-  "model": "fireworks::accounts/near-ai/models/llama-v3p3-70b-instruct",
-  "prompt": "Hello, how are you?",
-  "content": "I am doing well, thank you!",
-  "requestHash": "0x...",
-  "responseHash": "0x...",
-  "signature": "0x...",
-  "signingAddress": "0x...",
+  "timestamp": 1770301689302,
+  "model": "deepseek-ai/DeepSeek-V3.1",
+  "prompt": "Explain blockchain in one sentence",
+  "requestHash": "cef14d468d15a5e3e59ef1c31dd62f3d006af275847d49c2ef16472c8df10477",
+  "responseHash": "1e4cafe672f453d8cc5eced54a3a35141efab1460b926ff2666514edd273ad51",
+  "signature": "0xb50e415a16701a3a3122c5bf111168e1f6e911d5cc3955f5dad2752248214b303ed8636e6ee99ed05c1973cdda9b5f5eaf67dce4380dcaf514821b6cfa5a5b891c",
+  "signingAddress": "0x34B7BcB4b2b61FCF9fA14715ba8708AC0dBC8Be5",
   "signingAlgo": "ecdsa",
-  "output": "I am doing well, thank you!",
-  "proofHash": "0x...",
-  "txHash": "..."
+  "output": "A blockchain is a distributed and immutable digital ledger that securely records transactions in a way that is transparent, verifiable, and resistant to modification.",
+  "proofHash": "c780c9346fa70305178d5cce8f220b648cacb5b7ec320581f65fa29e97aa2a27",
+  "txHash": "996cEWDMmv1M2sq4XWDgwMvjMHq1TmrDZ5dMic1jAdkx"
 }`;
 
 function LoadingSpinner() {
