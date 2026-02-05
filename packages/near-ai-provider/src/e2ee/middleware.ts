@@ -8,38 +8,13 @@
  * - Captures encrypted wire content for attestation
  */
 
-import type { KeyPair } from './types.js';
-import {
-  generateKeyPair,
-  eciesEncrypt,
-  eciesDecrypt,
-  generatePassphrase,
-} from './crypto.js';
+import type { E2EEContext, E2EECapturedData } from './types.js';
+import { generatePassphrase } from '../passphrase.js';
+import { generateKeyPair, eciesEncrypt, eciesDecrypt } from './crypto.js';
 import { bytesToHex } from '@noble/ciphers/utils.js';
-
-/** E2EE context for a request */
-export interface E2EEContext {
-  /** Client's ephemeral key pair for this request */
-  clientKeyPair: KeyPair;
-  /** Model's public key (hex, 64 bytes) */
-  modelPublicKey: string;
-}
-
-/** Captured E2EE request/response for attestation */
-export interface E2EECapturedData {
-  /** The encrypted request body string sent to the server */
-  requestBody: string;
-  /** The raw encrypted response body string received from the server */
-  responseBody: string;
-  /** Chat completion ID extracted from response */
-  id: string | null;
-  /** Decrypted output text */
-  output: string;
-}
 
 /** Promise that resolves when capture is complete */
 let capturePromise: Promise<E2EECapturedData | null> | null = null;
-let captureResolve: ((data: E2EECapturedData | null) => void) | null = null;
 
 /**
  * Get the promise for captured E2EE data
@@ -57,7 +32,6 @@ export function getE2EECapturePromise(): Promise<E2EECapturedData | null> {
  */
 export function clearE2EECapture(): void {
   capturePromise = null;
-  captureResolve = null;
 }
 
 /** Chat message structure */
@@ -350,6 +324,7 @@ export function createE2EEFetch(modelPublicKey: string): {
           }
 
           return {
+            passphrase,
             requestBody: encryptedBodyString,
             responseBody: rawResponseBody,
             id: extractedId,
@@ -404,6 +379,7 @@ export function createE2EEFetch(modelPublicKey: string): {
 
           // Set up capture with resolved data
           capturePromise = Promise.resolve({
+            passphrase,
             requestBody: encryptedBodyString,
             responseBody: rawResponseBody,
             id: extractedId,

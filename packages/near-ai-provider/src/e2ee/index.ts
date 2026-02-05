@@ -1,6 +1,6 @@
 /** E2EE (End-to-End Encryption) module for NEAR AI Provider */
 
-export type { KeyPair } from './types.js';
+export type { KeyPair, E2EEContext, E2EECapturedData } from './types.js';
 
 export { generateKeyPair, eciesEncrypt, eciesDecrypt } from './crypto.js';
 
@@ -11,4 +11,3 @@ export {
   getE2EECapturePromise,
   clearE2EECapture,
 } from './middleware.js';
-export type { E2EEContext, E2EECapturedData } from './middleware.js';

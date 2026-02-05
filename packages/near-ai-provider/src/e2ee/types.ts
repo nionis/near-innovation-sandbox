@@ -26,7 +26,30 @@ export interface AttestationReport {
   }>;
 }
 
+/** a key pair */
 export interface KeyPair {
   publicKey: Uint8Array;
   privateKey: Uint8Array;
+}
+
+/** E2EE context for a request */
+export interface E2EEContext {
+  /** Client's ephemeral key pair for this request */
+  clientKeyPair: KeyPair;
+  /** Model's public key (hex, 64 bytes) */
+  modelPublicKey: string;
+}
+
+/** Captured E2EE request/response for attestation */
+export interface E2EECapturedData {
+  /** ephemeral passphrase for this request */
+  passphrase: string[];
+  /** The encrypted request body string sent to the server */
+  requestBody: string;
+  /** The raw encrypted response body string received from the server */
+  responseBody: string;
+  /** Chat completion ID extracted from response */
+  id: string | null;
+  /** Decrypted output text */
+  output: string;
 }

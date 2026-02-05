@@ -1,40 +1,35 @@
+import type { KeyPair } from './types.js';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { hkdf } from '@noble/hashes/hkdf.js';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { gcm } from '@noble/ciphers/aes.js';
 import {
   asciiToBytes,
   hexToBytes,
   randomBytes,
   bytesToHex,
 } from '@noble/curves/utils.js';
-import { randomNumber } from '@repo/packages-utils/crypto';
-import { hkdf } from '@noble/hashes/hkdf.js';
-import { sha256 } from '@noble/hashes/sha2.js';
-import { EEFLongWordList } from './words.js';
-import type { KeyPair } from './types.js';
-import { gcm } from '@noble/ciphers/aes.js';
 
-/* generate a passphrase that includes random numbers */
-export function generatePassphrase(numWords: number): string[] {
-  const words = new Array(numWords);
-
-  for (let i = 0; i < numWords; i++) {
-    const wordIndex = randomNumber(0, EEFLongWordList.length - 1);
-    let word = EEFLongWordList[wordIndex];
-    word += randomNumber(0, 9).toString();
-    words.push(word);
-  }
-
-  return words;
-}
+const HKDF_INFO_E2EE_KEYPAIR = asciiToBytes('e2ee_keypair');
 
 /** generate a key pair from a passphrase */
 export function generateKeyPair(passphrase: string[]): KeyPair {
-  const seed = asciiToBytes(passphrase.join('-'));
-  const { secretKey: privateKey, publicKey } = secp256k1.keygen(seed);
+  const passphraseBytes = asciiToBytes(passphrase.join('-'));
+  const privateKey = hkdf(
+    sha256,
+    passphraseBytes,
+    undefined,
+    HKDF_INFO_E2EE_KEYPAIR,
+    32
+  );
+  const publicKey = secp256k1.getPublicKey(privateKey, false);
+
   return { privateKey, publicKey };
 }
 
-const HKDF_INFO = asciiToBytes('ecdsa_encryption');
+const HKDF_INFO_NEAR_AI = asciiToBytes('ecdsa_encryption');
 
+/** derive a shared secret from a key pair */
 export function deriveSharedSecret(keyPair: KeyPair): Uint8Array {
   const { privateKey, publicKey } = keyPair;
 
@@ -47,20 +42,14 @@ export function deriveSharedSecret(keyPair: KeyPair): Uint8Array {
     sha256,
     sharedPoint.slice(1),
     undefined,
-    HKDF_INFO,
+    HKDF_INFO_NEAR_AI,
     32
   );
 
   return derivedKey;
 }
 
-/**
- * Encrypt plaintext using ECIES
- *
- * @param plaintext - The plaintext string to encrypt
- * @param recipientPublicKey - Recipient's public key (hex, 64 bytes without 04 prefix OR 65 bytes with prefix)
- * @returns Hex-encoded ciphertext
- */
+/** encrypt a plaintext string using ECIES */
 export function eciesEncrypt(
   plaintext: string,
   recipientPublicKey: string
@@ -102,13 +91,7 @@ export function eciesEncrypt(
   return bytesToHex(packed);
 }
 
-/**
- * Decrypt ECIES ciphertext
- *
- * @param ciphertextHex - Hex-encoded ciphertext from eciesEncrypt
- * @param privateKey - Recipient's private key (hex, 32 bytes = 64 hex chars)
- * @returns Decrypted plaintext string
- */
+/** decrypt a ciphertext string using ECIES */
 export function eciesDecrypt(
   ciphertextHex: string,
   privateKey: string

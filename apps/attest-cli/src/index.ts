@@ -85,6 +85,11 @@ program
     'NEAR private key (defaults to NEAR_PRIVATE_KEY env var)',
     process.env.NEAR_PRIVATE_KEY
   )
+  .option(
+    '--e2ee <boolean>',
+    'Enable E2EE (defaults to false)',
+    process.env.E2EE ?? true
+  )
   .action(async (options) => {
     try {
       const nearAiApiKey = options.apiKey;
@@ -111,7 +116,7 @@ program
 
       const provider = createNearAI({
         apiKey: nearAiApiKey,
-        e2ee: { enabled: true },
+        // e2ee: { enabled: options.e2ee },
       });
 
       const blockchain = new AttestationsBlockchain({
@@ -142,6 +147,10 @@ program
 
       // Get captured E2EE data (encrypted request/response for attestation)
       const capturedData = await getE2EECapturePromise();
+
+      console.log('capturedData', capturedData);
+      console.log('requestBody', typeof result.request.body);
+      console.log('responseBody', typeof result.response.body);
 
       console.log('Attesting AI output...');
       const receipt = await attest(

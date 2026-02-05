@@ -33,6 +33,14 @@ export async function attestChat(
   // fetch the cryptographic signature using the provider's method
   const signatureData = await fetchSignature(id, model, nearAiApiKey);
 
+  // console.log({
+  //   requestBody: requestBody.slice(0, 10),
+  //   responseBody: responseBody.slice(0, 10),
+  //   requestHash,
+  //   responseHash,
+  //   signatureData,
+  // });
+
   // verify the signature text matches our computed hashes
   if (!compareHashes(signatureData.text, requestHash, responseHash)) {
     throw new Error('signature mismatch');
@@ -47,8 +55,8 @@ export async function attestChat(
     content: undefined,
     requestHash: requestHash,
     responseHash: responseHash,
-    signature: signatureData.signature.slice(2),
-    signingAddress: signatureData.signing_address.slice(2),
+    signature: signatureData.signature,
+    signingAddress: signatureData.signing_address,
     signingAlgo: signatureData.signing_algo,
     output: output,
     proofHash: computeProofHash(

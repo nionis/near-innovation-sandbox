@@ -6,7 +6,7 @@ import {
   bytesToHex,
   hexToBytes,
   utf8ToBytes,
-} from '@noble/ciphers/utils.js';
+} from '@noble/hashes/utils.js';
 
 /** generate a random nonce */
 export function randomNonce(): string {
@@ -63,7 +63,5 @@ export function computeProofHash(
   responseHash: string,
   signature: string
 ): string {
-  return bytesToHex(
-    sha256(hexToBytes(`${requestHash}:${responseHash}:${signature}`))
-  );
+  return sha256_utf8_str(`${requestHash}:${responseHash}:${signature}`);
 }

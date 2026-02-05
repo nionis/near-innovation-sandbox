@@ -1,17 +1,19 @@
-import type { NearAIChatModelId } from '@repo/packages-utils/near';
 import type {
   ModelPublicKeyRecord as Record,
   AttestationReport,
 } from './types.js';
-import { NEAR_AI_BASE_URL } from '@repo/packages-utils/near';
-import { generateNonce } from './utils.js';
+import {
+  type NearAIChatModelId,
+  NEAR_AI_BASE_URL,
+} from '@repo/packages-utils/near';
+import { randomNonce } from '@repo/packages-utils/crypto';
 
 export class ModelPublicKeys {
   private cacheTTL: number = 5 * 60 * 1000; // 5 minutes
   private cache: Map<string, Record> = new Map();
 
   private async fetchPublicKey(model: NearAIChatModelId): Promise<Record> {
-    const nonce = generateNonce();
+    const nonce = randomNonce();
     const url = new URL(`${NEAR_AI_BASE_URL}/attestation/report`);
     url.searchParams.set('model', model);
     url.searchParams.set('signing_algo', 'ecdsa');

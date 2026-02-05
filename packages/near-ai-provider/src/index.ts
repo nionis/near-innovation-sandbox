@@ -12,10 +12,10 @@ export { getE2EECapturePromise, clearE2EECapture } from './e2ee/middleware.js';
 
 /** a lazy E2EE fetch wrapper that fetches the model's public key on first request */
 function createLazyE2EEFetch(): typeof fetch {
+  // create model public keys cache
   const modelPublicKeys = new ModelPublicKeys();
-
   // cache for model-specific E2EE fetch instances
-  const e2eeFetchCache = new Map<string, typeof fetch>();
+  const e2eeFetchCache = new Map<NearAIChatModelId, typeof fetch>();
 
   return async (input, init) => {
     const url = typeof input === 'string' ? input : input.toString();

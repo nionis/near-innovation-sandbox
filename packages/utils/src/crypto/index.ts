@@ -4,17 +4,18 @@ import {
   bytesToHex,
   hexToBytes,
   utf8ToBytes,
-} from '@noble/ciphers/utils.js';
+} from '@noble/hashes/utils.js';
 
 /** generate a random nonce */
 export function randomNonce(): string {
   return bytesToHex(randomBytes(32));
 }
 
-/** generate a random number between min and max */
+// EFForg/OpenWireless
+// ref https://github.com/EFForg/OpenWireless/blob/master/app/js/diceware.js
+// ref https://github.com/bitwarden/jslib/blob/6008a03395989060e984f6bc331642367ac1ab79/common/src/services/crypto.service.ts#L677
+/** generate a random number between min and max (copied from bitwarden) */
 export function randomNumber(min: number, max: number): number {
-  // EFForg/OpenWireless
-  // ref https://github.com/EFForg/OpenWireless/blob/master/app/js/diceware.js
   let rval = 0;
   const range = max - min + 1;
   const bitsNeeded = Math.ceil(Math.log2(range));
