@@ -1,15 +1,25 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { keccak_256 } from '@noble/hashes/sha3.js';
-import { secp256k1 } from '@noble/curves/secp256k1.js';
-import { randomBytes, bytesToHex, hexToBytes } from '@noble/ciphers/utils.js';
+import { eip191Signer } from 'micro-eth-signer';
+import {
+  randomBytes,
+  bytesToHex,
+  hexToBytes,
+  utf8ToBytes,
+} from '@noble/ciphers/utils.js';
 
 /** generate a random nonce */
 export function randomNonce(): string {
   return bytesToHex(randomBytes(32));
 }
 
-/** compute SHA256 hash of a string */
-export function sha256_str(data: string): string {
+/** compute SHA256 hash of a UTF-8 string */
+export function sha256_utf8_str(data: string): string {
+  return bytesToHex(sha256(utf8ToBytes(data)));
+}
+
+/** compute SHA256 hash of a hex string */
+export function sha256_hex_str(data: string): string {
   return bytesToHex(sha256(hexToBytes(data)));
 }
 
@@ -27,13 +37,12 @@ export function verifySignature(
   expectedAddress: string
 ): { valid: boolean; recoveredAddress: string } {
   try {
-    const recoveredAddress = bytesToHex(
-      secp256k1.recoverPublicKey(hexToBytes(signature), hexToBytes(message))
-    );
+    const recoveredAddress = eip191Signer.recoverPublicKey(signature, message);
     const valid =
       recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
     return { valid, recoveredAddress };
   } catch (error) {
+    console.error('error verifying signature', error);
     return { valid: false, recoveredAddress: '' };
   }
 }

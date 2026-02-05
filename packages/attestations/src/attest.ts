@@ -1,7 +1,7 @@
 import type { Receipt, Chat } from './types.js';
 import type { ModelMessage } from 'ai';
 import { type NearAIChatModelId } from '@repo/packages-near';
-import { sha256_str, compareHashes, computeProofHash } from './crypto.js';
+import { sha256_utf8_str, compareHashes, computeProofHash } from './crypto.js';
 import { fetchSignature } from './verify-utils.js';
 
 /** attest model output */
@@ -27,8 +27,8 @@ export async function attestChat(
   }
 
   // compute hashes for the request and response
-  const requestHash = sha256_str(requestBody);
-  const responseHash = sha256_str(responseBody);
+  const requestHash = sha256_utf8_str(requestBody);
+  const responseHash = sha256_utf8_str(responseBody);
 
   // fetch the cryptographic signature using the provider's method
   const signatureData = await fetchSignature(id, model, nearAiApiKey);
@@ -47,8 +47,8 @@ export async function attestChat(
     content: undefined,
     requestHash: requestHash,
     responseHash: responseHash,
-    signature: signatureData.signature,
-    signingAddress: signatureData.signing_address,
+    signature: signatureData.signature.slice(2),
+    signingAddress: signatureData.signing_address.slice(2),
     signingAlgo: signatureData.signing_algo,
     output: output,
     proofHash: computeProofHash(
