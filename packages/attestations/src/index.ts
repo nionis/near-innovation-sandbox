@@ -1,5 +1,6 @@
 import type { Chat, Receipt, AllVerificationResults } from './types.js';
 import { retry } from '@repo/packages-utils';
+import { NEAR_AI_BASE_URL, NRAS_BASE_URL } from '@repo/packages-utils/near';
 import { attestChat } from './attest.js';
 import {
   verifyChatAttestation,
@@ -12,9 +13,16 @@ export type * from './types.js';
 
 export async function attest(
   chat: Chat,
-  nearAiApiKey: string
+  nearAiApiKey: string,
+  options?: {
+    nearAiBaseURL?: string;
+  }
 ): Promise<Receipt> {
-  const receipt = await attestChat(chat, nearAiApiKey);
+  const receipt = await attestChat(
+    chat,
+    nearAiApiKey,
+    options?.nearAiBaseURL ?? NEAR_AI_BASE_URL
+  );
   return receipt;
 }
 
@@ -42,12 +50,11 @@ export async function storeAttestationRecordWithAPI(
   return response.json();
 }
 
-const DEFAULT_NRAS_URL = 'https://nras.attestation.nvidia.com/v3/attest/gpu';
-
 export async function verify(
   receipt: Receipt,
   blockchain: AttestationsBlockchain,
   options?: {
+    nearAiBaseURL?: string;
     nrasUrl?: string;
   }
 ): Promise<AllVerificationResults> {
@@ -66,9 +73,9 @@ export async function verify(
             );
             result = await verifyModelAndGatewayAttestation(
               receipt,
-              options?.nrasUrl ?? DEFAULT_NRAS_URL
+              options?.nearAiBaseURL ?? NEAR_AI_BASE_URL,
+              options?.nrasUrl ?? NRAS_BASE_URL
             );
-            console.log('result', result);
             const total = aggregateVerificationResults(Object.values(result));
             if (total.valid) return result;
             throw new Error(

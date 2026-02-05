@@ -50,10 +50,12 @@ export async function verifyChatAttestation(
 
 export async function verifyModelAndGatewayAttestation(
   receipt: Receipt,
+  nearAiBaseURL: string,
   nrasUrl: string
 ): Promise<ModelAndGatewayVerificationResult> {
   const nonce = randomNonce();
   const attestation = await fetchAttestation(
+    nearAiBaseURL,
     receipt.model,
     nonce,
     receipt.signingAddress
@@ -124,7 +126,7 @@ async function verifyGpuAttestation(
   expectedNonce: string,
   nrasUrl: string
 ): Promise<VerificationResult> {
-  const response = await fetch(nrasUrl, {
+  const response = await fetch(`${nrasUrl}/attest/gpu`, {
     method: 'POST',
     headers: {
       accept: 'application/json',

@@ -9,7 +9,11 @@ import type {
 import { verify } from '@repo/packages-attestations';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
-import type { NearBlockchainNetwork } from '@repo/packages-utils/near';
+import {
+  type NearBlockchainNetwork,
+  NEAR_AI_BASE_URL,
+  NRAS_BASE_URL,
+} from '@repo/packages-utils/near';
 
 const NETWORK_ID: NearBlockchainNetwork = 'testnet';
 const CONTRACT_ID = SMART_CONTRACTS[NETWORK_ID].contractId;
@@ -38,10 +42,11 @@ export function ReceiptVerifier({
       contractId: CONTRACT_ID,
     });
 
-    // Use local NRAS proxy to bypass CORS
     return verify(receipt, blockchain, {
+      // use local near.ai
+      nearAiBaseURL: '/api/verify?url=' + NEAR_AI_BASE_URL,
       // use local nras
-      nrasUrl: '/api/nras',
+      nrasUrl: '/api/verify?url=' + NRAS_BASE_URL,
     });
   }, []);
 

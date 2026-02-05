@@ -3,13 +3,19 @@ import { NEAR_AI_BASE_URL } from '@repo/packages-utils/near';
 
 /** fetch available models from near.ai API */
 export async function fetchAvailableModels(
-  apiKey: string
+  apiKey: string,
+  options?: {
+    nearAiBaseUrl?: string;
+  }
 ): Promise<ListModelsResponse> {
-  const response = await fetch(`${NEAR_AI_BASE_URL}/models`, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-  });
+  const response = await fetch(
+    `${options?.nearAiBaseUrl ?? NEAR_AI_BASE_URL}/models`,
+    {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error(

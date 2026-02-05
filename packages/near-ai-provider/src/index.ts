@@ -2,6 +2,7 @@ import type { NearAIProvider, NearAIProviderSettings } from './types.js';
 import {
   type NearAIChatModelId,
   NEAR_AI_BASE_URL,
+  NRAS_BASE_URL,
 } from '@repo/packages-utils/near';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { ModelPublicKeys, createE2EEFetch } from './e2ee/index.js';
@@ -12,9 +13,9 @@ export { getE2EECapturePromise, clearE2EECapture } from './e2ee/middleware.js';
 export { fetchAvailableModels } from './list-models.js';
 
 /** a lazy E2EE fetch wrapper that fetches the model's public key on first request */
-function createLazyE2EEFetch(): typeof fetch {
+function createLazyE2EEFetch(nrasBaseURL: string): typeof fetch {
   // create model public keys cache
-  const modelPublicKeys = new ModelPublicKeys();
+  const modelPublicKeys = new ModelPublicKeys(nrasBaseURL);
   // cache for model-specific E2EE fetch instances
   const e2eeFetchCache = new Map<NearAIChatModelId, typeof fetch>();
 
@@ -62,9 +63,12 @@ function createLazyE2EEFetch(): typeof fetch {
 export function createNearAI(options: NearAIProviderSettings): NearAIProvider {
   const baseURL = options.baseURL ?? NEAR_AI_BASE_URL;
   const apiKey = options.apiKey;
+  const nrasBaseURL = options.e2ee?.nrasBaseURL ?? NRAS_BASE_URL;
 
   // create custom fetch if E2EE is enabled
-  const customFetch = options.e2ee?.enabled ? createLazyE2EEFetch() : undefined;
+  const customFetch = options.e2ee?.enabled
+    ? createLazyE2EEFetch(nrasBaseURL)
+    : undefined;
 
   return createOpenAICompatible<
     NearAIChatModelId,

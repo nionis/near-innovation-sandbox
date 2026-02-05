@@ -8,7 +8,8 @@ import { fetchSignature } from './verify-utils.js';
 /** attest model output */
 export async function attestChat(
   chat: Chat,
-  nearAiApiKey: string
+  nearAiApiKey: string,
+  nearAiBaseURL: string
 ): Promise<Receipt> {
   const { id, requestBody, responseBody, output } = chat;
 
@@ -32,7 +33,12 @@ export async function attestChat(
   const responseHash = sha256_utf8_str(responseBody);
 
   // fetch the cryptographic signature using the provider's method
-  const signatureData = await fetchSignature(id, model, nearAiApiKey);
+  const signatureData = await fetchSignature(
+    nearAiBaseURL,
+    nearAiApiKey,
+    model,
+    id
+  );
 
   // verify the signature text matches our computed hashes
   if (!compareHashes(signatureData.text, requestHash, responseHash)) {

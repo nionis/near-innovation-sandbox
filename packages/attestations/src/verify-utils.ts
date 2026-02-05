@@ -1,25 +1,23 @@
+import type { NearAIChatModelId } from '@repo/packages-utils/near';
 import type {
   Attestation,
   SignatureResponse,
   VerificationResult,
 } from './types.js';
-import {
-  type NearAIChatModelId,
-  NEAR_AI_BASE_URL,
-} from '@repo/packages-utils/near';
 
 /** fetch signature from near.ai API */
 export async function fetchSignature(
-  chatId: string,
+  nearAiBaseURL: string,
+  nearAiApiKey: string,
   model: NearAIChatModelId,
-  apiKey: string
+  chatId: string
 ): Promise<SignatureResponse> {
-  const url = `${NEAR_AI_BASE_URL}/signature/${chatId}?model=${encodeURIComponent(model)}&signing_algo=ecdsa`;
+  const url = `${nearAiBaseURL}/signature/${chatId}?model=${encodeURIComponent(model)}&signing_algo=ecdsa`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${nearAiApiKey}`,
     },
   });
 
@@ -35,11 +33,12 @@ export async function fetchSignature(
 
 /** fetch model and gateway attestation from NEAR AI Cloud */
 export async function fetchAttestation(
+  nearAiBaseURL: string,
   model: NearAIChatModelId,
   requestNonce: string,
   signingAddress: string
 ): Promise<Attestation> {
-  const url = `${NEAR_AI_BASE_URL}/attestation/report?model=${encodeURIComponent(model)}&signing_algo=ecdsa&nonce=${requestNonce}&signing_address=${encodeURIComponent(signingAddress)}`;
+  const url = `${nearAiBaseURL}/attestation/report?model=${encodeURIComponent(model)}&signing_algo=ecdsa&nonce=${requestNonce}&signing_address=${encodeURIComponent(signingAddress)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {
