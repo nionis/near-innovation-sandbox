@@ -20,16 +20,6 @@ export interface KeyPair {
   publicKey: string;
 }
 
-/** ECIES ciphertext structure */
-interface ECIESCiphertext {
-  /** Ephemeral public key (for encryption) or recipient public key hint */
-  ephemeralPublicKey: Uint8Array;
-  /** Initialization vector for AES-GCM */
-  iv: Uint8Array;
-  /** Encrypted data with authentication tag */
-  ciphertext: Uint8Array;
-}
-
 /**
  * Generate a new ephemeral key pair for ECIES
  */
@@ -59,7 +49,13 @@ function deriveSharedSecret(
 
   // Use HKDF to derive a 32-byte key from the shared secret
   // Using SHA-256 as the hash function with 'ecdsa_encryption' info (required by NEAR AI)
-  const derivedKey = hkdf(sha256, sharedPoint.slice(1), undefined, HKDF_INFO, 32);
+  const derivedKey = hkdf(
+    sha256,
+    sharedPoint.slice(1),
+    undefined,
+    HKDF_INFO,
+    32
+  );
 
   return derivedKey;
 }
@@ -88,7 +84,10 @@ export function eciesEncrypt(
   const recipientPubKeyBytes = hexToBytes(recipientPubKeyHex);
 
   // Derive shared secret
-  const sharedSecret = deriveSharedSecret(ephemeralPrivateKey, recipientPubKeyBytes);
+  const sharedSecret = deriveSharedSecret(
+    ephemeralPrivateKey,
+    recipientPubKeyBytes
+  );
 
   // Generate random IV (12 bytes for AES-GCM)
   const iv = randomBytes(12);
@@ -116,7 +115,10 @@ export function eciesEncrypt(
  * @param privateKey - Recipient's private key (hex, 32 bytes = 64 hex chars)
  * @returns Decrypted plaintext string
  */
-export function eciesDecrypt(ciphertextHex: string, privateKey: string): string {
+export function eciesDecrypt(
+  ciphertextHex: string,
+  privateKey: string
+): string {
   const packed = hexToBytes(ciphertextHex);
 
   // Unpack: ephemeralPublicKey (65 bytes with 04 prefix) || iv (12 bytes) || ciphertext (variable)

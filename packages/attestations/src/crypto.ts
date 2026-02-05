@@ -1,20 +1,23 @@
-import { ethers } from 'ethers';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { keccak_256 } from '@noble/hashes/sha3.js';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { randomBytes, bytesToHex, hexToBytes } from '@noble/ciphers/utils.js';
 
-/** generate a random nonce (browser-compatible via ethers) */
+/** generate a random nonce */
 export function randomNonce(): string {
-  return ethers.hexlify(ethers.randomBytes(32)).slice(2);
+  return bytesToHex(randomBytes(32));
 }
 
-/** compute SHA256 hash of a string (browser-compatible via ethers) */
-export function sha256(data: string): string {
-  return ethers.sha256(ethers.toUtf8Bytes(data)).slice(2);
+/** compute SHA256 hash of a string */
+export function sha256_str(data: string): string {
+  return bytesToHex(sha256(hexToBytes(data)));
 }
 
 /** convert a NEAR account ID to an Ethereum-like address */
 export function nearAccountIdToAddress(accountId: string): string {
-  const hash = ethers.keccak256(ethers.toUtf8Bytes(accountId));
+  const hash = keccak_256(hexToBytes(accountId));
   // take last 20 bytes (40 hex chars) and return as checksummed address
-  return ethers.getAddress('0x' + hash.slice(-40));
+  return '0x' + bytesToHex(hash.slice(-40));
 }
 
 /** verify ECDSA signature matches the expected signing address */
@@ -24,7 +27,9 @@ export function verifySignature(
   expectedAddress: string
 ): { valid: boolean; recoveredAddress: string } {
   try {
-    const recoveredAddress = ethers.verifyMessage(message, signature);
+    const recoveredAddress = bytesToHex(
+      secp256k1.recoverPublicKey(hexToBytes(signature), hexToBytes(message))
+    );
     const valid =
       recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
     return { valid, recoveredAddress };
@@ -49,5 +54,7 @@ export function computeProofHash(
   responseHash: string,
   signature: string
 ): string {
-  return sha256(`${requestHash}:${responseHash}:${signature}`);
+  return bytesToHex(
+    sha256(hexToBytes(`${requestHash}:${responseHash}:${signature}`))
+  );
 }

@@ -5,6 +5,8 @@ import { getModelPublicKey, createE2EEFetch } from './e2ee/index.js';
 
 export type * from './types.js';
 
+export { getE2EECapturePromise, clearE2EECapture } from './e2ee/middleware.js';
+
 /** a lazy E2EE fetch wrapper that fetches the model's public key on first request */
 function createLazyE2EEFetch(): typeof fetch {
   // cache for model-specific E2EE fetch instances
@@ -33,9 +35,12 @@ function createLazyE2EEFetch(): typeof fetch {
 
     // get or create E2EE fetch for this model
     let e2eeFetch = e2eeFetchCache.get(model);
+
+    // create E2EE fetch if not already cached
     if (!e2eeFetch) {
-      // Fetch model's public key
+      // fetch model's public key
       const modelKeyInfo = await getModelPublicKey(model);
+      // create E2EE fetch for this model
       const { fetch: wrappedFetch } = createE2EEFetch(modelKeyInfo.publicKey);
       e2eeFetchCache.set(model, wrappedFetch);
       e2eeFetch = wrappedFetch;
