@@ -20,7 +20,7 @@ import {
   storeAttestationRecordWithBlockchain,
   verify,
 } from '@repo/packages-attestations';
-import { generateText } from 'ai';
+import { streamText } from 'ai';
 import { Command } from 'commander';
 import dotenv from 'dotenv';
 import fs from 'fs';
@@ -137,50 +137,47 @@ program
       console.log(`  Model: ${options.model}`);
       console.log(`  Prompt: ${options.prompt}`);
 
-      // // Clear any previous E2EE capture
-      // clearE2EECapture();
-
       const model = provider(options.model as NearAIChatModelId);
-      const result = await generateText({
+      const stream = streamText({
         model,
         messages,
       });
 
-      // Get captured E2EE data (encrypted request/response for attestation)
-      const captured = await capturedResponsePromise;
-
-      if (!captured || !captured.requestBody || !captured.responseBody) {
-        console.error('No captured data found');
-        process.exit(1);
+      let output = '';
+      for await (const chunk of stream.textStream) {
+        output += chunk;
       }
 
-      console.log('capturedData', captured);
+      const id = (await stream.response).id;
+      const captured = await capturedResponsePromise;
+      if (!captured) throw new Error('No captured response');
+      console.log('capturedData', id, captured);
 
-      // console.log('Attesting AI output...');
-      // const receipt = await attest(
-      //   {
-      //     id: result.response.id,
-      //     requestBody: capturedData.rawRequestBody,
-      //     responseBody: capturedData.rawResponseBody,
-      //     output: result.text,
-      //   },
-      //   nearAiApiKey
-      // );
+      console.log('Attesting AI output...');
+      const receipt = await attest(
+        {
+          id: id,
+          requestBody: captured.requestBody,
+          responseBody: captured.responseBody,
+          output: output,
+        },
+        nearAiApiKey
+      );
 
-      // console.log('Storing attestation record on blockchain...');
-      // const { txHash } = await storeAttestationRecordWithBlockchain(
-      //   blockchain,
-      //   { proofHash: receipt.proofHash, timestamp: receipt.timestamp }
-      // );
-      // receipt.txHash = txHash;
+      console.log('Storing attestation record on blockchain...');
+      const { txHash } = await storeAttestationRecordWithBlockchain(
+        blockchain,
+        { proofHash: receipt.proofHash, timestamp: receipt.timestamp }
+      );
+      receipt.txHash = txHash;
 
-      // if (options.output) {
-      //   console.log(`Writing receipt to ${options.output}`);
-      //   fs.writeFileSync(options.output, JSON.stringify(receipt, null, 2));
-      // }
-      // console.log('Receipt');
-      // console.log(`  Signature: ${receipt.signature}`);
-      // console.log(receipt.output);
+      if (options.output) {
+        console.log(`Writing receipt to ${options.output}`);
+        fs.writeFileSync(options.output, JSON.stringify(receipt, null, 2));
+      }
+      console.log('Receipt');
+      console.log(`  Signature: ${receipt.signature}`);
+      console.log(receipt.output);
     } catch (error) {
       console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);

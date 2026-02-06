@@ -40,12 +40,6 @@ export async function attestChat(
     id
   );
 
-  console.log({
-    requestHash,
-    responseHash,
-    signatureData: signatureData.text,
-  });
-
   // verify the signature text matches our computed hashes
   if (!compareHashes(signatureData.text, requestHash, responseHash)) {
     throw new Error('signature mismatch');

@@ -79,8 +79,6 @@ export function createCapturingFetch(
       });
     }
 
-    console.log('encryptedRequestBody', encryptedRequestBody);
-
     // make the request
     const response = await fetch(input, {
       ...init,
@@ -133,8 +131,6 @@ export function createCapturingFetch(
     } else {
       const clone = response.clone();
       const responseBody = await clone.text();
-
-      console.log('response', clone.status, clone.statusText, responseBody);
 
       capturedResponsePromise = Promise.resolve(
         e2eeContext
