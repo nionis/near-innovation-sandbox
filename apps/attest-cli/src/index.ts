@@ -4,8 +4,7 @@ import type { ModelMessage } from 'ai';
 import pkg from '../package.json' with { type: 'json' };
 import {
   createNearAI,
-  getE2EECapturePromise,
-  clearE2EECapture,
+  capturedResponsePromise,
   fetchAvailableModels,
 } from '@repo/packages-near-ai-provider';
 import {
@@ -138,8 +137,8 @@ program
       console.log(`  Model: ${options.model}`);
       console.log(`  Prompt: ${options.prompt}`);
 
-      // Clear any previous E2EE capture
-      clearE2EECapture();
+      // // Clear any previous E2EE capture
+      // clearE2EECapture();
 
       const model = provider(options.model as NearAIChatModelId);
       const result = await generateText({
@@ -148,34 +147,40 @@ program
       });
 
       // Get captured E2EE data (encrypted request/response for attestation)
-      const capturedData = await getE2EECapturePromise();
+      const captured = await capturedResponsePromise;
 
-      console.log('Attesting AI output...');
-      const receipt = await attest(
-        {
-          id: capturedData?.id ?? result.response.id,
-          requestBody: capturedData?.requestBody ?? String(result.request.body),
-          responseBody:
-            capturedData?.responseBody ?? JSON.stringify(result.response.body),
-          output: result.text,
-        },
-        nearAiApiKey
-      );
-
-      console.log('Storing attestation record on blockchain...');
-      const { txHash } = await storeAttestationRecordWithBlockchain(
-        blockchain,
-        { proofHash: receipt.proofHash, timestamp: receipt.timestamp }
-      );
-      receipt.txHash = txHash;
-
-      if (options.output) {
-        console.log(`Writing receipt to ${options.output}`);
-        fs.writeFileSync(options.output, JSON.stringify(receipt, null, 2));
+      if (!captured || !captured.requestBody || !captured.responseBody) {
+        console.error('No captured data found');
+        process.exit(1);
       }
-      console.log('Receipt');
-      console.log(`  Signature: ${receipt.signature}`);
-      console.log(receipt.output);
+
+      console.log('capturedData', captured);
+
+      // console.log('Attesting AI output...');
+      // const receipt = await attest(
+      //   {
+      //     id: result.response.id,
+      //     requestBody: capturedData.rawRequestBody,
+      //     responseBody: capturedData.rawResponseBody,
+      //     output: result.text,
+      //   },
+      //   nearAiApiKey
+      // );
+
+      // console.log('Storing attestation record on blockchain...');
+      // const { txHash } = await storeAttestationRecordWithBlockchain(
+      //   blockchain,
+      //   { proofHash: receipt.proofHash, timestamp: receipt.timestamp }
+      // );
+      // receipt.txHash = txHash;
+
+      // if (options.output) {
+      //   console.log(`Writing receipt to ${options.output}`);
+      //   fs.writeFileSync(options.output, JSON.stringify(receipt, null, 2));
+      // }
+      // console.log('Receipt');
+      // console.log(`  Signature: ${receipt.signature}`);
+      // console.log(receipt.output);
     } catch (error) {
       console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);

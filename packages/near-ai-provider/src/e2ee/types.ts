@@ -25,6 +25,7 @@ export interface AttestationReport {
     signing_address: string;
     signing_algo: string;
     signing_public_key: string;
+    request_nonce: string;
   }>;
 }
 

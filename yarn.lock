@@ -11,6 +11,15 @@
     "@ai-sdk/provider-utils" "4.0.10"
     "@vercel/oidc" "3.1.0"
 
+"@ai-sdk/gateway@3.0.36":
+  version "3.0.36"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/gateway/-/gateway-3.0.36.tgz#1ad83063431d9130bc363393aa11784e37b37138"
+  integrity sha512-2r1Q6azvqMYxQ1hqfWZmWg4+8MajoldD/ty65XdhCaCoBfvDu7trcvxXDfTSU+3/wZ1JIDky46SWYFOHnTbsBw==
+  dependencies:
+    "@ai-sdk/provider" "3.0.7"
+    "@ai-sdk/provider-utils" "4.0.13"
+    "@vercel/oidc" "3.1.0"
+
 "@ai-sdk/openai-compatible@^2.0.0":
   version "2.0.23"
   resolved "https://registry.npmjs.org/@ai-sdk/openai-compatible/-/openai-compatible-2.0.23.tgz"
@@ -28,10 +37,26 @@
     "@standard-schema/spec" "^1.1.0"
     eventsource-parser "^3.0.6"
 
+"@ai-sdk/provider-utils@4.0.13":
+  version "4.0.13"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/provider-utils/-/provider-utils-4.0.13.tgz#d2240b0c4d701eef8a4273ade71585a691e34e04"
+  integrity sha512-HHG72BN4d+OWTcq2NwTxOm/2qvk1duYsnhCDtsbYwn/h/4zeqURu1S0+Cn0nY2Ysq9a9HGKvrYuMn9bgFhR2Og==
+  dependencies:
+    "@ai-sdk/provider" "3.0.7"
+    "@standard-schema/spec" "^1.1.0"
+    eventsource-parser "^3.0.6"
+
 "@ai-sdk/provider@3.0.5":
   version "3.0.5"
   resolved "https://registry.npmjs.org/@ai-sdk/provider/-/provider-3.0.5.tgz"
   integrity sha512-2Xmoq6DBJqmSl80U6V9z5jJSJP7ehaJJQMy2iFUqTay06wdCqTnPVBBQbtEL8RCChenL+q5DC5H5WzU3vV3v8w==
+  dependencies:
+    json-schema "^0.4.0"
+
+"@ai-sdk/provider@3.0.7":
+  version "3.0.7"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/provider/-/provider-3.0.7.tgz#470bb8f9e46ec9d8d62b07b4c1f5737b991ebe83"
+  integrity sha512-VkPLrutM6VdA924/mG8OS+5frbVTcu6e046D2bgDo00tehBANR1QBJ/mPcZ9tXMFOsVcm6SQArOregxePzTFPw==
   dependencies:
     json-schema "^0.4.0"
 
@@ -2032,6 +2057,16 @@ ai@^6.0.61:
     "@ai-sdk/gateway" "3.0.28"
     "@ai-sdk/provider" "3.0.5"
     "@ai-sdk/provider-utils" "4.0.10"
+    "@opentelemetry/api" "1.9.0"
+
+ai@^6.0.73:
+  version "6.0.73"
+  resolved "https://registry.yarnpkg.com/ai/-/ai-6.0.73.tgz#0df60a3871127260c758cb3419b2dcc44cea08dc"
+  integrity sha512-p2/ICXIjAM4+bIFHEkAB+l58zq+aTmxAkotsb6doNt/CEms72zt6gxv2ky1fQDwU4ecMOcmMh78VJUSEKECzlg==
+  dependencies:
+    "@ai-sdk/gateway" "3.0.36"
+    "@ai-sdk/provider" "3.0.7"
+    "@ai-sdk/provider-utils" "4.0.13"
     "@opentelemetry/api" "1.9.0"
 
 ajv-formats@2.1.1, ajv-formats@^2.1.1:

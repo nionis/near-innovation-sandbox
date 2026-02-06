@@ -42,6 +42,10 @@ export class ModelPublicKeys {
       throw new Error(`No model attestation found for model: ${model}`);
     }
 
+    if (modelAttestation.request_nonce !== nonce) {
+      throw new Error(`Request nonce mismatch for model: ${model}`);
+    }
+
     if (!modelAttestation.signing_public_key) {
       throw new Error(
         `Model attestation missing signing_public_key for model: ${model}`
