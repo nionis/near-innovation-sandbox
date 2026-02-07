@@ -1,3 +1,5 @@
+import type { ModelMessage } from 'ai';
+
 /** E2EE encryption settings */
 export interface E2EESettings {
   /** Enable end-to-end encryption for chat completions */
@@ -35,12 +37,15 @@ export interface KeyPair {
   privateKey: Uint8Array;
 }
 
-/** E2EE context for a request */
+/** a key pair */
+export interface KeyPairFromPassphrase extends KeyPair {
+  passphrase: string[];
+}
+
 export interface E2EEContext {
-  /** Client's ephemeral key pair for this request */
-  clientKeyPair: KeyPair;
-  /** Model's public key (hex, 64 bytes) */
-  modelPublicKey: string;
+  modelsPublicKey: Uint8Array;
+  encrypt: (ourKeyPair: KeyPair, messages: ModelMessage[]) => ModelMessage[];
+  decrypt: (ourKeyPair: KeyPair, ciphertext: string) => string;
 }
 
 /** Captured E2EE request/response for attestation */

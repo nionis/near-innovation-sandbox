@@ -1,6 +1,9 @@
 import type { ModelMessage } from 'ai';
 import type { NearAIChatModelId } from '@repo/packages-utils/near';
-import type { E2EEContext } from './e2ee/index.js';
+import type { E2EEContext, KeyPairFromPassphrase } from './e2ee/types.js';
+import { generatePassphrase } from './passphrase.js';
+import { generateKeyPairFromPassphrase } from './e2ee/crypto.js';
+import { bytesToHex } from '@noble/curves/utils.js';
 
 type CapturedResponse =
   | {
@@ -10,6 +13,7 @@ type CapturedResponse =
       responseBody: string;
       decryptedResponseBody: string;
       passphrase: string[];
+      modelsPublicKey: string;
     }
   | {
       e2ee: false;
@@ -18,6 +22,7 @@ type CapturedResponse =
       responseBody: string;
       decryptedResponseBody: undefined;
       passphrase: undefined;
+      modelsPublicKey: undefined;
     };
 
 export let capturedResponsePromise = Promise.resolve<CapturedResponse | null>(
@@ -31,10 +36,9 @@ export function createCapturingFetch(
   const capturingFetch: typeof fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input.toString();
 
+    const headers = new Headers(init?.headers);
     let requestBody = init?.body;
     let encryptedRequestBody: string | undefined;
-    let responseBody: string | undefined;
-    let decryptedResponseBody: string | undefined;
 
     // E2EE only supports chat completions endpoint
     if (!url.includes('/chat/completions')) {
@@ -62,17 +66,29 @@ export function createCapturingFetch(
       ? await createE2EEContext(parsedBody.model)
       : undefined;
 
-    // merge the headers
-    const headers = new Headers(init?.headers);
+    let ourKeyPair: KeyPairFromPassphrase | undefined;
+    let modelsPublicKeyHex: string | undefined;
     if (e2eeContext) {
-      for (const [key, value] of e2eeContext.headers.entries()) {
-        headers.set(key, value);
-      }
+      const _passphrase = generatePassphrase(6);
+      const _ourKeyPair = generateKeyPairFromPassphrase(_passphrase);
+      ourKeyPair = {
+        passphrase: _passphrase,
+        privateKey: _ourKeyPair.privateKey,
+        publicKey: _ourKeyPair.publicKey,
+      };
+      modelsPublicKeyHex = bytesToHex(e2eeContext.modelsPublicKey);
+
+      headers.set('X-Signing-Algo', 'ecdsa');
+      headers.set('X-Client-Pub-Key', bytesToHex(ourKeyPair.publicKey));
+      headers.set('X-Model-Pub-Key', modelsPublicKeyHex);
     }
 
     // encrypt the request body
-    if (e2eeContext) {
-      const encryptedMessages = e2eeContext.encrypt(parsedBody.messages);
+    if (e2eeContext && ourKeyPair) {
+      const encryptedMessages = e2eeContext.encrypt(
+        ourKeyPair,
+        parsedBody.messages
+      );
       encryptedRequestBody = JSON.stringify({
         ...parsedBody,
         messages: encryptedMessages,
@@ -105,14 +121,15 @@ export function createCapturingFetch(
         }
 
         capturedResponsePromise = Promise.resolve(
-          e2eeContext
+          e2eeContext && ourKeyPair
             ? {
                 e2ee: true as const,
                 requestBody,
                 encryptedRequestBody: encryptedRequestBody!,
                 responseBody: _responseBody,
                 decryptedResponseBody: _decryptedResponseBody!,
-                passphrase: e2eeContext.passphrase,
+                passphrase: ourKeyPair.passphrase,
+                modelsPublicKey: modelsPublicKeyHex!,
               }
             : {
                 e2ee: false as const,
@@ -133,14 +150,15 @@ export function createCapturingFetch(
       const responseBody = await clone.text();
 
       capturedResponsePromise = Promise.resolve(
-        e2eeContext
+        e2eeContext && ourKeyPair
           ? {
               e2ee: true as const,
               requestBody,
               encryptedRequestBody: encryptedRequestBody!,
-              responseBody: e2eeContext.decrypt(responseBody),
+              responseBody: e2eeContext.decrypt(ourKeyPair, responseBody!),
               decryptedResponseBody: responseBody!,
-              passphrase: e2eeContext.passphrase,
+              passphrase: ourKeyPair.passphrase,
+              modelsPublicKey: modelsPublicKeyHex!,
             }
           : {
               e2ee: false as const,

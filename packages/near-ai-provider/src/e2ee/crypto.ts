@@ -8,7 +8,7 @@ import { asciiToBytes, randomBytes } from '@noble/curves/utils.js';
 const HKDF_INFO_E2EE_KEYPAIR = asciiToBytes('e2ee_keypair');
 
 /** generate a key pair from a passphrase */
-export function generateKeyPair(passphrase: string[]): KeyPair {
+export function generateKeyPairFromPassphrase(passphrase: string[]): KeyPair {
   const passphraseBytes = asciiToBytes(passphrase.join('-'));
   const privateKey = hkdf(
     sha256,
@@ -24,13 +24,13 @@ export function generateKeyPair(passphrase: string[]): KeyPair {
 
 const HKDF_INFO_NEAR_AI = asciiToBytes('ecdsa_encryption');
 
-/** derive a shared secret from a key pair */
+/** derive a shared secret */
 export function deriveSharedSecret(
-  secretKey: Uint8Array,
-  publicKey: Uint8Array
+  alicePrivateKey: Uint8Array,
+  bobPublicKey: Uint8Array
 ): Uint8Array {
   // Perform ECDH
-  const sharedPoint = secp256k1.getSharedSecret(secretKey, publicKey);
+  const sharedPoint = secp256k1.getSharedSecret(alicePrivateKey, bobPublicKey);
 
   // Use HKDF to derive a 32-byte key from the shared secret
   // Using SHA-256 as the hash function with 'ecdsa_encryption' info (required by NEAR AI)
@@ -45,19 +45,16 @@ export function deriveSharedSecret(
   return derivedKey;
 }
 
-/** encrypt a plaintext string using ECIES */
-export function eciesEncrypt(
-  recipientPublicKey: Uint8Array,
+/** encrypt a plaintext string using ECIES to send to a model */
+export function encryptForModel(
+  ourKeyPair: KeyPair,
+  modelsPublicKey: Uint8Array,
   plaintext: string
 ): Uint8Array {
-  // Generate ephemeral key pair for this encryption
-  const { secretKey: ephemeralPrivateKey, publicKey: ephemeralPublicKey } =
-    secp256k1.keygen();
-
   // Derive shared secret
   const sharedSecret = deriveSharedSecret(
-    ephemeralPrivateKey,
-    recipientPublicKey
+    ourKeyPair.privateKey,
+    modelsPublicKey
   );
 
   // Generate random IV (12 bytes for AES-GCM)
@@ -70,27 +67,30 @@ export function eciesEncrypt(
 
   // Pack: ephemeralPublicKey (65 bytes with 04 prefix) || iv (12 bytes) || ciphertext (variable)
   const packed = new Uint8Array(
-    ephemeralPublicKey.length + iv.length + ciphertext.length
+    ourKeyPair.publicKey.length + iv.length + ciphertext.length
   );
-  packed.set(ephemeralPublicKey, 0);
-  packed.set(iv, ephemeralPublicKey.length);
-  packed.set(ciphertext, ephemeralPublicKey.length + iv.length);
+  packed.set(ourKeyPair.publicKey, 0);
+  packed.set(iv, ourKeyPair.publicKey.length);
+  packed.set(ciphertext, ourKeyPair.publicKey.length + iv.length);
 
   return packed;
 }
 
 /** decrypt a ciphertext string using ECIES */
-export function eciesDecrypt(
-  secretKey: Uint8Array,
+export function decryptFromModel(
+  ourKeyPair: KeyPair,
   packedCiphertext: Uint8Array
 ): Uint8Array {
   // Unpack: ephemeralPublicKey (65 bytes with 04 prefix) || iv (12 bytes) || ciphertext (variable)
-  const ephemeralPublicKey = packedCiphertext.slice(0, 65);
+  const modelsPublicKey = packedCiphertext.slice(0, 65);
   const iv = packedCiphertext.slice(65, 65 + 12);
   const ciphertext = packedCiphertext.slice(65 + 12);
 
   // Derive shared secret using our private key and the ephemeral public key
-  const sharedSecret = deriveSharedSecret(secretKey, ephemeralPublicKey);
+  const sharedSecret = deriveSharedSecret(
+    ourKeyPair.privateKey,
+    modelsPublicKey
+  );
 
   // Decrypt using AES-256-GCM
   const cipher = gcm(sharedSecret, iv);

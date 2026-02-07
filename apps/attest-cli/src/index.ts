@@ -151,7 +151,6 @@ program
       const id = (await stream.response).id;
       const captured = await capturedResponsePromise;
       if (!captured) throw new Error('No captured response');
-      console.log('capturedData', id, captured);
 
       console.log('Attesting AI output...');
       const receipt = await attest(
