@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import type {
-  Receipt,
-  AllVerificationResults,
+  ChatExport,
+  VerifyOutput,
   VerificationResult,
 } from '@repo/packages-attestations';
 import { verify } from '@repo/packages-attestations';
@@ -21,28 +21,26 @@ const CONTRACT_ID = SMART_CONTRACTS[NETWORK_ID].contractId;
 type VerifyState =
   | { status: 'idle' }
   | { status: 'loading'; step: string }
-  | { status: 'success'; results: AllVerificationResults }
+  | { status: 'success'; results: VerifyOutput }
   | { status: 'error'; message: string };
 
-interface ReceiptVerifierProps {
-  onVerificationComplete?: (results: AllVerificationResults) => void;
+interface ChatVerifierProps {
+  onVerificationComplete?: (results: VerifyOutput) => void;
 }
 
-export function ReceiptVerifier({
-  onVerificationComplete,
-}: ReceiptVerifierProps) {
-  const [receiptJson, setReceiptJson] = useState('');
+export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
+  const [chatExportJson, setChatExportJson] = useState('');
   const [verifyState, setVerifyState] = useState<VerifyState>({
     status: 'idle',
   });
 
-  const verifyReceipt = useCallback(async (receipt: Receipt) => {
+  const verifyChat = useCallback(async (chatExport: ChatExport) => {
     const blockchain = new AttestationsBlockchain({
       networkId: NETWORK_ID,
       contractId: CONTRACT_ID,
     });
 
-    return verify(receipt, blockchain, {
+    return verify(chatExport, blockchain, {
       // use local near.ai
       nearAiBaseURL: '/api/verify?url=' + NEAR_AI_BASE_URL,
       // use local nras
@@ -52,31 +50,27 @@ export function ReceiptVerifier({
 
   const handleVerify = async () => {
     // Parse JSON
-    let receipt: Receipt;
+    let chatExport: ChatExport;
     try {
-      receipt = JSON.parse(receiptJson);
+      chatExport = JSON.parse(chatExportJson);
     } catch {
       setVerifyState({ status: 'error', message: 'Invalid JSON format' });
       return;
     }
 
     // Validate required fields
-    const requiredFields: (keyof Receipt)[] = [
+    const requiredFields: (keyof ChatExport)[] = [
       'version',
       'timestamp',
       'model',
-      'prompt',
-      'requestHash',
-      'responseHash',
       'signature',
       'signingAddress',
       'signingAlgo',
-      'output',
-      'proofHash',
+      'txHash',
     ];
 
     for (const field of requiredFields) {
-      if (receipt[field] === undefined || receipt[field] === null) {
+      if (chatExport[field] === undefined || chatExport[field] === null) {
         setVerifyState({
           status: 'error',
           message: `Missing required field: ${field}`,
@@ -89,7 +83,7 @@ export function ReceiptVerifier({
 
     try {
       setVerifyState({ status: 'loading', step: 'Verifying attestations...' });
-      const results = await verifyReceipt(receipt);
+      const results = await verifyChat(chatExport);
 
       setVerifyState({ status: 'success', results });
       onVerificationComplete?.(results);
@@ -103,12 +97,12 @@ export function ReceiptVerifier({
   };
 
   const handleLoadExample = () => {
-    setReceiptJson(EXAMPLE_RECEIPT);
+    setChatExportJson(EXAMPLE_CHAT_EXPORT);
     setVerifyState({ status: 'idle' });
   };
 
   const handleClear = () => {
-    setReceiptJson('');
+    setChatExportJson('');
     setVerifyState({ status: 'idle' });
   };
 
@@ -141,9 +135,9 @@ export function ReceiptVerifier({
         </div>
         <textarea
           id="receipt-json"
-          value={receiptJson}
+          value={chatExportJson}
           onChange={(e) => {
-            setReceiptJson(e.target.value);
+            setChatExportJson(e.target.value);
             if (verifyState.status === 'error') {
               setVerifyState({ status: 'idle' });
             }
@@ -156,7 +150,7 @@ export function ReceiptVerifier({
       {/* Verify Button */}
       <button
         onClick={handleVerify}
-        disabled={!receiptJson.trim() || verifyState.status === 'loading'}
+        disabled={!chatExportJson.trim() || verifyState.status === 'loading'}
         className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 text-white font-medium transition-all hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
       >
         {verifyState.status === 'loading' ? (
@@ -191,7 +185,7 @@ export function ReceiptVerifier({
   );
 }
 
-function VerificationResults({ results }: { results: AllVerificationResults }) {
+function VerificationResults({ results }: { results: VerifyOutput }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Overall Result */}
@@ -302,19 +296,17 @@ function VerificationRow({
   );
 }
 
-const EXAMPLE_RECEIPT = `{
-  "version": "1.0",
-  "timestamp": 1770301689302,
+const EXAMPLE_CHAT_EXPORT = `{
+  "version": "1.0.0",
+  "timestamp": 1770459386903,
+  "txHash": "FhWiwPpDjSgkuV6i6Bc35ZV48h5gp5yzs5dKVzuovQTj",
   "model": "deepseek-ai/DeepSeek-V3.1",
-  "prompt": "Explain blockchain in one sentence",
-  "requestHash": "cef14d468d15a5e3e59ef1c31dd62f3d006af275847d49c2ef16472c8df10477",
-  "responseHash": "1e4cafe672f453d8cc5eced54a3a35141efab1460b926ff2666514edd273ad51",
-  "signature": "0xb50e415a16701a3a3122c5bf111168e1f6e911d5cc3955f5dad2752248214b303ed8636e6ee99ed05c1973cdda9b5f5eaf67dce4380dcaf514821b6cfa5a5b891c",
+  "requestBody": "{\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"messages\":[{\"role\":\"user\",\"content\":\"Explain blockchain in one sentence\"}],\"stream\":true}",
+  "responseBody": "data: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":12,\"completion_tokens\":0},\"prompt_token_ids\":null}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"A\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":13,\"completion_tokens\":1}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" blockchain is a decentralized, immutable\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":19,\"completion_tokens\":7}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" digital ledger that securely records transactions\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":25,\"completion_tokens\":13}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" across a distributed network of computers.\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":32,\"completion_tokens\":20}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":33,\"completion_tokens\":21}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":33,\"completion_tokens\":21}}\n\ndata: [DONE]\n\n",
+  "signature": "0xf34e2abc9f19073e43a425f5a0bf68b8af56379214b8a270fe634938a0f8f8424b42dbb7eaba77ff44963e8bd3072c8337df989a22ab4c1bdafc2eeb9c52d21e1c",
   "signingAddress": "0x34B7BcB4b2b61FCF9fA14715ba8708AC0dBC8Be5",
   "signingAlgo": "ecdsa",
-  "output": "A blockchain is a distributed and immutable digital ledger that securely records transactions in a way that is transparent, verifiable, and resistant to modification.",
-  "proofHash": "c780c9346fa70305178d5cce8f220b648cacb5b7ec320581f65fa29e97aa2a27",
-  "txHash": "996cEWDMmv1M2sq4XWDgwMvjMHq1TmrDZ5dMic1jAdkx"
+  "e2ee": false
 }`;
 
 function LoadingSpinner() {

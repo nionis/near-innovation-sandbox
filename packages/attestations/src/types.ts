@@ -13,28 +13,61 @@ export interface BlockchainConfig {
 
 /** input data for attestation */
 export interface AttestInput {
-  id: string;
+  chatId: string;
   requestBody: string;
   responseBody: string;
-  output: string;
 }
 
-/** attestation receipt */
-export interface Receipt {
-  version: string;
-  timestamp: number;
-  model: NearAIChatModelId;
-  prompt: string;
-  content?: string;
+/** output data for attestation */
+export interface AttestOutput {
   requestHash: string;
   responseHash: string;
   signature: string;
   signingAddress: string;
   signingAlgo: string;
-  output: string;
-  proofHash: string;
-  txHash?: string;
 }
+
+/** input data for verification */
+export type VerifyInput = {
+  model: NearAIChatModelId;
+  requestBody: string;
+  responseBody: string;
+  signature: string;
+  signingAddress: string;
+  signingAlgo: string;
+  timestamp: number;
+};
+
+/** all verification results */
+export type VerifyOutput = {
+  chat: VerificationResult;
+  notorized: VerificationResult;
+  result: VerificationResult;
+} & ModelAndGatewayVerificationResult;
+
+export type ChatExport = VerifyInput & {
+  version: string;
+  timestamp: number;
+  txHash: string;
+} & (
+    | {
+        e2ee: true;
+        passphrase: string;
+        modelsPublicKey: string;
+      }
+    | {
+        e2ee: false;
+        passphrase: undefined;
+        modelsPublicKey: undefined;
+      }
+  );
+
+export type Chat = {
+  prompt: string;
+  content?: string;
+  output: string;
+  verification: VerifyOutput;
+};
 
 /** attestation response from NEAR AI Cloud */
 export interface Attestation {
@@ -117,10 +150,3 @@ export type ModelAndGatewayVerificationResult = {
   gateway_tdx: VerificationResult;
   gateway_compose: VerificationResult;
 };
-
-/** all verification results */
-export type AllVerificationResults = {
-  chat: VerificationResult;
-  notorized: VerificationResult;
-  result: VerificationResult;
-} & ModelAndGatewayVerificationResult;

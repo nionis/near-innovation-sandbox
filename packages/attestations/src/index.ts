@@ -1,5 +1,11 @@
-import type { AttestInput, Receipt, AllVerificationResults } from './types.js';
+import type {
+  AttestInput,
+  AttestOutput,
+  VerifyInput,
+  VerifyOutput,
+} from './types.js';
 import { retry } from '@repo/packages-utils';
+import { sha256_utf8_str } from '@repo/packages-utils/crypto';
 import { NEAR_AI_BASE_URL, NRAS_BASE_URL } from '@repo/packages-utils/near';
 import { attestChat } from './attest.js';
 import {
@@ -8,6 +14,7 @@ import {
 } from './verify.js';
 import { aggregateVerificationResults } from './verify-utils.js';
 import { AttestationsBlockchain } from './blockchain.js';
+import { computeProofHash } from './crypto.js';
 
 export type * from './types.js';
 
@@ -17,13 +24,13 @@ export async function attest(
   options?: {
     nearAiBaseURL?: string;
   }
-): Promise<Receipt> {
-  const receipt = await attestChat(
+): Promise<AttestOutput> {
+  const output = await attestChat(
     input,
     nearAiApiKey,
     options?.nearAiBaseURL ?? NEAR_AI_BASE_URL
   );
-  return receipt;
+  return output;
 }
 
 export async function storeAttestationRecordWithBlockchain(
@@ -51,16 +58,30 @@ export async function storeAttestationRecordWithAPI(
 }
 
 export async function verify(
-  receipt: Receipt,
+  input: VerifyInput,
   blockchain: AttestationsBlockchain,
   options?: {
     nearAiBaseURL?: string;
     nrasUrl?: string;
   }
-): Promise<AllVerificationResults> {
+): Promise<VerifyOutput> {
+  // compute hashes for the request and response
+  const requestHash = sha256_utf8_str(input.requestBody);
+  const responseHash = sha256_utf8_str(input.responseBody);
+  const proofHash = computeProofHash(
+    requestHash,
+    responseHash,
+    input.signature
+  );
+
   const [chat, modelAndGateway, notorized] = await Promise.all([
     // verify the chat attestation
-    verifyChatAttestation(receipt),
+    verifyChatAttestation({
+      requestHash,
+      responseHash,
+      signature: input.signature,
+      signingAddress: input.signingAddress,
+    }),
     // verify the model and gateway attestation
     (async () => {
       let result: Awaited<ReturnType<typeof verifyModelAndGatewayAttestation>>;
@@ -72,7 +93,12 @@ export async function verify(
               `Verify model and gateway attestation (attempt ${count + 1} of ${max})...`
             );
             result = await verifyModelAndGatewayAttestation(
-              receipt,
+              {
+                model: input.model,
+                signingAddress: input.signingAddress,
+                requestHash,
+                responseHash,
+              },
               options?.nearAiBaseURL ?? NEAR_AI_BASE_URL,
               options?.nrasUrl ?? NRAS_BASE_URL
             );
@@ -93,17 +119,14 @@ export async function verify(
     })(),
     // verify the blockchain attestation
     (async () => {
-      const attestationRecord = await blockchain.getAttestationRecord(
-        receipt.proofHash
-      );
+      const attestationRecord =
+        await blockchain.getAttestationRecord(proofHash);
 
       if (!attestationRecord) {
         return { valid: false, message: 'proof hash not found' };
       }
 
-      if (
-        attestationRecord.timestamp !== new Date(receipt.timestamp).getTime()
-      ) {
+      if (attestationRecord.timestamp !== new Date(input.timestamp).getTime()) {
         return { valid: false, message: 'timestamp does not match' };
       }
 

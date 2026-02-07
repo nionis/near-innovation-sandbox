@@ -1,6 +1,6 @@
 'use client';
 
-import { ReceiptVerifier } from './components/ReceiptVerifier';
+import { ChatVerifier } from './components/ChatVerifier';
 
 export default function Home() {
   return (
@@ -18,7 +18,7 @@ export default function Home() {
         </div>
 
         {/* Verifier Component */}
-        <ReceiptVerifier />
+        <ChatVerifier />
       </main>
     </div>
   );

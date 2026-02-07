@@ -1,27 +1,30 @@
 import type {
-  Receipt,
   ModelAndGatewayVerificationResult,
   ModelAttestation,
   GatewayAttestation,
   AttestationInfo,
   VerificationResult,
 } from './types.js';
+import type { NearAIChatModelId } from '@repo/packages-utils/near';
 import { getCollateralAndVerify, type TcbStatus } from '@phala/dcap-qvl';
 import { fetchAttestation } from './verify-utils.js';
 import { verifySignature } from './crypto.js';
 import { randomNonce, base64UrlToBase64 } from '@repo/packages-utils/crypto';
 
 /** verify model attestation */
-export async function verifyChatAttestation(
-  receipt: Receipt
-): Promise<VerificationResult> {
+export async function verifyChatAttestation(input: {
+  requestHash: string;
+  responseHash: string;
+  signature: string;
+  signingAddress: string;
+}): Promise<VerificationResult> {
   // verify the ECDSA signature
-  const signatureText = `${receipt.requestHash}:${receipt.responseHash}`;
+  const signatureText = `${input.requestHash}:${input.responseHash}`;
 
   const signatureResult = verifySignature(
     signatureText,
-    receipt.signature,
-    receipt.signingAddress
+    input.signature,
+    input.signingAddress
   );
 
   if (!signatureResult.valid) {
@@ -33,7 +36,7 @@ export async function verifyChatAttestation(
 
   const addressMatch =
     signatureResult.recoveredAddress.toLowerCase() ===
-    receipt.signingAddress.toLowerCase();
+    input.signingAddress.toLowerCase();
 
   if (!addressMatch) {
     return {
@@ -49,16 +52,21 @@ export async function verifyChatAttestation(
 }
 
 export async function verifyModelAndGatewayAttestation(
-  receipt: Receipt,
+  input: {
+    model: NearAIChatModelId;
+    signingAddress: string;
+    requestHash: string;
+    responseHash: string;
+  },
   nearAiBaseURL: string,
   nrasUrl: string
 ): Promise<ModelAndGatewayVerificationResult> {
   const nonce = randomNonce();
   const attestation = await fetchAttestation(
     nearAiBaseURL,
-    receipt.model,
+    input.model,
     nonce,
-    receipt.signingAddress
+    input.signingAddress
   );
 
   const {
@@ -67,7 +75,7 @@ export async function verifyModelAndGatewayAttestation(
   } = attestation;
   const modelAttestation = modelAttestations.find((a) => {
     return (
-      a.signing_address.toLowerCase() === receipt.signingAddress.toLowerCase()
+      a.signing_address.toLowerCase() === input.signingAddress.toLowerCase()
     );
   });
 

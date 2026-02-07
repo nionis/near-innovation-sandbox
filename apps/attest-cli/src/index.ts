@@ -14,12 +14,13 @@ import {
 import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 import {
-  type Receipt,
+  type ChatExport,
   type VerificationResult,
   attest,
   storeAttestationRecordWithBlockchain,
   verify,
 } from '@repo/packages-attestations';
+import { computeProofHash } from '@repo/packages-attestations/crypto';
 import { streamText } from 'ai';
 import { Command } from 'commander';
 import dotenv from 'dotenv';
@@ -83,8 +84,8 @@ program
   )
   .option('--disable-e2ee', 'Disable E2EE (defaults to false)')
   .option(
-    '-o, --output <path>',
-    'Output file for the receipt (default: prints to stdout)'
+    '-e, --export <path>',
+    'Export file for the chat (default: prints to stdout)'
   )
   .action(async (options) => {
     try {
@@ -148,35 +149,72 @@ program
         output += chunk;
       }
 
-      const id = (await stream.response).id;
+      const chatId = (await stream.response).id;
       const captured = await capturedResponsePromise;
       if (!captured) throw new Error('No captured response');
 
       console.log('Attesting AI output...');
-      const receipt = await attest(
+      const chatAttestation = await attest(
         {
-          id: id,
+          chatId,
           requestBody: captured.requestBody,
           responseBody: captured.responseBody,
-          output: output,
         },
         nearAiApiKey
       );
 
+      const proofHash = computeProofHash(
+        chatAttestation.requestHash,
+        chatAttestation.responseHash,
+        chatAttestation.signature
+      );
+      const now = Date.now();
+
       console.log('Storing attestation record on blockchain...');
       const { txHash } = await storeAttestationRecordWithBlockchain(
         blockchain,
-        { proofHash: receipt.proofHash, timestamp: receipt.timestamp }
+        { proofHash, timestamp: now }
       );
-      receipt.txHash = txHash;
 
-      if (options.output) {
-        console.log(`Writing receipt to ${options.output}`);
-        fs.writeFileSync(options.output, JSON.stringify(receipt, null, 2));
+      const chatExport: ChatExport = captured.e2ee
+        ? {
+            version: '1.0.0',
+            timestamp: now,
+            txHash,
+            model: options.model,
+            requestBody: captured.requestBody,
+            responseBody: captured.responseBody,
+            signature: chatAttestation.signature,
+            signingAddress: chatAttestation.signingAddress,
+            signingAlgo: chatAttestation.signingAlgo,
+            e2ee: true,
+            passphrase: captured.passphrase.join('-'),
+            modelsPublicKey: captured.modelsPublicKey,
+          }
+        : {
+            version: '1.0.0',
+            timestamp: now,
+            txHash,
+            model: options.model,
+            requestBody: captured.requestBody,
+            responseBody: captured.responseBody,
+            signature: chatAttestation.signature,
+            signingAddress: chatAttestation.signingAddress,
+            signingAlgo: chatAttestation.signingAlgo,
+            e2ee: false,
+            passphrase: undefined,
+            modelsPublicKey: undefined,
+          };
+
+      console.log('chatExport', chatExport);
+
+      if (options.export) {
+        console.log(`Exporting chat to ${options.export}`);
+        fs.writeFileSync(options.export, JSON.stringify(chatExport, null, 2));
       }
-      console.log('Receipt');
-      console.log(`  Signature: ${receipt.signature}`);
-      console.log(receipt.output);
+      // console.log('Receipt');
+      // console.log(`  Signature: ${receipt.signature}`);
+      // console.log(receipt.output);
     } catch (error) {
       console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);
@@ -188,12 +226,12 @@ program
 program
   .command('verify')
   .description('Verify a receipt against TEE attestation and blockchain')
-  .requiredOption('-r, --receipt <path>', 'Path to the receipt JSON file')
+  .requiredOption('-i, --import <path>', 'Path to the import JSON file')
   .action(async (options) => {
     try {
-      const receipt = JSON.parse(
-        fs.readFileSync(options.receipt, 'utf-8')
-      ) as Receipt;
+      const chatExport = JSON.parse(
+        fs.readFileSync(options.import, 'utf-8')
+      ) as ChatExport;
 
       const blockchain = new AttestationsBlockchain({
         networkId: NEAR_NETWORK,
@@ -209,7 +247,7 @@ program
         gateway_tdx,
         gateway_compose,
         notorized,
-      } = await verify(receipt, blockchain);
+      } = await verify(chatExport, blockchain);
 
       function printVerificationResult(
         name: string,
@@ -232,9 +270,9 @@ program
 
       if (result.valid) {
         console.log('Verified AI output!');
-        console.log(`  Model: ${receipt.model}`);
-        console.log(`  Prompt: ${receipt.prompt}`);
-        console.log(`  Output: ${receipt.output}`);
+        // console.log(`  Model: ${receipt.model}`);
+        // console.log(`  Prompt: ${receipt.prompt}`);
+        // console.log(`  Output: ${receipt.output}`);
       } else {
         console.log('Verification failed!');
         console.log(`  Reason: ${result.message}`);
