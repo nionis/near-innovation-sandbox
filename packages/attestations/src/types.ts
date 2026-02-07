@@ -11,14 +11,15 @@ export interface BlockchainConfig {
   accountId?: string;
 }
 
-export interface Chat {
+/** input data for attestation */
+export interface AttestInput {
   id: string;
   requestBody: string;
   responseBody: string;
   output: string;
 }
 
-/** verifiable receipt for AI-generated content */
+/** attestation receipt */
 export interface Receipt {
   version: string;
   timestamp: number;

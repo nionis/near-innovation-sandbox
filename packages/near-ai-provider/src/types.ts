@@ -18,6 +18,7 @@ export interface NearAIProviderSettings {
   e2ee?: E2EESettings;
 }
 
+/** response from near.ai API for listing models */
 export interface ListModelsResponse {
   object: 'list';
   data: {
@@ -27,3 +28,24 @@ export interface ListModelsResponse {
     owned_by: string;
   }[];
 }
+
+/** captured response from the near.ai API */
+export type CapturedResponse =
+  | {
+      e2ee: true;
+      requestBody: string;
+      encryptedRequestBody: string;
+      responseBody: string;
+      decryptedResponseBody: string;
+      passphrase: string[];
+      modelsPublicKey: string;
+    }
+  | {
+      e2ee: false;
+      requestBody: string;
+      encryptedRequestBody: undefined;
+      responseBody: string;
+      decryptedResponseBody: undefined;
+      passphrase: undefined;
+      modelsPublicKey: undefined;
+    };

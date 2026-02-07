@@ -1,4 +1,4 @@
-import type { Receipt, Chat } from './types.js';
+import type { Receipt, AttestInput } from './types.js';
 import type { ModelMessage } from 'ai';
 import { type NearAIChatModelId } from '@repo/packages-utils/near';
 import { sha256_utf8_str } from '@repo/packages-utils/crypto';
@@ -7,11 +7,11 @@ import { fetchSignature } from './verify-utils.js';
 
 /** attest model output */
 export async function attestChat(
-  chat: Chat,
+  input: AttestInput,
   nearAiApiKey: string,
   nearAiBaseURL: string
 ): Promise<Receipt> {
-  const { id, requestBody, responseBody, output } = chat;
+  const { id, requestBody, responseBody, output } = input;
 
   let model: NearAIChatModelId;
   let messages: ModelMessage[];

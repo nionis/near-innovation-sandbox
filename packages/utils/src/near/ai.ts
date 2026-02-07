@@ -1,3 +1,4 @@
+/** available chat model IDs with E2EE on near.ai API */
 export const NEAR_AI_CHAT_MODEL_IDS = [
   'deepseek-ai/DeepSeek-V3.1',
   'openai/gpt-oss-120b',

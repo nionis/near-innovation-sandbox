@@ -1,4 +1,4 @@
-import type { Chat, Receipt, AllVerificationResults } from './types.js';
+import type { AttestInput, Receipt, AllVerificationResults } from './types.js';
 import { retry } from '@repo/packages-utils';
 import { NEAR_AI_BASE_URL, NRAS_BASE_URL } from '@repo/packages-utils/near';
 import { attestChat } from './attest.js';
@@ -12,14 +12,14 @@ import { AttestationsBlockchain } from './blockchain.js';
 export type * from './types.js';
 
 export async function attest(
-  chat: Chat,
+  input: AttestInput,
   nearAiApiKey: string,
   options?: {
     nearAiBaseURL?: string;
   }
 ): Promise<Receipt> {
   const receipt = await attestChat(
-    chat,
+    input,
     nearAiApiKey,
     options?.nearAiBaseURL ?? NEAR_AI_BASE_URL
   );

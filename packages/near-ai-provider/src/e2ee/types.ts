@@ -42,22 +42,9 @@ export interface KeyPairFromPassphrase extends KeyPair {
   passphrase: string[];
 }
 
+/** E2EE context for a model */
 export interface E2EEContext {
   modelsPublicKey: Uint8Array;
   encrypt: (ourKeyPair: KeyPair, messages: ModelMessage[]) => ModelMessage[];
   decrypt: (ourKeyPair: KeyPair, ciphertext: string) => string;
-}
-
-/** Captured E2EE request/response for attestation */
-export interface E2EECapturedData {
-  /** ephemeral passphrase for this request */
-  passphrase: string[];
-  /** The encrypted request body string sent to the server */
-  requestBody: string;
-  /** The raw encrypted response body string received from the server */
-  responseBody: string;
-  /** Chat completion ID extracted from response */
-  id: string | null;
-  /** Decrypted output text */
-  output: string;
 }

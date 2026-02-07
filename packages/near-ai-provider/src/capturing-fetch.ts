@@ -1,29 +1,10 @@
 import type { ModelMessage } from 'ai';
 import type { NearAIChatModelId } from '@repo/packages-utils/near';
+import type { CapturedResponse } from './types.js';
 import type { E2EEContext, KeyPairFromPassphrase } from './e2ee/types.js';
 import { generatePassphrase } from './passphrase.js';
 import { generateKeyPairFromPassphrase } from './e2ee/crypto.js';
 import { bytesToHex } from '@noble/curves/utils.js';
-
-type CapturedResponse =
-  | {
-      e2ee: true;
-      requestBody: string;
-      encryptedRequestBody: string;
-      responseBody: string;
-      decryptedResponseBody: string;
-      passphrase: string[];
-      modelsPublicKey: string;
-    }
-  | {
-      e2ee: false;
-      requestBody: string;
-      encryptedRequestBody: undefined;
-      responseBody: string;
-      decryptedResponseBody: undefined;
-      passphrase: undefined;
-      modelsPublicKey: undefined;
-    };
 
 export let capturedResponsePromise = Promise.resolve<CapturedResponse | null>(
   null
