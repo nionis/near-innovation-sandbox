@@ -7,6 +7,7 @@ import {
   IconDots,
   IconHistory,
   IconSearch,
+  IconShieldCheck,
   IconTrash,
 } from '@tabler/icons-react'
 import { useSetAtom } from 'jotai'
@@ -16,6 +17,8 @@ import { useIsLargeScreen, useIsSmallScreen } from '@/hooks/useScreenChange'
 import platform from '@/platform'
 import { router } from '@/router'
 import { deleteSession, getSession } from '@/stores/chatStore'
+import type { Session } from '../../shared/types'
+import { AttestVerifyButton } from './AttestVerifyButton'
 import { clear as clearSession } from '@/stores/sessionActions'
 import { useUIStore } from '@/stores/uiStore'
 import * as atoms from '../stores/atoms'
@@ -30,7 +33,7 @@ import UpdateAvailableButton from './UpdateAvailableButton'
  * 顶部标题工具栏（右侧）
  * @returns
  */
-export default function Toolbar({ sessionId }: { sessionId: string }) {
+export default function Toolbar({ sessionId, session }: { sessionId: string; session?: Session }) {
   const { t } = useTranslation()
   const isSmallScreen = useIsSmallScreen()
   const isLargeScreen = useIsLargeScreen()
@@ -105,6 +108,8 @@ export default function Toolbar({ sessionId }: { sessionId: string }) {
         <IconHistory strokeWidth={1.8} />
       </ActionIcon>
 
+      {session && <AttestVerifyButton session={session} />}
+
       <ActionMenu
         position="bottom-end"
         items={[
@@ -163,7 +168,15 @@ export default function Toolbar({ sessionId }: { sessionId: string }) {
             icon: IconHistory,
             onClick: () => setThreadHistoryDrawerOpen(true),
           },
-
+          ...(session
+            ? [
+                {
+                  text: t('Attest & Verify'),
+                  icon: IconShieldCheck,
+                  onClick: () => NiceModal.show('attest-verify', { session }),
+                },
+              ]
+            : []),
           {
             text: t('Export Chat'),
             icon: IconDeviceFloppy,

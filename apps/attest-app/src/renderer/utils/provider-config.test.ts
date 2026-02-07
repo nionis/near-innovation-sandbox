@@ -58,9 +58,9 @@ describe('provider-config', () => {
 
     it('should parse a valid builtin provider config', () => {
       const configJson = JSON.stringify({
-        id: ModelProviderEnum.OpenAI,
+        id: ModelProviderEnum.NearAI,
         settings: {
-          apiHost: 'https://api.openai.com',
+          apiHost: 'https://cloud-api.near.ai/v1',
           apiKey: 'sk-test-key',
         },
       })
@@ -68,8 +68,8 @@ describe('provider-config', () => {
       const result = parseProviderFromJson(configJson)
 
       expect(result).toBeDefined()
-      expect(result?.id).toBe(ModelProviderEnum.OpenAI)
-      expect(result?.apiHost).toBe('https://api.openai.com')
+      expect(result?.id).toBe(ModelProviderEnum.NearAI)
+      expect(result?.apiHost).toBe('https://cloud-api.near.ai/v1')
       expect(result?.apiKey).toBe('sk-test-key')
     })
 

@@ -88,7 +88,7 @@ async function ocrMessages(messages: Message[]) {
   let ocrModel: ModelInterface
   const dependencies = await createModelDependencies()
   if (settings.licenseKey) {
-    const modelSettings = getModelSettings(settings, ModelProviderEnum.ChatboxAI, 'chatbox-ocr-1')
+    const modelSettings = getModelSettings(settings, ModelProviderEnum.NearAI, 'deepseek-ai/DeepSeek-V3.1')
     ocrModel = getModel(modelSettings, settings, { uuid: '123' }, dependencies)
   } else {
     const ocrModelSetting = settings.ocrModel

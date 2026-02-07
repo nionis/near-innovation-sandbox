@@ -399,15 +399,7 @@ function ProviderSettings({ providerId }: { providerId: string }) {
         )}
 
         {/* API Host */}
-        {[
-          ModelProviderEnum.OpenAI,
-          ModelProviderEnum.OpenAIResponses,
-          ModelProviderEnum.Claude,
-          ModelProviderEnum.Gemini,
-          ModelProviderEnum.Ollama,
-          ModelProviderEnum.LMStudio,
-          '',
-        ].includes(baseInfo.id) && (
+        {[ModelProviderEnum.NearAI, ''].includes(baseInfo.id) && (
           <Stack gap="xxs">
             <Flex justify="space-between" align="flex-end" gap="md">
               <Text span fw="600" className=" whitespace-nowrap">
@@ -426,33 +418,13 @@ function ProviderSettings({ providerId }: { providerId: string }) {
               />
             </Flex>
             <Text span size="xs" flex="0 1 auto" c="chatbox-secondary">
-              {[ModelProviderEnum.OpenAI, ModelProviderEnum.Ollama, ModelProviderEnum.LMStudio, ''].includes(
-                baseInfo.id
-              )
+              {[ModelProviderEnum.NearAI, ''].includes(baseInfo.id)
                 ? normalizeOpenAIApiHostAndPath({
                     apiHost: providerSettings?.apiHost || baseInfo.defaultSettings?.apiHost,
                   }).apiHost +
                   normalizeOpenAIApiHostAndPath({
                     apiHost: providerSettings?.apiHost || baseInfo.defaultSettings?.apiHost,
                   }).apiPath
-                : ''}
-              {baseInfo.id === ModelProviderEnum.OpenAIResponses
-                ? normalizeOpenAIResponsesHostAndPath({
-                    apiHost: providerSettings?.apiHost || baseInfo.defaultSettings?.apiHost,
-                    apiPath: providerSettings?.apiPath || baseInfo.defaultSettings?.apiPath,
-                  }).apiHost +
-                  normalizeOpenAIResponsesHostAndPath({
-                    apiHost: providerSettings?.apiHost || baseInfo.defaultSettings?.apiHost,
-                    apiPath: providerSettings?.apiPath || baseInfo.defaultSettings?.apiPath,
-                  }).apiPath
-                : ''}
-              {baseInfo.id === ModelProviderEnum.Claude
-                ? normalizeClaudeHost(providerSettings?.apiHost || baseInfo.defaultSettings?.apiHost || '').apiHost +
-                  normalizeClaudeHost(providerSettings?.apiHost || baseInfo.defaultSettings?.apiHost || '').apiPath
-                : ''}
-              {baseInfo.id === ModelProviderEnum.Gemini
-                ? normalizeGeminiHost(providerSettings?.apiHost || baseInfo.defaultSettings?.apiHost || '').apiHost +
-                  normalizeGeminiHost(providerSettings?.apiHost || baseInfo.defaultSettings?.apiHost || '').apiPath
                 : ''}
             </Text>
           </Stack>

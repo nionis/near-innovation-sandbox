@@ -303,8 +303,8 @@ export const imageCreatorSessionForCN: Session = {
   starred: true,
   settings: {
     dalleStyle: 'vivid',
-    provider: ModelProviderEnum.ChatboxAI,
-    modelId: 'DALL-E-3',
+    provider: ModelProviderEnum.NearAI,
+    modelId: 'deepseek-ai/DeepSeek-V3.1',
   },
   messages: [
     {
@@ -416,8 +416,8 @@ export const imageCreatorSessionForEN: Session = {
   starred: true,
   settings: {
     dalleStyle: 'vivid',
-    provider: ModelProviderEnum.ChatboxAI,
-    modelId: 'DALL-E-3',
+    provider: ModelProviderEnum.NearAI,
+    modelId: 'deepseek-ai/DeepSeek-V3.1',
   },
   messages: [
     {

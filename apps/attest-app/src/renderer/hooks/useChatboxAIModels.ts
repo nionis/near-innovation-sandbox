@@ -6,14 +6,14 @@ import { useLanguage, useProviderSettings, useSettingsStore } from '@/stores/set
 
 const useChatboxAIModels = () => {
   const language = useLanguage()
-  const { providerSettings: chatboxAISettings, setProviderSettings } = useProviderSettings(ModelProviderEnum.ChatboxAI)
+  const { providerSettings: chatboxAISettings, setProviderSettings } = useProviderSettings(ModelProviderEnum.NearAI)
   const licenseKey = useSettingsStore((state) => state.licenseKey)
 
   const { data, ...others } = useQuery({
     queryKey: ['chatbox-ai-models', language, licenseKey],
     queryFn: async () => {
       const res = await getModelManifest({
-        aiProvider: ModelProviderEnum.ChatboxAI,
+        aiProvider: ModelProviderEnum.NearAI,
         licenseKey,
         language,
       })

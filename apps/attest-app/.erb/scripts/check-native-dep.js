@@ -30,7 +30,17 @@ if (dependencies) {
     const dependenciesKeys = Object.keys(dependencies)
     
     // Packages to exclude from native dependency check
-    const excludePackages = ['capacitor-stream-http'] // Capacitor plugins are not native Electron dependencies
+    // Capacitor plugins are not native Electron dependencies
+    // Workspace file: references are bundled by webpack and handled separately
+    const excludePackages = [
+        'capacitor-stream-http',
+        '@repo/packages-attestations',
+        '@repo/packages-near-ai-provider',
+        '@repo/packages-utils',
+        'attestations',
+        'near-ai-provider',
+        'utils',
+    ]
     
     // Check for packages with binding.gyp (source-based native modules)
     const nativeDepsByBindingGyp = fs

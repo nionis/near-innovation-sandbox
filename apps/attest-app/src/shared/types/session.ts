@@ -224,6 +224,21 @@ export const SessionSchema = z.object({
   threads: z.array(SessionThreadSchema).optional(),
   threadName: z.string().optional(),
   messageForksHash: z.record(z.string(), MessageForkSchema).optional(),
+  /** Last captured request/response from NEAR AI for session-level attestation */
+  capturedResponse: z
+    .object({
+      e2ee: z.boolean(),
+      requestBody: z.string(),
+      encryptedRequestBody: z.string().optional(),
+      responseBody: z.string(),
+      decryptedResponseBody: z.string().optional(),
+      passphrase: z.array(z.string()).optional(),
+      modelsPublicKey: z.string().optional(),
+      /** Chat ID from NEAR AI response (e.g. chatcmpl-...) for attestation API */
+      chatId: z.string().optional(),
+    })
+    .passthrough()
+    .optional(),
 })
 
 export const SessionMetaSchema = SessionSchema.pick({

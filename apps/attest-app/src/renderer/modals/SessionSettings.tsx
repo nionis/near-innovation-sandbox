@@ -638,29 +638,21 @@ export function ChatConfig({
         />
       </Flex>
 
-      {settings?.provider !== ModelProviderEnum.ChatboxAI && (
-        <Stack gap="xs" py="xs">
-          <Flex align="center" justify="space-between" gap="xs">
-            <Text size="sm" fw="600">
-              {t('Stream output')}
-            </Text>
-            <Switch
-              checked={settings?.stream ?? globalSettingsStream ?? true}
-              onChange={(v) => onSettingsChange({ stream: v.target.checked })}
-            />
-          </Flex>
-        </Stack>
-      )}
+      <Stack gap="xs" py="xs">
+        <Flex align="center" justify="space-between" gap="xs">
+          <Text size="sm" fw="600">
+            {t('Stream output')}
+          </Text>
+          <Switch
+            checked={settings?.stream ?? globalSettingsStream ?? true}
+            onChange={(v) => onSettingsChange({ stream: v.target.checked })}
+          />
+        </Flex>
+      </Stack>
 
       <Stack>
-        {settings?.provider === ModelProviderEnum.Claude && (
-          <ClaudeProviderConfig settings={settings} onSettingsChange={onSettingsChange} />
-        )}
-        {settings?.provider === ModelProviderEnum.OpenAI && (
+        {settings?.provider === ModelProviderEnum.NearAI && (
           <OpenAIProviderConfig settings={settings} onSettingsChange={onSettingsChange} />
-        )}
-        {settings?.provider === ModelProviderEnum.Gemini && (
-          <GoogleProviderConfig settings={settings} onSettingsChange={onSettingsChange} />
         )}
       </Stack>
     </Stack>

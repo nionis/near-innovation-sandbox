@@ -1,3 +1,4 @@
+import type { LanguageModel } from 'ai'
 import type { LanguageModelV2 } from '@ai-sdk/provider'
 import {
   APICallError,
@@ -73,18 +74,18 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
 
   protected abstract getProvider(
     options: CallChatCompletionOptions
-  ): Pick<Provider, 'languageModel'> & Partial<Pick<Provider, 'textEmbeddingModel' | 'imageModel'>>
+  ): Pick<Provider, 'languageModel'> & Partial<Pick<Provider, 'embeddingModel' | 'imageModel'>>
 
-  protected abstract getChatModel(options: CallChatCompletionOptions): LanguageModelV2
+  protected abstract getChatModel(options: CallChatCompletionOptions): LanguageModel
 
   protected getImageModel(): ImageModel | null {
     return null
   }
 
-  protected getTextEmbeddingModel(options: CallChatCompletionOptions): EmbeddingModel<string> | null {
+  protected getTextEmbeddingModel(options: CallChatCompletionOptions): EmbeddingModel | null {
     const provider = this.getProvider(options)
-    if (provider.textEmbeddingModel) {
-      return provider.textEmbeddingModel(this.options.model.modelId)
+    if (provider.embeddingModel) {
+      return provider.embeddingModel(this.options.model.modelId)
     }
     return null
   }
@@ -130,10 +131,9 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
   }
 
   public async paint(
-    prompt: string,
-    num: number,
-    callback?: (picBase64: string) => void,
-    signal?: AbortSignal
+    params: { prompt: string; images?: { imageUrl: string }[]; num: number },
+    signal?: AbortSignal,
+    callback?: (picBase64: string) => void
   ): Promise<string[]> {
     const imageModel = this.getImageModel()
     if (!imageModel) {
@@ -141,8 +141,8 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
     }
     const result = await generateImage({
       model: imageModel,
-      prompt,
-      n: num,
+      prompt: params.prompt,
+      n: params.num,
       abortSignal: signal,
     })
     const dataUrls = result.images.map((image) => `data:${image.mediaType};base64,${image.base64}`)
@@ -449,7 +449,7 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
   }
 
   private async handleStreamingCompletion<T extends ToolSet>(
-    model: LanguageModelV2,
+    model: LanguageModel,
     coreMessages: ModelMessage[],
     options: CallChatCompletionOptions<T>,
     callSettings: CallSettings

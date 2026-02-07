@@ -3,7 +3,7 @@ import { ModelProviderEnum, type SessionSettings, type Settings } from 'src/shar
 import type { ModelDependencies } from 'src/shared/types/adapters'
 import type { SentryScope } from 'src/shared/utils/sentry_adapter'
 import { describe, expect, it, vi } from 'vitest'
-import CustomOpenAIResponses from './custom-openai-responses'
+import NearAI from './near-ai'
 import { getModel } from './index'
 
 const mockScope: SentryScope = {
@@ -28,10 +28,10 @@ const mockDependencies: ModelDependencies = {
 }
 
 describe('getModel', () => {
-  it('returns CustomOpenAIResponses when provider is OpenAIResponses', () => {
+  it('returns NearAI when provider is NearAI', () => {
     const sessionSettings: SessionSettings = {
-      provider: ModelProviderEnum.OpenAIResponses,
-      modelId: 'gpt-5-pro',
+      provider: ModelProviderEnum.NearAI,
+      modelId: 'deepseek-ai/DeepSeek-V3.1',
       temperature: 0.7,
       topP: 0.9,
       maxTokens: 2048,
@@ -43,16 +43,16 @@ describe('getModel', () => {
       ...defaultSettings,
       providers: {
         ...defaultSettings.providers,
-        [ModelProviderEnum.OpenAIResponses]: {
+        [ModelProviderEnum.NearAI]: {
           apiKey: 'test-key',
-          apiHost: 'https://api.openai.com',
-          models: [{ modelId: 'gpt-5-pro' }],
+          apiHost: 'https://cloud-api.near.ai/v1',
+          models: [{ modelId: 'deepseek-ai/DeepSeek-V3.1' }],
         },
       },
     }
 
     const model = getModel(sessionSettings, globalSettings, newConfigs(), mockDependencies)
 
-    expect(model).toBeInstanceOf(CustomOpenAIResponses)
+    expect(model).toBeInstanceOf(NearAI)
   })
 })

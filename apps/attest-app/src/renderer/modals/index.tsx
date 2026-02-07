@@ -1,4 +1,5 @@
 import NiceModal from '@ebay/nice-modal-react'
+import AttestVerifyModal from '@/components/AttestVerifyModal'
 import AppStoreRating from './AppStoreRating'
 import ArtifactPreview from './ArtifactPreview'
 import AttachLink from './AttachLink'
@@ -18,6 +19,7 @@ import Welcome from './Welcome'
 NiceModal.register('welcome', Welcome)
 NiceModal.register('provider-selector', ProviderSelector)
 NiceModal.register('session-settings', SessionSettings)
+NiceModal.register('attest-verify', AttestVerifyModal)
 NiceModal.register('app-store-rating', AppStoreRating)
 NiceModal.register('artifact-preview', ArtifactPreview)
 NiceModal.register('clear-session-list', ClearSessionList)

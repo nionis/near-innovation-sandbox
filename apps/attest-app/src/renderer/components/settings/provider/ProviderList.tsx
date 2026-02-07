@@ -52,7 +52,7 @@ export function ProviderList({ providers, onAddProvider, onImportProvider, isImp
           {providers.map((provider) => (
             <Link
               key={provider.id}
-              to={provider.id === 'chatbox-ai' ? `/settings/provider/chatbox-ai` : `/settings/provider/$providerId`}
+              to={`/settings/provider/${provider.id}`}
               params={{ providerId: provider.id }}
               className={clsx(
                 'no-underline',

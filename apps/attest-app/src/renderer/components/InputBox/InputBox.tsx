@@ -835,7 +835,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                   )}
                 </>
               )}
-              {model?.provider === ModelProviderEnum.ChatboxAI && sessionType === 'picture' && (
+              {model?.provider === ModelProviderEnum.NearAI && sessionType === 'picture' && (
                 <>
                   <ImageUploadInput ref={pictureInputRef} onChange={onFileInputChange} />
                   <ImageUploadButton onClick={onImageUploadClick} tooltipLabel={t('Attach Image')} />
@@ -907,7 +907,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                 </>
               ) : (
                 <>
-                  {model?.provider === ModelProviderEnum.ChatboxAI && (
+                  {model?.provider === ModelProviderEnum.NearAI && (
                     <>
                       <ImageUploadInput ref={pictureInputRef} onChange={onFileInputChange} />
                       <ImageUploadButton onClick={onImageUploadClick} tooltipLabel={t('Add images')} isMobile />

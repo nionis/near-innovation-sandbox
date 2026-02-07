@@ -10,6 +10,7 @@ import { createModelDependencies } from '@/adapters'
 import * as dom from '@/hooks/dom'
 import { languageNameMap } from '@/i18n/locales'
 import * as appleAppStore from '@/packages/apple_app_store'
+import { capturedResponsePromise } from '@repo/packages-near-ai-provider'
 import { generateImage, generateText, streamText } from '@/packages/model-calls'
 import { getModelDisplayName } from '@/packages/model-setting-utils'
 import { estimateTokensFromMessages } from '@/packages/token'
@@ -17,6 +18,12 @@ import { router } from '@/router'
 import { StorageKeyGenerator } from '@/storage/StoreStorage'
 import { sortSessions } from '@/utils/session-utils'
 import { trackEvent } from '@/utils/track'
+
+/** Extract NEAR AI chat ID from SSE response body (first "data: {\"id\":\"chatcmpl-...\"}" line). */
+function extractChatIdFromResponseBody(responseBody: string): string | undefined {
+  const match = responseBody.match(/"id"\s*:\s*"(chatcmpl-[^"]+)"/)
+  return match?.[1]
+}
 import {
   AIProviderNoImplementedPaintError,
   ApiError,
@@ -817,6 +824,18 @@ async function generate(
           usage: result.usage,
         }
         await modifyMessage(sessionId, targetMsg, true)
+        // Store captured request/response for session-level attestation (NEAR AI)
+        try {
+          const captured = await capturedResponsePromise
+          if (captured) {
+            const chatId = extractChatIdFromResponseBody(captured.responseBody)
+            await chatStore.updateSession(sessionId, {
+              capturedResponse: { ...captured, chatId },
+            })
+          }
+        } catch (e) {
+          console.warn('Failed to store captured response for attestation', e)
+        }
         break
       }
       // 图片消息生成

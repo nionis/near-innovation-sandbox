@@ -2,10 +2,13 @@
  * Base webpack config used across other specific configs
  */
 
+import path from 'path'
 import webpack from 'webpack'
 import TsconfigPathsPlugins from 'tsconfig-paths-webpack-plugin'
 import webpackPaths from './webpack.paths'
 import { dependencies as externals } from '../../release/app/package.json'
+
+const monorepoPackagesPath = path.join(webpackPaths.rootPath, '../../packages')
 
 const configuration: webpack.Configuration = {
   externals: [...Object.keys(externals || {})],
@@ -24,6 +27,7 @@ const configuration: webpack.Configuration = {
             transpileOnly: true,
             compilerOptions: {
               module: 'esnext',
+              moduleResolution: 'node',
             },
           },
         },
@@ -69,8 +73,21 @@ const configuration: webpack.Configuration = {
    */
   resolve: {
     extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
+    // Map .js imports to .ts/.tsx source files (TypeScript ESM-style imports)
+    extensionAlias: {
+      '.js': ['.ts', '.tsx', '.js', '.jsx'],
+      '.jsx': ['.tsx', '.jsx'],
+    },
     modules: [webpackPaths.srcPath, 'node_modules'],
-    // There is no need to add aliases here, the paths in tsconfig get mirrored
+    alias: {
+      '@repo/packages-attestations': path.join(monorepoPackagesPath, 'attestations/src'),
+      '@repo/packages-near-ai-provider': path.join(monorepoPackagesPath, 'near-ai-provider/src'),
+      '@repo/packages-utils': path.join(monorepoPackagesPath, 'utils/src'),
+    },
+    // Polyfill fallbacks for Node.js core modules not available in browser/renderer
+    fallback: {
+      util: false,
+    },
     plugins: [new TsconfigPathsPlugins()],
   },
 

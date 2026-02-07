@@ -31,6 +31,9 @@ export const ProviderSettingsSchema = z.object({
   deploymentName: z.string().optional().catch(undefined),
   dalleDeploymentName: z.string().optional().catch(undefined),
   apiVersion: z.string().optional().catch(undefined),
+
+  // NEAR AI
+  e2eeEnabled: z.boolean().optional().catch(undefined),
 })
 
 const BuiltinProviderBaseInfoSchema = z.object({

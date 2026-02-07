@@ -482,106 +482,15 @@ async function migrate_9_to_10(dataStore: MigrateStore): Promise<boolean> {
 
     try {
       if (openaiKey || apiHost) {
-        providers[ModelProviderEnum.OpenAI] = {
-          apiHost,
+        providers[ModelProviderEnum.NearAI] = {
+          apiHost: apiHost || defaults.SystemProviders.find((p) => p.id === ModelProviderEnum.NearAI)?.defaultSettings?.apiHost,
           apiKey: openaiKey,
-          // 将openaiCustomModelOptions和openaiCustomModel迁移过来
-          models:
-            openaiCustomModel || openaiCustomModelOptions
-              ? uniqBy(
-                  [
-                    ...(defaults.SystemProviders.find((p) => p.id === ModelProviderEnum.OpenAI)?.defaultSettings
-                      ?.models || []),
-                    ...(openaiCustomModel ? [{ modelId: openaiCustomModel }] : []),
-                    ...(openaiCustomModelOptions || []).map((o: string) => ({
-                      modelId: o,
-                    })),
-                  ],
-                  'modelId'
-                )
-              : undefined,
         }
+        log.info('migrate to NEAR AI settings done')
       }
-      log.info('migrate openai settings done')
     } catch (e) {
-      log.info('migrate openai settings failed.')
+      log.info('migrate provider settings failed.')
     }
-
-    if (claudeApiKey || claudeApiHost) {
-      providers[ModelProviderEnum.Claude] = {
-        apiKey: claudeApiKey,
-        apiHost: claudeApiHost,
-      }
-      log.info('migrate claude settings done')
-    }
-    if (geminiAPIKey || geminiAPIHost) {
-      providers[ModelProviderEnum.Gemini] = {
-        apiKey: geminiAPIKey,
-        apiHost: geminiAPIHost,
-      }
-      log.info('migrate gemini settings done')
-    }
-    if (deepseekAPIKey) {
-      providers[ModelProviderEnum.DeepSeek] = {
-        apiKey: deepseekAPIKey,
-      }
-      log.info('migrate deepseek settings done')
-    }
-    if (siliconCloudKey) {
-      providers[ModelProviderEnum.SiliconFlow] = {
-        apiKey: siliconCloudKey,
-      }
-      log.info('migrate siliconflow settings done')
-    }
-    if (azureEndpoint || azureDeploymentNameOptions || azureDalleDeploymentName || azureApikey || azureApiVersion) {
-      providers[ModelProviderEnum.Azure] = {
-        apiKey: azureApikey,
-        endpoint: azureEndpoint,
-        dalleDeploymentName: azureDalleDeploymentName,
-        apiVersion: azureApiVersion,
-        models: azureDeploymentNameOptions?.map((op: string) => ({
-          modelId: op,
-        })),
-      }
-      log.info('migrate azure settings done')
-    }
-    if (xAIKey) {
-      providers[ModelProviderEnum.XAI] = {
-        apiKey: xAIKey,
-      }
-      log.info('migrate xai settings done')
-    }
-    if (ollamaHost) {
-      providers[ModelProviderEnum.Ollama] = {
-        apiHost: ollamaHost,
-      }
-      log.info('migrate ollama settings done')
-    }
-    if (lmStudioHost) {
-      providers[ModelProviderEnum.LMStudio] = {
-        apiHost: lmStudioHost,
-      }
-      log.info('migrate lmstudio settings done')
-    }
-    if (perplexityApiKey) {
-      providers[ModelProviderEnum.Perplexity] = {
-        apiKey: perplexityApiKey,
-      }
-      log.info('migrate perplexity settings done')
-    }
-    if (groqAPIKey) {
-      providers[ModelProviderEnum.Groq] = {
-        apiKey: groqAPIKey,
-      }
-      log.info('migrate groq settings done')
-    }
-    if (chatglmApiKey) {
-      providers[ModelProviderEnum.ChatGLM6B] = {
-        apiKey: chatglmApiKey,
-      }
-      log.info('migrate chatglm settings done')
-    }
-
     try {
       if (oldCustomProviders) {
         oldCustomProviders.forEach((cp: any) => {
@@ -634,40 +543,20 @@ async function migrate_9_to_10(dataStore: MigrateStore): Promise<boolean> {
 
       if (session.id) {
         const oldSessionSettings = (session.settings || {}) as any
-        const sessionProvider: ModelProvider = oldSessionSettings.aiProvider ?? oldSettings.aiProvider
-        const modelKey = {
-          [ModelProviderEnum.ChatboxAI]: 'chatboxAIModel',
-          [ModelProviderEnum.OpenAI]: 'model',
-          [ModelProviderEnum.Claude]: 'claudeModel',
-          [ModelProviderEnum.Gemini]: 'geminiModel',
-          [ModelProviderEnum.Ollama]: 'ollamaModel',
-          [ModelProviderEnum.LMStudio]: 'lmStudioModel',
-          [ModelProviderEnum.DeepSeek]: 'deepseekModel',
-          [ModelProviderEnum.SiliconFlow]: 'siliconCloudModel',
-          [ModelProviderEnum.Azure]: 'azureDeploymentName',
-          [ModelProviderEnum.XAI]: 'xAIModel',
-          [ModelProviderEnum.Perplexity]: 'perplexityModel',
-          [ModelProviderEnum.Groq]: 'groqModel',
-          [ModelProviderEnum.ChatGLM6B]: 'chatglmModel',
-          [ModelProviderEnum.Custom]: 'model',
-        }[sessionProvider]
-        const modelId: string = oldSessionSettings[modelKey!] ?? oldSettings[modelKey!]
+        const modelKey = 'model'
+        const modelId: string = oldSessionSettings[modelKey] ?? oldSettings[modelKey] ?? 'deepseek-ai/DeepSeek-V3.1'
         session.settings =
           session.type === 'chat'
             ? {
-                provider: sessionProvider,
+                provider: ModelProviderEnum.NearAI,
                 modelId,
                 maxContextMessageCount: oldSessionSettings.maxContextMessageCount ?? oldSettings.maxContextMessageCount,
                 temperature: oldSessionSettings.temperature ?? oldSettings.temperature,
                 topP: oldSessionSettings.topP ?? oldSettings.topP,
               }
             : {
-                provider: [ModelProviderEnum.ChatboxAI, ModelProviderEnum.OpenAI, ModelProviderEnum.Azure].includes(
-                  oldSettings.aiProvider
-                )
-                  ? oldSettings.aiProvider
-                  : ModelProviderEnum.ChatboxAI,
-                modelId: 'DALL-E-3',
+                provider: ModelProviderEnum.NearAI,
+                modelId: 'deepseek-ai/DeepSeek-V3.1',
                 imageGenerateNum: oldSessionSettings.imageGenerateNum ?? 3,
                 dalleStyle: oldSessionSettings.dalleStyle ?? 'vivid',
               }

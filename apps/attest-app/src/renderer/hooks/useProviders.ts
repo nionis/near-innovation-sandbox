@@ -18,11 +18,19 @@ export const useProviders = () => {
       allProviderBaseInfos
         .map((p) => {
           const providerSettings = providerSettingsMap?.[p.id]
-          if (p.id === ModelProviderEnum.ChatboxAI && settings.licenseKey) {
+          if (p.id === ModelProviderEnum.NearAI) {
+            // Use remote chatboxAIModels if available, otherwise fall back to
+            // persisted provider models or the static defaultSettings.models
+            const models =
+              chatboxAIModels.length > 0
+                ? chatboxAIModels
+                : providerSettings?.models?.length
+                  ? providerSettings.models
+                  : p.defaultSettings?.models || []
             return {
               ...p,
               ...providerSettings,
-              models: chatboxAIModels,
+              models,
             }
           } else if (
             (!p.isCustom && providerSettings?.apiKey) ||
