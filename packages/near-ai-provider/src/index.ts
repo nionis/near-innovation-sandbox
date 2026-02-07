@@ -9,6 +9,10 @@ import { E2EE } from './e2ee/index.js';
 
 export type * from './types.js';
 export type * from './e2ee/types.js';
+export {
+  parseMessagesFromRequestBody,
+  parseOutputFromResponseBody,
+} from './utils.js';
 export { capturedResponsePromise } from './capturing-fetch.js';
 export { fetchAvailableModels } from './list-models.js';
 

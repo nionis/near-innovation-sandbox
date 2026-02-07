@@ -6,6 +6,8 @@ import {
   createNearAI,
   capturedResponsePromise,
   fetchAvailableModels,
+  parseMessagesFromRequestBody,
+  parseOutputFromResponseBody,
 } from '@repo/packages-near-ai-provider';
 import {
   NearBlockchainNetwork,
@@ -206,15 +208,14 @@ program
             modelsPublicKey: undefined,
           };
 
-      console.log('chatExport', chatExport);
-
       if (options.export) {
         console.log(`Exporting chat to ${options.export}`);
         fs.writeFileSync(options.export, JSON.stringify(chatExport, null, 2));
       }
-      // console.log('Receipt');
-      // console.log(`  Signature: ${receipt.signature}`);
-      // console.log(receipt.output);
+      console.log('Result:');
+      console.log(`  Output: ${output}`);
+      console.log(`  Signature: ${chatAttestation.signature}`);
+      console.log(`  Proof Hash: ${proofHash}`);
     } catch (error) {
       console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);
@@ -268,11 +269,15 @@ program
       printVerificationResult('gateway_compose', gateway_compose);
       printVerificationResult('notorized', notorized);
 
+      const messages = parseMessagesFromRequestBody(chatExport.requestBody);
+      const prompt = messages[messages.length - 1]!.content;
+      const output = parseOutputFromResponseBody(chatExport.responseBody);
+
       if (result.valid) {
         console.log('Verified AI output!');
-        // console.log(`  Model: ${receipt.model}`);
-        // console.log(`  Prompt: ${receipt.prompt}`);
-        // console.log(`  Output: ${receipt.output}`);
+        console.log(`  Model: ${chatExport.model}`);
+        console.log(`  Prompt: ${prompt}`);
+        console.log(`  Output: ${output}`);
       } else {
         console.log('Verification failed!');
         console.log(`  Reason: ${result.message}`);
