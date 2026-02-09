@@ -76,12 +76,18 @@ const SettingsMenu = () => {
       title: 'common:privacy',
       route: route.settings.privacy,
       hasSubMenu: false,
-      isEnabled: true,
+      isEnabled: false,
     },
     {
       title: 'common:modelProviders',
       route: route.settings.model_providers,
       hasSubMenu: activeProviders.length > 0,
+      isEnabled: false,
+    },
+    {
+      title: 'NEAR AI',
+      route: route.settings.near_ai,
+      hasSubMenu: false,
       isEnabled: true,
     },
     {
@@ -112,7 +118,7 @@ const SettingsMenu = () => {
       title: 'common:local_api_server',
       route: route.settings.local_api_server,
       hasSubMenu: false,
-      isEnabled: true,
+      isEnabled: false,
     },
     {
       title: 'common:https_proxy',

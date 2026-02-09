@@ -104,9 +104,7 @@ export default defineConfig(({ mode }) => {
       MODEL_CATALOG_URL: JSON.stringify(
         'https://raw.githubusercontent.com/janhq/model-catalog/main/model_catalog.json'
       ),
-      AUTO_UPDATER_DISABLED: JSON.stringify(
-        env.AUTO_UPDATER_DISABLED === 'true'
-      ),
+      AUTO_UPDATER_DISABLED: true,
       UPDATE_CHECK_INTERVAL_MS: JSON.stringify(
         Number(env.UPDATE_CHECK_INTERVAL_MS) || 60 * 60 * 1000
       ),

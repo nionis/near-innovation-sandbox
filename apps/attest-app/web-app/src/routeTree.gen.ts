@@ -18,6 +18,7 @@ import { Route as HubIndexImport } from './routes/hub/index'
 import { Route as ThreadsThreadIdImport } from './routes/threads/$threadId'
 import { Route as SettingsShortcutsImport } from './routes/settings/shortcuts'
 import { Route as SettingsPrivacyImport } from './routes/settings/privacy'
+import { Route as SettingsNearAiImport } from './routes/settings/near-ai'
 import { Route as SettingsMcpServersImport } from './routes/settings/mcp-servers'
 import { Route as SettingsLocalApiServerImport } from './routes/settings/local-api-server'
 import { Route as SettingsInterfaceImport } from './routes/settings/interface'
@@ -74,6 +75,12 @@ const SettingsShortcutsRoute = SettingsShortcutsImport.update({
 const SettingsPrivacyRoute = SettingsPrivacyImport.update({
   id: '/settings/privacy',
   path: '/settings/privacy',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SettingsNearAiRoute = SettingsNearAiImport.update({
+  id: '/settings/near-ai',
+  path: '/settings/near-ai',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -271,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsMcpServersImport
       parentRoute: typeof rootRoute
     }
+    '/settings/near-ai': {
+      id: '/settings/near-ai'
+      path: '/settings/near-ai'
+      fullPath: '/settings/near-ai'
+      preLoaderRoute: typeof SettingsNearAiImport
+      parentRoute: typeof rootRoute
+    }
     '/settings/privacy': {
       id: '/settings/privacy'
       path: '/settings/privacy'
@@ -334,6 +348,7 @@ export interface FileRoutesByFullPath {
   '/settings/interface': typeof SettingsInterfaceRoute
   '/settings/local-api-server': typeof SettingsLocalApiServerRoute
   '/settings/mcp-servers': typeof SettingsMcpServersRoute
+  '/settings/near-ai': typeof SettingsNearAiRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/threads/$threadId': typeof ThreadsThreadIdRoute
@@ -358,6 +373,7 @@ export interface FileRoutesByTo {
   '/settings/interface': typeof SettingsInterfaceRoute
   '/settings/local-api-server': typeof SettingsLocalApiServerRoute
   '/settings/mcp-servers': typeof SettingsMcpServersRoute
+  '/settings/near-ai': typeof SettingsNearAiRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/threads/$threadId': typeof ThreadsThreadIdRoute
@@ -383,6 +399,7 @@ export interface FileRoutesById {
   '/settings/interface': typeof SettingsInterfaceRoute
   '/settings/local-api-server': typeof SettingsLocalApiServerRoute
   '/settings/mcp-servers': typeof SettingsMcpServersRoute
+  '/settings/near-ai': typeof SettingsNearAiRoute
   '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/threads/$threadId': typeof ThreadsThreadIdRoute
@@ -409,6 +426,7 @@ export interface FileRouteTypes {
     | '/settings/interface'
     | '/settings/local-api-server'
     | '/settings/mcp-servers'
+    | '/settings/near-ai'
     | '/settings/privacy'
     | '/settings/shortcuts'
     | '/threads/$threadId'
@@ -432,6 +450,7 @@ export interface FileRouteTypes {
     | '/settings/interface'
     | '/settings/local-api-server'
     | '/settings/mcp-servers'
+    | '/settings/near-ai'
     | '/settings/privacy'
     | '/settings/shortcuts'
     | '/threads/$threadId'
@@ -455,6 +474,7 @@ export interface FileRouteTypes {
     | '/settings/interface'
     | '/settings/local-api-server'
     | '/settings/mcp-servers'
+    | '/settings/near-ai'
     | '/settings/privacy'
     | '/settings/shortcuts'
     | '/threads/$threadId'
@@ -480,6 +500,7 @@ export interface RootRouteChildren {
   SettingsInterfaceRoute: typeof SettingsInterfaceRoute
   SettingsLocalApiServerRoute: typeof SettingsLocalApiServerRoute
   SettingsMcpServersRoute: typeof SettingsMcpServersRoute
+  SettingsNearAiRoute: typeof SettingsNearAiRoute
   SettingsPrivacyRoute: typeof SettingsPrivacyRoute
   SettingsShortcutsRoute: typeof SettingsShortcutsRoute
   ThreadsThreadIdRoute: typeof ThreadsThreadIdRoute
@@ -504,6 +525,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsInterfaceRoute: SettingsInterfaceRoute,
   SettingsLocalApiServerRoute: SettingsLocalApiServerRoute,
   SettingsMcpServersRoute: SettingsMcpServersRoute,
+  SettingsNearAiRoute: SettingsNearAiRoute,
   SettingsPrivacyRoute: SettingsPrivacyRoute,
   SettingsShortcutsRoute: SettingsShortcutsRoute,
   ThreadsThreadIdRoute: ThreadsThreadIdRoute,
@@ -537,6 +559,7 @@ export const routeTree = rootRoute
         "/settings/interface",
         "/settings/local-api-server",
         "/settings/mcp-servers",
+        "/settings/near-ai",
         "/settings/privacy",
         "/settings/shortcuts",
         "/threads/$threadId",
@@ -589,6 +612,9 @@ export const routeTree = rootRoute
     },
     "/settings/mcp-servers": {
       "filePath": "settings/mcp-servers.tsx"
+    },
+    "/settings/near-ai": {
+      "filePath": "settings/near-ai.tsx"
     },
     "/settings/privacy": {
       "filePath": "settings/privacy.tsx"

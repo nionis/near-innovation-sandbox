@@ -1,4 +1,4 @@
-﻿import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { createRootRoute, Outlet } from '@tanstack/react-router'
 // import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import DialogAppUpdater from '@/containers/dialogs/AppUpdater'
@@ -67,7 +67,6 @@ const AppLayout = () => {
           </div>
         </SidebarInset>
 
-        {productAnalyticPrompt && <PromptAnalytic />}
         {showJanModelPrompt && <PromptJanModel />}
 
       </SidebarProvider>
