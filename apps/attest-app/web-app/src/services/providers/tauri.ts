@@ -11,6 +11,7 @@ import { ExtensionManager } from '@/lib/extension'
 import { fetch as fetchTauri } from '@tauri-apps/plugin-http'
 import { DefaultProvidersService } from './default'
 import { getModelCapabilities } from '@/lib/models'
+import { fetchAvailableModels } from '@repo/packages-near-ai-provider'
 
 export class TauriProvidersService extends DefaultProvidersService {
   fetch(): typeof fetch {
@@ -168,6 +169,11 @@ export class TauriProvidersService extends DefaultProvidersService {
         provider.custom_header.forEach((header) => {
           headers[header.header] = header.value
         })
+      }
+
+      console.log('provider.provider', provider.provider)
+      if (provider.provider === 'near-ai') {
+        return await fetchAvailableModels(provider.api_key!)
       }
 
       // Always use Tauri's fetch to avoid CORS issues
