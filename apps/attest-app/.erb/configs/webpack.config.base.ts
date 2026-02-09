@@ -87,6 +87,7 @@ const configuration: webpack.Configuration = {
     // Polyfill fallbacks for Node.js core modules not available in browser/renderer
     fallback: {
       util: false,
+      buffer: require.resolve('buffer/'),
     },
     plugins: [new TsconfigPathsPlugins()],
   },
@@ -97,6 +98,10 @@ const configuration: webpack.Configuration = {
       CHATBOX_BUILD_TARGET: 'unknown',
       CHATBOX_BUILD_PLATFORM: 'unknown',
       USE_LOCAL_API: '',
+    }),
+    // Provide Buffer globally for browser compatibility
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
     }),
   ],
 }

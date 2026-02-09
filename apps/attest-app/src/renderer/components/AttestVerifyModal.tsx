@@ -42,7 +42,9 @@ const AttestVerifyModal = NiceModal.create(({ session }: { session: Session }) =
   const [verifyResult, setVerifyResult] = useState<VerifyOutput | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
 
-  const requestBodyForAttest = captured?.e2ee ? captured.encryptedRequestBody ?? captured.requestBody : captured?.requestBody ?? ''
+  const requestBodyForAttest = captured?.e2ee
+    ? captured.encryptedRequestBody ?? captured.requestBody
+    : captured?.requestBody ?? ''
   const responseBodyForAttest = captured?.responseBody ?? ''
   const chatId = captured?.chatId
 
@@ -82,8 +84,7 @@ const AttestVerifyModal = NiceModal.create(({ session }: { session: Session }) =
           requestBody: requestBodyForAttest,
           responseBody: responseBodyForAttest,
         },
-        apiKey,
-        { nearAiBaseURL: apiHost.replace(/\/v1\/?$/, '') }
+        apiKey
       )
       setAttestOutput(output)
       setAttestTimestamp(Date.now())
@@ -104,11 +105,7 @@ const AttestVerifyModal = NiceModal.create(({ session }: { session: Session }) =
     setStep('storing')
     setErrorMessage('')
     try {
-      const proofHash = computeProofHash(
-        attestOutput.requestHash,
-        attestOutput.responseHash,
-        attestOutput.signature
-      )
+      const proofHash = computeProofHash(attestOutput.requestHash, attestOutput.responseHash, attestOutput.signature)
       const { txHash: hash } = await storeAttestationRecordWithAPI(STORE_API_URL, {
         proofHash,
         timestamp: receipt.timestamp,
@@ -141,8 +138,8 @@ const AttestVerifyModal = NiceModal.create(({ session }: { session: Session }) =
         },
         blockchain,
         {
-          nearAiBaseURL: apiHost.replace(/\/v1\/?$/, ''),
-          nrasUrl: NRAS_BASE_URL,
+          nearAiBaseURL: 'http://localhost:3000/api/verify?url=' + NEAR_AI_BASE_URL,
+          nrasUrl: 'http://localhost:3000/api/verify?url=' + NRAS_BASE_URL,
         }
       )
       setVerifyResult(result)
@@ -167,12 +164,7 @@ const AttestVerifyModal = NiceModal.create(({ session }: { session: Session }) =
   const isBusy = step === 'attesting' || step === 'storing'
 
   return (
-    <Modal
-      title={t('Attest & Verify')}
-      opened={modal.visible}
-      onClose={() => modal.hide()}
-      size="md"
-    >
+    <Modal title={t('Attest & Verify')} opened={modal.visible} onClose={() => modal.hide()} size="md">
       <Stack gap="md">
         {!captured ? (
           <Text size="sm" c="dimmed">
@@ -253,13 +245,7 @@ const AttestVerifyModal = NiceModal.create(({ session }: { session: Session }) =
   )
 })
 
-function VerificationRow({
-  label,
-  result,
-}: {
-  label: string
-  result: { valid: boolean; message?: string }
-}) {
+function VerificationRow({ label, result }: { label: string; result: { valid: boolean; message?: string } }) {
   const { t } = useTranslation()
   return (
     <Flex justify="space-between" align="center" gap="xs">
