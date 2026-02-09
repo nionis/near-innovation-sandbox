@@ -383,85 +383,6 @@ function General() {
                   />
                 }
               />
-              <CardItem
-                title={t('settings:general.huggingfaceToken', {
-                  ns: 'settings',
-                })}
-                description={t('settings:general.huggingfaceTokenDesc', {
-                  ns: 'settings',
-                })}
-                actions={
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="hf-token"
-                      value={huggingfaceToken || ''}
-                      onChange={(e) => setHuggingfaceToken(e.target.value)}
-                      placeholder={'hf_xxx_xxx'}
-                      required
-                    />
-                    <Button
-                      variant="outline"
-                      size='sm'
-                      disabled={isValidatingToken}
-                      onClick={async () => {
-                        const token = (huggingfaceToken || '').trim()
-                        if (!token) {
-                          toast.error(
-                            'Please enter a Hugging Face token to validate'
-                          )
-                          return
-                        }
-                        setIsValidatingToken(true)
-                        const controller = new AbortController()
-                        const timeoutId = setTimeout(
-                          () => controller.abort(),
-                          TOKEN_VALIDATION_TIMEOUT_MS
-                        )
-                        try {
-                          const resp = await fetch(
-                            'https://huggingface.co/api/whoami-v2',
-                            {
-                              headers: { Authorization: `Bearer ${token}` },
-                              signal: controller.signal,
-                            }
-                          )
-                          if (resp.ok) {
-                            const data = await resp.json()
-                            toast.success('Token is valid', {
-                              description: data?.name
-                                ? `Signed in as ${data.name}`
-                                : 'Your Hugging Face token is valid.',
-                            })
-                          } else {
-                            toast.error('Token invalid', {
-                              description:
-                                'The provided Hugging Face token is invalid. Please check your token and try again.',
-                            })
-                          }
-                        } catch (e) {
-                          const name = (e as { name?: string })?.name
-                          if (name === 'AbortError') {
-                            toast.error('Validation timed out', {
-                              description:
-                                'The validation request timed out. Please check your network connection and try again.',
-                            })
-                          } else {
-                            toast.error('Validation failed', {
-                              description:
-                                'A network error occurred while validating the token. Please check your internet connection.',
-                            })
-                          }
-                        } finally {
-                          clearTimeout(timeoutId)
-                          setIsValidatingToken(false)
-                        }
-                      }}
-                    >
-                      Verify
-                    </Button>
-                  </div>
-                }
-              />
             </Card>
 
             {/* Resources */}
@@ -471,7 +392,7 @@ function General() {
                 description={t('settings:general.documentationDesc')}
                 actions={
                   <a
-                    href="https://jan.ai/docs"
+                    href="https://github.com/nionis/near-innovation-sandbox"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -487,7 +408,7 @@ function General() {
                 description={t('settings:general.releaseNotesDesc')}
                 actions={
                   <a
-                    href="https://github.com/janhq/jan/releases"
+                    href="https://github.com/nionis/near-innovation-sandbox/releases"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -543,7 +464,7 @@ function General() {
                 description={t('settings:general.reportAnIssueDesc')}
                 actions={
                   <a
-                    href="https://github.com/janhq/jan/issues/new"
+                    href="https://github.com/nionis/near-innovation-sandbox/issues/new"
                     target="_blank"
                   >
                     <div className="flex items-center gap-1">

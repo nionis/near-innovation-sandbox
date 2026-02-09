@@ -26,7 +26,7 @@ export const useModelProvider = create<ModelProviderState>()(
   persist(
     (set, get) => ({
       providers: [],
-      selectedProvider: 'llamacpp',
+      selectedProvider: 'near-ai',
       selectedModel: null,
       deletedModels: [],
       getModelBy: (modelId: string) => {
@@ -109,7 +109,10 @@ export const useModelProvider = create<ModelProviderState>()(
               return {
                 ...model,
                 settings: settings,
-                capabilities: mergedCapabilities.length > 0 ? mergedCapabilities : undefined,
+                capabilities:
+                  mergedCapabilities.length > 0
+                    ? mergedCapabilities
+                    : undefined,
                 displayName: existingModel?.displayName || model.displayName,
               }
             })

@@ -72,11 +72,6 @@ const getNavMainItems = (onNewProject: () => void, onSearch: () => void): NavMai
     ),
   },
   {
-    title: "common:hub",
-    url: route.hub.index,
-    animatedIcon: BlocksIcon,
-  },
-  {
     title: "common:settings",
     url: route.settings.general,
     animatedIcon: SettingsIcon,
