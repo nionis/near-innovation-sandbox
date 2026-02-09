@@ -20,34 +20,36 @@ export class TauriProvidersService extends DefaultProvidersService {
 
   async getProviders(): Promise<ModelProvider[]> {
     try {
-      const builtinProviders = predefinedProviders.map((provider) => {
-        let models = provider.models as Model[]
-        if (Object.keys(providerModels).includes(provider.provider)) {
-          const builtInModels = providerModels[
-            provider.provider as unknown as keyof typeof providerModels
-          ].models as unknown as string[]
+      const builtinProviders = predefinedProviders
+        .map((provider) => {
+          let models = provider.models as Model[]
+          if (Object.keys(providerModels).includes(provider.provider)) {
+            const builtInModels = providerModels[
+              provider.provider as unknown as keyof typeof providerModels
+            ].models as unknown as string[]
 
-          if (Array.isArray(builtInModels)) {
-            models = builtInModels.map((model) => {
-              const modelManifest = models.find((e) => e.id === model)
-              // TODO: Check chat_template for tool call support
-              return {
-                ...(modelManifest ?? { id: model, name: model }),
-                capabilities: getModelCapabilities(provider.provider, model),
-              } as Model
-            })
+            if (Array.isArray(builtInModels)) {
+              models = builtInModels.map((model) => {
+                const modelManifest = models.find((e) => e.id === model)
+                // TODO: Check chat_template for tool call support
+                return {
+                  ...(modelManifest ?? { id: model, name: model }),
+                  capabilities: getModelCapabilities(provider.provider, model),
+                } as Model
+              })
+            }
           }
-        }
 
-        return {
-          ...provider,
-          models,
-        }
-      }).filter(Boolean)
+          return {
+            ...provider,
+            models,
+          }
+        })
+        .filter(Boolean)
 
       const runtimeProviders: ModelProvider[] = []
       for (const [providerName, value] of EngineManager.instance().engines) {
-        const models = await value.list() ?? [] 
+        const models = (await value.list()) ?? []
         const provider: ModelProvider = {
           active: false,
           persist: true,
@@ -69,7 +71,10 @@ export class TauriProvidersService extends DefaultProvidersService {
             models.map(async (model) => {
               let capabilities: string[] = []
 
-              if ('capabilities' in model && Array.isArray(model.capabilities)) {
+              if (
+                'capabilities' in model &&
+                Array.isArray(model.capabilities)
+              ) {
                 capabilities = [...(model.capabilities as string[])]
               }
               if (!capabilities.includes(ModelCapabilities.TOOLS)) {
@@ -88,7 +93,10 @@ export class TauriProvidersService extends DefaultProvidersService {
               }
 
               // Add embeddings capability for embedding models
-              if (model.embedding && !capabilities.includes(ModelCapabilities.EMBEDDINGS)) {
+              if (
+                model.embedding &&
+                !capabilities.includes(ModelCapabilities.EMBEDDINGS)
+              ) {
                 capabilities = [...capabilities, ModelCapabilities.EMBEDDINGS]
               }
 

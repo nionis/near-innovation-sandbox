@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'rolldown'
 import pkgJson from './package.json' with { type: 'json' }
 import settingJson from './settings.json' with { type: 'json' }
@@ -17,7 +16,7 @@ export default defineConfig({
     IS_MAC: JSON.stringify(process.platform === 'darwin'),
     IS_LINUX: JSON.stringify(process.platform === 'linux'),
   },
-  inject: process.env.IS_DEV ? {} : {
-      fetch: ['@tauri-apps/plugin-http', 'fetch'],
+  inject: {
+    fetch: ['@tauri-apps/plugin-http', 'fetch'],
   },
 })

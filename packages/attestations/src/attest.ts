@@ -1,4 +1,8 @@
-import type { AttestInput, AttestOutput } from './types.js';
+import type {
+  AttestationsOptions,
+  AttestInput,
+  AttestOutput,
+} from './types.js';
 import { type NearAIChatModelId } from '@repo/packages-utils/near';
 import { sha256_utf8_str } from '@repo/packages-utils/crypto';
 import { compareHashes } from './crypto.js';
@@ -7,8 +11,9 @@ import { fetchSignature } from './verify-utils.js';
 /** get attestation from model for a chat */
 export async function attestChat(
   input: AttestInput,
+  nearAiBaseURL: string,
   nearAiApiKey: string,
-  nearAiBaseURL: string
+  options?: AttestationsOptions
 ): Promise<AttestOutput> {
   const { chatId, requestBody, responseBody } = input;
 
@@ -31,7 +36,8 @@ export async function attestChat(
     nearAiBaseURL,
     nearAiApiKey,
     model,
-    chatId
+    chatId,
+    options
   );
 
   // verify the signature text matches our computed hashes

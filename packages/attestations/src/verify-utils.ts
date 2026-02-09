@@ -1,5 +1,6 @@
 import type { NearAIChatModelId } from '@repo/packages-utils/near';
 import type {
+  AttestationsOptions,
   Attestation,
   SignatureResponse,
   VerificationResult,
@@ -10,10 +11,11 @@ export async function fetchSignature(
   nearAiBaseURL: string,
   nearAiApiKey: string,
   model: NearAIChatModelId,
-  chatId: string
+  chatId: string,
+  options?: AttestationsOptions
 ): Promise<SignatureResponse> {
   const url = `${nearAiBaseURL}/signature/${chatId}?model=${encodeURIComponent(model)}&signing_algo=ecdsa`;
-  const response = await fetch(url, {
+  const response = await (options?.fetch ?? fetch)(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -36,10 +38,11 @@ export async function fetchAttestation(
   nearAiBaseURL: string,
   model: NearAIChatModelId,
   requestNonce: string,
-  signingAddress: string
+  signingAddress: string,
+  options?: AttestationsOptions
 ): Promise<Attestation> {
   const url = `${nearAiBaseURL}/attestation/report?model=${encodeURIComponent(model)}&signing_algo=ecdsa&nonce=${requestNonce}&signing_address=${encodeURIComponent(signingAddress)}`;
-  const response = await fetch(url, {
+  const response = await (options?.fetch ?? fetch)(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
 import type {
+  AttestationsOptions,
   ModelAndGatewayVerificationResult,
   ModelAttestation,
   GatewayAttestation,
@@ -59,14 +60,16 @@ export async function verifyModelAndGatewayAttestation(
     responseHash: string;
   },
   nearAiBaseURL: string,
-  nrasUrl: string
+  nrasUrl: string,
+  options?: AttestationsOptions
 ): Promise<ModelAndGatewayVerificationResult> {
   const nonce = randomNonce();
   const attestation = await fetchAttestation(
     nearAiBaseURL,
     input.model,
     nonce,
-    input.signingAddress
+    input.signingAddress,
+    options
   );
 
   const {
@@ -97,7 +100,8 @@ export async function verifyModelAndGatewayAttestation(
 async function verifyModelAttestation(
   attestation: ModelAttestation,
   nonce: string,
-  nrasUrl: string
+  nrasUrl: string,
+  options?: AttestationsOptions
 ): Promise<
   Pick<
     ModelAndGatewayVerificationResult,
@@ -143,9 +147,10 @@ async function verifyModelAttestation(
 async function verifyGpuAttestation(
   payload: string,
   expectedNonce: string,
-  nrasUrl: string
+  nrasUrl: string,
+  options?: AttestationsOptions
 ): Promise<VerificationResult> {
-  const response = await fetch(`${nrasUrl}/attest/gpu`, {
+  const response = await (options?.fetch ?? fetch)(`${nrasUrl}/attest/gpu`, {
     method: 'POST',
     headers: {
       accept: 'application/json',

@@ -32,7 +32,12 @@ import {
   extractContentPartsFromUIMessage,
 } from '@/lib/messages'
 import { newUserThreadContent } from '@/lib/completion'
-import { ThreadMessage, MessageStatus, ChatCompletionRole, ContentType } from '@janhq/core'
+import {
+  ThreadMessage,
+  MessageStatus,
+  ChatCompletionRole,
+  ContentType,
+} from '@janhq/core'
 import { createImageAttachment } from '@/types/attachment'
 import {
   useChatAttachments,
@@ -585,7 +590,6 @@ function ThreadDetail() {
   // Handle edit message - updates the message and regenerates from it
   const handleEditMessage = useCallback(
     (messageId: string, newText: string) => {
-
       const currentLocalMessages = useMessages.getState().getMessages(threadId)
       const messageIndex = currentLocalMessages.findIndex(
         (m) => m.id === messageId
@@ -620,7 +624,7 @@ function ThreadDetail() {
       setChatMessages(updatedChatMessages)
 
       // Only regenerate if the edited message is from the user
-      if(updatedMessage.role === 'assistant') return
+      if (updatedMessage.role === 'assistant') return
 
       // Delete all messages after this one and regenerate
       const messagesToDelete = currentLocalMessages.slice(messageIndex + 1)
@@ -709,7 +713,13 @@ function ThreadDetail() {
     setTimeout(() => {
       handleRegenerate()
     }, 1000)
-  }, [selectedModel, selectedProvider, getProviderByName, serviceHub, handleRegenerate])
+  }, [
+    selectedModel,
+    selectedProvider,
+    getProviderByName,
+    serviceHub,
+    handleRegenerate,
+  ])
 
   const threadModel = useMemo(() => thread?.model, [thread])
 
@@ -727,9 +737,7 @@ function ThreadDetail() {
         <div className="flex-1 relative">
           <Conversation className="absolute inset-0 text-start">
             <ConversationContent
-              className={cn(
-                'mx-auto w-full md:w-4/5 xl:w-4/6',
-              )}
+              className={cn('mx-auto w-full md:w-4/5 xl:w-4/6')}
             >
               {chatMessages.map((message, index) => {
                 const isLastMessage = index === chatMessages.length - 1

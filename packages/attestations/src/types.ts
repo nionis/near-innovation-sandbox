@@ -4,28 +4,33 @@ import type {
 } from '@repo/packages-utils/near';
 
 /** NEAR blockchain configuration */
-export interface BlockchainConfig {
+export type BlockchainConfig = {
   networkId: NearBlockchainNetwork;
   contractId: string;
   privateKey?: string;
   accountId?: string;
-}
+};
+
+/** options for attestations API */
+export type AttestationsOptions = {
+  fetch?: typeof fetch;
+};
 
 /** input data for attestation */
-export interface AttestInput {
+export type AttestInput = {
   chatId: string;
   requestBody: string;
   responseBody: string;
-}
+};
 
 /** output data for attestation */
-export interface AttestOutput {
+export type AttestOutput = {
   requestHash: string;
   responseHash: string;
   signature: string;
   signingAddress: string;
   signingAlgo: string;
-}
+};
 
 /** input data for verification */
 export type VerifyInput = {
@@ -45,6 +50,7 @@ export type VerifyOutput = {
   result: VerificationResult;
 } & ModelAndGatewayVerificationResult;
 
+/** compact chat export that can be stored and verified later */
 export type ChatExport = VerifyInput & {
   version: string;
   timestamp: number;
@@ -62,12 +68,30 @@ export type ChatExport = VerifyInput & {
       }
   );
 
+/** pre-formatted chat that can be displayed to the user */
 export type Chat = {
   prompt: string;
   content?: string;
   output: string;
   verification: VerifyOutput;
 };
+
+/** verification result */
+export interface VerificationResult {
+  valid: boolean;
+  message?: string;
+}
+
+/** verification result for model and gateway attestation */
+export type ModelAndGatewayVerificationResult = {
+  model_gpu: VerificationResult;
+  model_tdx: VerificationResult;
+  model_compose: VerificationResult;
+  gateway_tdx: VerificationResult;
+  gateway_compose: VerificationResult;
+};
+
+// below are API types for NEAR AI Cloud and NRAS
 
 /** attestation response from NEAR AI Cloud */
 export interface Attestation {
@@ -135,18 +159,3 @@ export interface SignatureResponse {
   signing_address: string;
   signing_algo: string;
 }
-
-/** verification result */
-export interface VerificationResult {
-  valid: boolean;
-  message?: string;
-}
-
-/** verification result for model and gateway attestation */
-export type ModelAndGatewayVerificationResult = {
-  model_gpu: VerificationResult;
-  model_tdx: VerificationResult;
-  model_compose: VerificationResult;
-  gateway_tdx: VerificationResult;
-  gateway_compose: VerificationResult;
-};

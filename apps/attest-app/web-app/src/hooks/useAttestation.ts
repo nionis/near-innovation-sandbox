@@ -10,6 +10,7 @@ import {
 } from '@repo/packages-attestations'
 import { computeProofHash } from '@repo/packages-attestations/crypto'
 import { toast } from 'sonner'
+import { fetch as fetchTauri } from '@tauri-apps/plugin-http'
 
 /**
  * Hook for generating verifiable proofs for AI-generated content
@@ -59,7 +60,10 @@ export function useAttestation() {
             requestBody: chatData.requestBody,
             responseBody: chatData.responseBody,
           },
-          apiKey
+          apiKey,
+          {
+            fetch: fetchTauri,
+          }
         )
 
         const proofHash = computeProofHash(

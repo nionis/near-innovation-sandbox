@@ -1,4 +1,5 @@
 import type {
+  AttestationsOptions,
   AttestInput,
   AttestOutput,
   VerifyInput,
@@ -18,21 +19,22 @@ import { computeProofHash } from './crypto.js';
 
 export type * from './types.js';
 
+/** attest a chat and return the attestation output */
 export async function attest(
   input: AttestInput,
   nearAiApiKey: string,
-  options?: {
-    nearAiBaseURL?: string;
-  }
+  options?: AttestationsOptions
 ): Promise<AttestOutput> {
   const output = await attestChat(
     input,
+    NEAR_AI_BASE_URL,
     nearAiApiKey,
-    options?.nearAiBaseURL ?? NEAR_AI_BASE_URL
+    options
   );
   return output;
 }
 
+/** store an attestation record on the blockchain via blockchain instance */
 export async function storeAttestationRecordWithBlockchain(
   blockchain: AttestationsBlockchain,
   record: { proofHash: string; timestamp: number }
@@ -40,6 +42,7 @@ export async function storeAttestationRecordWithBlockchain(
   return blockchain.storeAttestationRecord(record.proofHash, record.timestamp);
 }
 
+/** store an attestation record on the blockchain via API */
 export async function storeAttestationRecordWithAPI(
   apiUrl: string,
   record: { proofHash: string; timestamp: number }
@@ -57,13 +60,11 @@ export async function storeAttestationRecordWithAPI(
   return response.json();
 }
 
+/** verify a chat and return the verification output */
 export async function verify(
   input: VerifyInput,
   blockchain: AttestationsBlockchain,
-  options?: {
-    nearAiBaseURL?: string;
-    nrasUrl?: string;
-  }
+  options?: AttestationsOptions
 ): Promise<VerifyOutput> {
   // compute hashes for the request and response
   const requestHash = sha256_utf8_str(input.requestBody);
@@ -99,8 +100,9 @@ export async function verify(
                 requestHash,
                 responseHash,
               },
-              options?.nearAiBaseURL ?? NEAR_AI_BASE_URL,
-              options?.nrasUrl ?? NRAS_BASE_URL
+              NEAR_AI_BASE_URL,
+              NRAS_BASE_URL,
+              options
             );
             const total = aggregateVerificationResults(Object.values(result));
             if (total.valid) return result;
