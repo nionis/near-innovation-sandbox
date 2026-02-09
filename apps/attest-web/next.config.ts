@@ -1,6 +1,10 @@
 import type { NextConfig } from 'next';
 
-const requiredEnvVars = ['NEAR_ACCOUNT_ID', 'NEAR_PRIVATE_KEY'];
+const requiredEnvVars = [
+  'NEAR_ACCOUNT_ID',
+  'NEAR_PRIVATE_KEY',
+  'BLOB_READ_WRITE_TOKEN',
+];
 
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {

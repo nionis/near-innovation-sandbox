@@ -54,6 +54,7 @@ export type VerifyOutput = {
 export type ChatExport = VerifyInput & {
   version: string;
   timestamp: number;
+  proofHash: string;
   txHash: string;
 } & (
     | {

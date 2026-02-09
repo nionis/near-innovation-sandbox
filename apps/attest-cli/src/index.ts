@@ -182,6 +182,7 @@ program
         ? {
             version: '1.0.0',
             timestamp: now,
+            proofHash,
             txHash,
             model: options.model,
             requestBody: captured.requestBody,
@@ -196,6 +197,7 @@ program
         : {
             version: '1.0.0',
             timestamp: now,
+            proofHash,
             txHash,
             model: options.model,
             requestBody: captured.requestBody,

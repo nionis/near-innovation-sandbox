@@ -18,7 +18,8 @@
       ],
       "passThroughEnv": [
         "NEAR_ACCOUNT_ID",
-        "NEAR_PRIVATE_KEY"
+        "NEAR_PRIVATE_KEY",
+        "BLOB_READ_WRITE_TOKEN"
       ]
     },
     "lint": {
