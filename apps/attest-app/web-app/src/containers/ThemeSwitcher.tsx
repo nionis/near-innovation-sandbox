@@ -1,0 +1,50 @@
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useTheme } from '@/hooks/useTheme'
+import { cn } from '@/lib/utils'
+import { useTranslation } from '@/i18n/react-i18next-compat'
+import { ChevronsUpDown } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+export function ThemeSwitcher() {
+  const { t } = useTranslation()
+
+  const themeOptions = [
+    { value: 'dark', label: t('common:dark') },
+    { value: 'light', label: t('common:light') },
+    { value: 'auto', label: t('common:system') },
+  ]
+
+  const { setTheme, activeTheme } = useTheme()
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-between" title={t('common:editTheme')}>
+          {themeOptions.find(
+            (item: { value: string; label: string }) => item.value === activeTheme
+          )?.label || t('common:auto')}
+          <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground ml-2" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {themeOptions.map((item) => (
+          <DropdownMenuItem
+            key={item.value}
+            className={cn(
+              'cursor-pointer my-0.5',
+              activeTheme === item.value && 'bg-secondary-foreground/8'
+            )}
+            onClick={() => setTheme(item.value as 'auto' | 'light' | 'dark')}
+          >
+            {item.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
