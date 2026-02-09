@@ -2,10 +2,8 @@
 
 1. attest AI
 
-- ensure E2EE to works again
-- share functionality
-- NEAR AI login
-- CORS proxy via tauri layer
+- ensure E2EE to works again OR custom encryption
+- tailor UI and UX
 - verify with camera
 
 2. factors
