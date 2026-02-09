@@ -65,7 +65,10 @@ interface AttestationState {
 }
 
 // Default attestation API URL (can be overridden in settings)
-const DEFAULT_ATTESTATION_API_URL = 'http://localhost:3000'
+const DEFAULT_ATTESTATION_API_URL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://near-innovation-sandbox-attest-web.vercel.app'
+    : 'http://localhost:3000'
 
 export const useAttestationStore = create<AttestationState>()(
   persist(
@@ -75,7 +78,7 @@ export const useAttestationStore = create<AttestationState>()(
       },
 
       messageStates: {},
-      
+
       pendingChatData: null,
 
       setAttestationApiUrl: (url: string) => {
