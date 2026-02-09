@@ -57,14 +57,22 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       nodePolyfills({
-        include: ['path'],
+        include: ['path', 'buffer'],
+        globals: {
+          Buffer: false,
+          process: false,
+          global: false,
+        },
       }),
       injectGoogleAnalytics(env.GA_MEASUREMENT_ID),
     ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        '@janhq/conversational-extension': path.resolve(__dirname, '../extensions/conversational-extension/src/index.ts'),
+        '@janhq/conversational-extension': path.resolve(
+          __dirname,
+          '../extensions/conversational-extension/src/index.ts'
+        ),
       },
     },
     define: {
@@ -123,7 +131,7 @@ export default defineConfig(({ mode }) => {
       watch: {
         // 3. tell vite to ignore watching `src-tauri`
         ignored: ['**/src-tauri/**'],
-        usePolling: true
+        usePolling: true,
       },
     },
   }

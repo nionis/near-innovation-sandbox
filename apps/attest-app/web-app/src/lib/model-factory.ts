@@ -32,13 +32,12 @@ import { invoke } from '@tauri-apps/api/core'
 import { SessionInfo } from '@janhq/core'
 import {
   createNearAI,
-  getE2EECapturePromise,
-  clearE2EECapture,
+  capturedResponsePromise,
 } from '@repo/packages-near-ai-provider'
 import type { NearAIChatModelId } from '@repo/packages-utils/near'
 
 // Re-export E2EE capture utilities for attestation
-export { getE2EECapturePromise, clearE2EECapture }
+export { capturedResponsePromise }
 
 /**
  * Llama.cpp timings structure from the response
@@ -281,7 +280,7 @@ export class ModelFactory {
       apiKey: provider.api_key,
       baseURL: provider.base_url,
       headers: Object.keys(headers).length > 0 ? headers : undefined,
-      e2ee: { enabled: true },
+      e2ee: { enabled: false },
     })
 
     // Cast to LanguageModel for compatibility - generateText accepts both v2 and v3

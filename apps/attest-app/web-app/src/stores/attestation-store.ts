@@ -16,18 +16,13 @@ export interface AttestationChatData {
  * Receipt returned from attestation
  */
 export interface AttestationReceipt {
-  version: string
-  timestamp: number
-  model: string
-  prompt: string
-  content?: string
   requestHash: string
   responseHash: string
   signature: string
   signingAddress: string
   signingAlgo: string
-  output: string
   proofHash: string
+  timestamp: number
   txHash: string
 }
 

@@ -1,7 +1,14 @@
 import { useCallback } from 'react'
-import { useAttestationStore, type AttestationReceipt } from '@/stores/attestation-store'
+import {
+  useAttestationStore,
+  type AttestationReceipt,
+} from '@/stores/attestation-store'
 import { useModelProvider } from '@/hooks/useModelProvider'
-import { attest, storeAttestationRecordWithAPI } from '@repo/packages-attestations'
+import {
+  attest,
+  storeAttestationRecordWithAPI,
+} from '@repo/packages-attestations'
+import { computeProofHash } from '@repo/packages-attestations/crypto'
 import { toast } from 'sonner'
 
 /**
@@ -33,7 +40,8 @@ export function useAttestation() {
       const nearAiProvider = getProviderByName('near-ai')
       const apiKey = nearAiProvider?.api_key
       if (!apiKey) {
-        const error = 'NEAR AI API key not configured. Please set your API key in provider settings.'
+        const error =
+          'NEAR AI API key not configured. Please set your API key in provider settings.'
         setError(messageId, error)
         toast.error(error)
         return null
@@ -45,20 +53,40 @@ export function useAttestation() {
         toast.info('Generating verifiable proof...')
 
         // Step 1: Create the attestation receipt
-        const receipt = await attest(chatData, apiKey)
+        const attestOutput = await attest(
+          {
+            chatId: chatData.id,
+            requestBody: chatData.requestBody,
+            responseBody: chatData.responseBody,
+          },
+          apiKey
+        )
+
+        const proofHash = computeProofHash(
+          attestOutput.requestHash,
+          attestOutput.responseHash,
+          attestOutput.signature
+        )
+        const timestamp = Date.now()
 
         // Step 2: Store on blockchain via API
         const { txHash } = await storeAttestationRecordWithAPI(
           settings.attestationApiUrl,
           {
-            proofHash: receipt.proofHash,
-            timestamp: receipt.timestamp,
+            proofHash,
+            timestamp,
           }
         )
 
-        // Update the receipt with the transaction hash
+        // Construct the full receipt
         const fullReceipt: AttestationReceipt = {
-          ...receipt,
+          requestHash: attestOutput.requestHash,
+          responseHash: attestOutput.responseHash,
+          signature: attestOutput.signature,
+          signingAddress: attestOutput.signingAddress,
+          signingAlgo: attestOutput.signingAlgo,
+          proofHash,
+          timestamp,
           txHash,
         }
 
@@ -90,7 +118,14 @@ export function useAttestation() {
         return null
       }
     },
-    [getChatData, getProviderByName, setAttesting, setReceipt, setError, settings.attestationApiUrl]
+    [
+      getChatData,
+      getProviderByName,
+      setAttesting,
+      setReceipt,
+      setError,
+      settings.attestationApiUrl,
+    ]
   )
 
   return {

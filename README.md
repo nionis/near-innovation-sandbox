@@ -1,6 +1,9 @@
 # TODO
 
-- get E2EE to work again
-- decide UX
-  - decide if we go full Jan or web-based
-  - sharing functionality
+1. attest AI
+
+- ensure E2EE to works again
+- share functionality
+- verify with camera
+
+2. factors
