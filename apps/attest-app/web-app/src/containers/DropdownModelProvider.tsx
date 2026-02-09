@@ -336,15 +336,6 @@ const DropdownModelProvider = ({
   const groupedItems = useMemo(() => {
     const groups: Record<string, SearchableModel[]> = {}
 
-    if (!searchValue) {
-      // When not searching, show all active providers (even without models)
-      providers.forEach((provider) => {
-        if (provider.active) {
-          groups[provider.provider] = []
-        }
-      })
-    }
-
     // Add the filtered items to their respective groups
     filteredItems.forEach((item) => {
       const providerKey = item.provider.provider
@@ -595,8 +586,14 @@ const DropdownModelProvider = ({
                           onClick={(e) => {
                             e.stopPropagation()
                             navigate({
-                              to: route.settings.providers,
-                              params: { providerName: providerInfo.provider },
+                              to:
+                                providerInfo.provider === 'near-ai'
+                                  ? route.settings.near_ai
+                                  : route.settings.providers,
+                              params:
+                                providerInfo.provider === 'near-ai'
+                                  ? {}
+                                  : { providerName: providerInfo.provider },
                             })
                             setOpen(false)
                           }}
