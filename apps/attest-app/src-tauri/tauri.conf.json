@@ -32,7 +32,13 @@
         "decorations": true,
         "titleBarStyle": "Overlay",
         "windowEffects": {
-          "effects": ["fullScreenUI", "mica", "tabbed", "blur", "acrylic"],
+          "effects": [
+            "fullScreenUI",
+            "mica",
+            "tabbed",
+            "blur",
+            "acrylic"
+          ],
           "state": "active"
         },
         "dragDropEnabled": false
@@ -59,7 +65,9 @@
         "enable": true,
         "scope": {
           "requireLiteralLeadingDot": false,
-          "allow": ["**/*"]
+          "allow": [
+            "**/*"
+          ]
         }
       }
     }
@@ -91,6 +99,8 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["resources/LICENSE"]
+    "resources": [
+      "resources/LICENSE"
+    ]
   }
 }

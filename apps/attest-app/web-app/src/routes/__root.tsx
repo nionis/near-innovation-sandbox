@@ -11,10 +11,10 @@ import { DataProvider } from '@/providers/DataProvider'
 import { route } from '@/constants/routes'
 import { ExtensionProvider } from '@/providers/ExtensionProvider'
 import { ToasterProvider } from '@/providers/ToasterProvider'
-import { useAnalytic } from '@/hooks/useAnalytic'
-import { PromptAnalytic } from '@/containers/analytics/PromptAnalytic'
-import { useJanModelPrompt } from '@/hooks/useJanModelPrompt'
-import { PromptJanModel } from '@/containers/PromptJanModel'
+// import { useAnalytic } from '@/hooks/useAnalytic'
+// import { PromptAnalytic } from '@/containers/analytics/PromptAnalytic'
+// import { useJanModelPrompt } from '@/hooks/useJanModelPrompt'
+// import { PromptJanModel } from '@/containers/PromptJanModel'
 import { AnalyticProvider } from '@/providers/AnalyticProvider'
 import { useLeftPanel } from '@/hooks/useLeftPanel'
 import ToolApproval from '@/containers/dialogs/ToolApproval'
@@ -25,9 +25,8 @@ import { useEffect } from 'react'
 import GlobalError from '@/containers/GlobalError'
 import { GlobalEventHandler } from '@/providers/GlobalEventHandler'
 import { ServiceHubProvider } from '@/providers/ServiceHubProvider'
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { LeftSidebar } from '@/components/left-sidebar'
-
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -35,8 +34,8 @@ export const Route = createRootRoute({
 })
 
 const AppLayout = () => {
-  const { productAnalyticPrompt } = useAnalytic()
-  const { showJanModelPrompt } = useJanModelPrompt()
+  // const { productAnalyticPrompt } = useAnalytic()
+  // const { showJanModelPrompt } = useJanModelPrompt()
   const {
     open: isLeftPanelOpen,
     setLeftPanel,
@@ -45,7 +44,7 @@ const AppLayout = () => {
   } = useLeftPanel()
 
   return (
-    <div className='bg-neutral-50 dark:bg-background size-full'>
+    <div className="bg-neutral-50 dark:bg-background size-full">
       <SidebarProvider
         open={isLeftPanelOpen}
         onOpenChange={setLeftPanel}
@@ -55,20 +54,19 @@ const AppLayout = () => {
         <AnalyticProvider />
         <KeyboardShortcutsProvider />
         {/* Fake absolute panel top to enable window drag */}
-        {IS_MACOS &&
+        {IS_MACOS && (
           <div className="fixed w-full h-2 z-20 top-0" data-tauri-drag-region />
-        }
+        )}
         <DialogAppUpdater />
         <BackendUpdater />
         <LeftSidebar />
-        <SidebarInset >
-          <div className='bg-neutral-50 dark:bg-background size-full'>
+        <SidebarInset>
+          <div className="bg-neutral-50 dark:bg-background size-full">
             <Outlet />
           </div>
         </SidebarInset>
 
-        {showJanModelPrompt && <PromptJanModel />}
-
+        {/* {showJanModelPrompt && <PromptJanModel />} */}
       </SidebarProvider>
     </div>
   )
