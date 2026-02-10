@@ -2,7 +2,6 @@
 
 1. attest AI
 
-- store verification results
 - insert link button
 - store attestations locally and verification UI
 - better parse SSE

@@ -30,6 +30,23 @@ const blockchain = new AttestationsBlockchain({
   networkId: NETWORK_ID,
 })
 
+/**
+ * Compute a cache key from verification input to detect changes
+ */
+function computeVerificationCacheKey(verifyInput: VerifyInput): string {
+  // Create a stable string representation of the verification input
+  const cacheData = {
+    model: verifyInput.model,
+    requestBody: verifyInput.requestBody,
+    responseBody: verifyInput.responseBody,
+    signature: verifyInput.signature,
+    signingAddress: verifyInput.signingAddress,
+    signingAlgo: verifyInput.signingAlgo,
+    timestamp: verifyInput.timestamp,
+  }
+  return JSON.stringify(cacheData)
+}
+
 /** fetch that is used to proxy to '/api/verify?url=' */
 const proxyFetch: typeof fetch = async (input, init) => {
   const url = typeof input === 'string' ? input : input.toString()
@@ -78,10 +95,6 @@ export function useAttestation() {
       const { chatData, receipt } = messageState
 
       try {
-        // Mark as verifying
-        setVerifying(messageId, true)
-        toast.info('Verifying proof...')
-
         // Extract model from requestBody
         let model: NearAIChatModelId
         try {
@@ -107,13 +120,33 @@ export function useAttestation() {
           timestamp: receipt.timestamp,
         }
 
+        // Compute cache key for this verification
+        const cacheKey = computeVerificationCacheKey(verifyInput)
+
+        // Check if we have a cached result with matching cache key
+        // Only use cache if the previous verification was successful
+        if (
+          messageState.verificationResult &&
+          messageState.verificationCacheKey === cacheKey &&
+          messageState.verificationResult.result.valid
+        ) {
+          // Use cached result
+          toast.info('Using cached verification result')
+          openVerificationDialog(messageId, messageState.verificationResult)
+          return messageState.verificationResult
+        }
+
+        // Mark as verifying
+        setVerifying(messageId, true)
+        toast.info('Verifying proof...')
+
         // Verify the proof
         const verificationResult = await verify(verifyInput, blockchain, {
           fetch: proxyFetch,
         })
 
-        // Store the verification result
-        setVerificationResult(messageId, verificationResult)
+        // Store the verification result with cache key
+        setVerificationResult(messageId, verificationResult, cacheKey)
 
         // Open the verification dialog instead of showing a toast
         openVerificationDialog(messageId, verificationResult)

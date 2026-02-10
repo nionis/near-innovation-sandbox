@@ -38,6 +38,7 @@ export interface MessageAttestationState {
   chatData?: AttestationChatData
   receipt?: AttestationReceipt
   verificationResult?: VerifyOutput
+  verificationCacheKey?: string // Cache key to detect if verification inputs changed
   isAttesting: boolean
   isVerifying: boolean
   error?: string
@@ -80,7 +81,8 @@ interface AttestationState {
   setVerifying: (messageId: string, isVerifying: boolean) => void
   setVerificationResult: (
     messageId: string,
-    verificationResult: VerifyOutput
+    verificationResult: VerifyOutput,
+    cacheKey?: string
   ) => void
   setVerificationError: (messageId: string, error: string) => void
   clearMessageState: (messageId: string) => void
@@ -222,7 +224,8 @@ export const useAttestationStore = create<AttestationState>()(
 
       setVerificationResult: (
         messageId: string,
-        verificationResult: VerifyOutput
+        verificationResult: VerifyOutput,
+        cacheKey?: string
       ) => {
         set((state) => ({
           messageStates: {
@@ -230,6 +233,7 @@ export const useAttestationStore = create<AttestationState>()(
             [messageId]: {
               ...state.messageStates[messageId],
               verificationResult,
+              verificationCacheKey: cacheKey,
               isVerifying: false,
               verificationError: undefined,
             },
