@@ -14,6 +14,7 @@ import {
   NEAR_AI_BASE_URL,
   NRAS_BASE_URL,
 } from '@repo/packages-utils/near';
+import { proxyFetch } from '../lib/utils';
 
 const NETWORK_ID: NearBlockchainNetwork = 'testnet';
 const CONTRACT_ID = SMART_CONTRACTS[NETWORK_ID].contractId;
@@ -40,12 +41,7 @@ export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
       contractId: CONTRACT_ID,
     });
 
-    return verify(chatExport, blockchain, {
-      // use local near.ai
-      nearAiBaseURL: '/api/verify?url=' + NEAR_AI_BASE_URL,
-      // use local nras
-      nrasUrl: '/api/verify?url=' + NRAS_BASE_URL,
-    });
+    return verify(chatExport, blockchain, { fetch: proxyFetch });
   }, []);
 
   const handleVerify = async () => {

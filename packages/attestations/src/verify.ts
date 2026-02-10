@@ -89,7 +89,7 @@ export async function verifyModelAndGatewayAttestation(
   }
 
   const [modelVerifications, gatewayVerifications] = await Promise.all([
-    verifyModelAttestation(modelAttestation, nonce, nrasUrl),
+    verifyModelAttestation(modelAttestation, nonce, nrasUrl, options),
     verifyGatewayAttestation(gatewayAttestation, nonce),
   ]);
 
@@ -133,7 +133,8 @@ async function verifyModelAttestation(
   const model_gpu = await verifyGpuAttestation(
     attestation.nvidia_payload,
     nonce,
-    nrasUrl
+    nrasUrl,
+    options
   );
 
   const model_tdx = model_gpu.valid

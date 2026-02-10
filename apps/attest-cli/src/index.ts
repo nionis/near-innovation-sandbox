@@ -27,6 +27,13 @@ import {
   extractAndDecryptResponseBodyOutput,
   extractOutputFromResponseBody,
 } from '@repo/packages-utils/e2ee';
+import {
+  SHARE_API_URL,
+  encryptString,
+  decryptString,
+  uploadBinary,
+  downloadBinary,
+} from '@repo/packages-utils/share';
 import { streamText } from 'ai';
 import { Command } from 'commander';
 import dotenv from 'dotenv';
@@ -120,6 +127,11 @@ program
         );
         process.exit(1);
       }
+      const shareApiUrl = process.env.SHARE_API_URL ?? SHARE_API_URL;
+      if (!shareApiUrl) {
+        console.error('env var SHARE_API_URL is required');
+        process.exit(1);
+      }
 
       const provider = createNearAI({
         apiKey: nearAiApiKey,
@@ -198,8 +210,27 @@ program
         ephemeralPrivateKeys: captured.e2ee
           ? captured.ephemeralPrivateKeys
           : undefined,
-        ourPassphrase: captured.e2ee ? captured.ourPassphrase : undefined,
+        ourPassphrase: captured.ourPassphrase,
       } as ChatExport;
+
+      const encryptedBinary = encryptString(
+        JSON.stringify(chatExport),
+        chatExport.ourPassphrase
+      );
+      const { id: shareId } = await uploadBinary(shareApiUrl, {
+        requestHash: chatAttestation.requestHash,
+        responseHash: chatAttestation.responseHash,
+        signature: chatAttestation.signature,
+        binary: encryptedBinary,
+      });
+      if (shareId !== proofHash) {
+        console.error('Share ID mismatch');
+        console.error(`  Share ID: ${shareId}`);
+        console.error(`  Proof Hash: ${proofHash}`);
+        process.exit(1);
+      }
+
+      console.log(`Shared chat export with id: ${shareId}`);
 
       if (options.export) {
         console.log(`Exporting chat to ${options.export}`);
@@ -303,10 +334,90 @@ program
           chatExport.responseBody
         );
       } else {
-        output = chatExport.responseBody;
+        output = extractOutputFromResponseBody(chatExport.responseBody);
       }
 
       console.log('Output:', output);
+    } catch (error) {
+      console.error(error);
+      console.error('Error:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// verify command
+program
+  .command('download')
+  .description('Download a chat export from the share API')
+  .requiredOption('-i, --id <id>', 'Share ID')
+  .requiredOption('-p, --passphrase <passphrase>', 'Passphrase')
+  .action(async (options) => {
+    try {
+      const shareApiUrl = process.env.SHARE_API_URL ?? SHARE_API_URL;
+      if (!shareApiUrl) {
+        console.error('env var SHARE_API_URL is required');
+        process.exit(1);
+      }
+
+      const passphrase = options.passphrase.split('-') as string[];
+      console.log('Downloading chat export from share API...');
+      console.log(`  Share ID: ${options.id}`);
+      console.log(`  Passphrase: ${options.passphrase}`);
+      const binary = await downloadBinary(shareApiUrl, options.id);
+
+      console.log('Decrypting chat export...');
+      const chatExport = JSON.parse(
+        decryptString(binary, passphrase)
+      ) as ChatExport;
+
+      const blockchain = new AttestationsBlockchain({
+        networkId: NEAR_NETWORK,
+        contractId: SMART_CONTRACTS.testnet.contractId,
+      });
+
+      const {
+        result,
+        chat,
+        model_gpu,
+        model_tdx,
+        model_compose,
+        gateway_tdx,
+        gateway_compose,
+        notorized,
+      } = await verify(chatExport, blockchain);
+
+      function printVerificationResult(
+        name: string,
+        result: VerificationResult
+      ) {
+        console.log(
+          `${name}:`,
+          result.valid ? '✅' : '❌ ' + (result.message ?? 'unknown error')
+        );
+      }
+
+      console.log('Verifying AI output...');
+      printVerificationResult('chat', chat);
+      printVerificationResult('model_gpu', model_gpu);
+      printVerificationResult('model_tdx', model_tdx);
+      printVerificationResult('model_compose', model_compose);
+      printVerificationResult('gateway_tdx', gateway_tdx);
+      printVerificationResult('gateway_compose', gateway_compose);
+      printVerificationResult('notorized', notorized);
+
+      const { messages } = parseRequestBody(chatExport.requestBody);
+      const prompt = messages[messages.length - 1]!.content;
+
+      if (result.valid) {
+        console.log('Verified AI output!');
+        console.log(`  Model: ${chatExport.model}`);
+        console.log(`  Prompt: ${prompt}`);
+      } else {
+        console.log('Verification failed!');
+        console.log(`  Reason: ${result.message}`);
+      }
+
+      process.exit(result.valid ? 0 : 1);
     } catch (error) {
       console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);

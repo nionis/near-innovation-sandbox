@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { head } from '@vercel/blob';
-import type { ChatExport } from '@repo/packages-attestations/types';
 
 const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN!;
 
@@ -17,22 +16,22 @@ export async function OPTIONS() {
 }
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ proofHash: string }> }
-): Promise<NextResponse<ChatExport | { error: string }>> {
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { proofHash } = await params;
+    const { id } = await params;
 
-    // Validate proofHash parameter
-    if (!proofHash) {
+    // Validate id parameter
+    if (!id) {
       return NextResponse.json(
-        { error: 'proofHash parameter is required' },
+        { error: 'id parameter is required' },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    // Construct the blob URL
-    const blobUrl = `share/${proofHash}.json`;
+    // Construct the blob URL for binary data
+    const blobUrl = `share/${id}.bin`;
 
     try {
       // Check if the blob exists
@@ -40,21 +39,27 @@ export async function GET(
         token: BLOB_READ_WRITE_TOKEN,
       });
 
-      // Fetch the blob content
+      // Fetch the binary blob content
       const response = await fetch(blobMetadata.url);
 
       if (!response.ok) {
         return NextResponse.json(
-          { error: 'Failed to retrieve chat export from storage' },
+          { error: 'Failed to retrieve binary data from storage' },
           { status: response.status, headers: corsHeaders }
         );
       }
 
-      const chatExport = (await response.json()) as ChatExport;
+      // Get the binary data as ArrayBuffer
+      const binaryData = await response.arrayBuffer();
 
-      return NextResponse.json(chatExport, {
+      // Return the binary data with appropriate content type
+      return new NextResponse(binaryData, {
         status: 200,
-        headers: corsHeaders,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': binaryData.byteLength.toString(),
+        },
       });
     } catch (blobError) {
       // If blob doesn't exist, return 404
@@ -63,14 +68,14 @@ export async function GET(
         blobError.message.includes('not found')
       ) {
         return NextResponse.json(
-          { error: 'Chat export not found' },
+          { error: 'Binary data not found' },
           { status: 404, headers: corsHeaders }
         );
       }
       throw blobError;
     }
   } catch (error) {
-    console.error('Failed to retrieve chat export:', error);
+    console.error('Failed to retrieve binary data:', error);
     return NextResponse.json(
       {
         error:

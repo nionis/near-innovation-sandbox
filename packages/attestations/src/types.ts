@@ -56,18 +56,17 @@ export type ChatExport = VerifyInput & {
   timestamp: number;
   proofHash: string;
   txHash: string;
+  ourPassphrase: string[];
 } & (
     | {
         e2ee: true;
         modelsPublicKey: string;
         ephemeralPrivateKeys: string[];
-        ourPassphrase: string[];
       }
     | {
         e2ee: false;
         modelsPublicKey: undefined;
         ephemeralPrivateKeys: undefined;
-        ourPassphrase: undefined;
       }
   );
 
