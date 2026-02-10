@@ -171,7 +171,6 @@ program
 
       let output = '';
       for await (const chunk of stream.textStream) {
-        console.log('chunk', chunk);
         output += chunk;
       }
 
