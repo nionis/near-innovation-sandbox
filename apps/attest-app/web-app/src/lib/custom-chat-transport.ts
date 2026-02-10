@@ -269,17 +269,18 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
           try {
             // Wait for the stream to complete first
             const output = await result.text
+            const chatId = (await result.response).id
 
             // Get the captured E2EE data from the fetch wrapper
             // This promise resolves when the fetch wrapper finishes reading the response
             const capturedData = await capturedResponsePromise
 
-            console.debug('[Attestation] Captured data:', capturedData, output)
+            console.debug('[Attestation] Captured data')
 
             if (capturedData) {
               // Convert CapturedResponse to AttestationChatData
               return {
-                id: options.chatId,
+                id: chatId,
                 requestBody: capturedData.requestBody,
                 responseBody: capturedData.responseBody,
                 output,
