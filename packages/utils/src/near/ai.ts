@@ -3,7 +3,7 @@ export const NEAR_AI_CHAT_MODEL_IDS = [
   'deepseek-ai/DeepSeek-V3.1',
   'openai/gpt-oss-120b',
   'Qwen/Qwen3-30B-A3B-Instruct-2507',
-  'zai-org/GLM-4.6',
+  'black-forest-labs/FLUX.2-klein-4B',
   'zai-org/GLM-4.7',
 ] as const;
 

@@ -1099,7 +1099,8 @@ const ChatInput = ({
       await openImagePicker()
       return
     }
-    setShowVisionModelPrompt(true)
+    // Vision model prompt disabled - just show a toast instead
+    toast.error('Vision model not available. Please download a vision model from the Hub.')
   }
 
   const handleVisionModelDownloadComplete = useCallback(
@@ -1786,12 +1787,12 @@ const ChatInput = ({
         onCancel={handleExtensionDialogCancel}
       />
 
-      {/* Vision Model Download Prompt */}
-      <PromptVisionModel
+      {/* Vision Model Download Prompt - Disabled */}
+      {/* <PromptVisionModel
         open={showVisionModelPrompt}
         onClose={() => setShowVisionModelPrompt(false)}
         onDownloadComplete={handleVisionModelDownloadComplete}
-      />
+      /> */}
     </div>
   )
 }

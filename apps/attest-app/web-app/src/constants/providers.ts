@@ -46,7 +46,48 @@ export const predefinedProviders = [
         },
       },
     ],
-    models: [],
+    models: [
+      {
+        id: 'deepseek-ai/DeepSeek-V3.1',
+        name: 'DeepSeek-V3.1',
+        version: '1.0',
+        description:
+          'Latest DeepSeek model with improved reasoning and tool use capabilities.',
+        capabilities: ['completion', 'tools'],
+      },
+      {
+        id: 'openai/gpt-oss-120b',
+        name: 'GPT OSS 120B',
+        version: '1.0',
+        description:
+          'Open-source GPT model with 120B parameters for high-quality text generation.',
+        capabilities: ['completion', 'tools'],
+      },
+      {
+        id: 'Qwen/Qwen3-30B-A3B-Instruct-2507',
+        name: 'Qwen3-30B-A3B-Instruct',
+        version: '1.0',
+        description:
+          'Alibaba Qwen3 instruction-tuned model optimized for chat and reasoning tasks.',
+        capabilities: ['completion', 'tools'],
+      },
+      {
+        id: 'black-forest-labs/FLUX.2-klein-4B',
+        name: 'FLUX.2-klein-4B',
+        version: '1.0',
+        description:
+          'Black Forest Labs image generation model for creating high-quality images.',
+        capabilities: ['image-generation'],
+      },
+      {
+        id: 'zai-org/GLM-4.7',
+        name: 'GLM-4.7',
+        version: '1.0',
+        description:
+          'General Language Model with strong multilingual and reasoning capabilities.',
+        capabilities: ['completion', 'tools'],
+      },
+    ],
   },
   // {
   //   active: true,

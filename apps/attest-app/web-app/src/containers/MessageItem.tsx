@@ -321,6 +321,8 @@ export const MessageItem = memo(
         return null
       }
 
+      console.log('part', part)
+
       const toolName = part.type.split('-').slice(1).join('-')
       return (
         <Tool
