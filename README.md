@@ -7,6 +7,7 @@
 - store attestations locally and verification UI
 - share button and insert link button
 - show balance
+- image model
 - verify with camera?
 
 2. factors
