@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { VerifyOutput } from '@repo/packages-attestations'
 
 /**
  * Chat data required for attestation
@@ -32,12 +33,21 @@ export interface AttestationReceipt {
 export interface MessageAttestationState {
   chatData?: AttestationChatData
   receipt?: AttestationReceipt
+  verificationResult?: VerifyOutput
   isAttesting: boolean
+  isVerifying: boolean
   error?: string
+  verificationError?: string
 }
 
 interface AttestationSettings {
   attestationApiUrl: string
+}
+
+interface VerificationDialogState {
+  isOpen: boolean
+  messageId: string | null
+  verificationResult: VerifyOutput | null
 }
 
 interface AttestationState {
@@ -50,6 +60,9 @@ interface AttestationState {
   // Pending chat data waiting to be assigned to a message ID
   pendingChatData: AttestationChatData | null
 
+  // Verification dialog state
+  verificationDialog: VerificationDialogState
+
   // Actions
   setAttestationApiUrl: (url: string) => void
   setChatData: (messageId: string, chatData: AttestationChatData) => void
@@ -60,8 +73,16 @@ interface AttestationState {
   setAttesting: (messageId: string, isAttesting: boolean) => void
   setReceipt: (messageId: string, receipt: AttestationReceipt) => void
   setError: (messageId: string, error: string) => void
+  setVerifying: (messageId: string, isVerifying: boolean) => void
+  setVerificationResult: (
+    messageId: string,
+    verificationResult: VerifyOutput
+  ) => void
+  setVerificationError: (messageId: string, error: string) => void
   clearMessageState: (messageId: string) => void
   getMessageState: (messageId: string) => MessageAttestationState | undefined
+  openVerificationDialog: (messageId: string, result: VerifyOutput) => void
+  closeVerificationDialog: () => void
 }
 
 // Default attestation API URL (can be overridden in settings)
@@ -80,6 +101,12 @@ export const useAttestationStore = create<AttestationState>()(
       messageStates: {},
 
       pendingChatData: null,
+
+      verificationDialog: {
+        isOpen: false,
+        messageId: null,
+        verificationResult: null,
+      },
 
       setAttestationApiUrl: (url: string) => {
         set((state) => ({
@@ -139,6 +166,7 @@ export const useAttestationStore = create<AttestationState>()(
             [messageId]: {
               ...state.messageStates[messageId],
               isAttesting,
+              isVerifying: false,
               error: isAttesting
                 ? undefined
                 : state.messageStates[messageId]?.error,
@@ -174,6 +202,51 @@ export const useAttestationStore = create<AttestationState>()(
         }))
       },
 
+      setVerifying: (messageId: string, isVerifying: boolean) => {
+        set((state) => ({
+          messageStates: {
+            ...state.messageStates,
+            [messageId]: {
+              ...state.messageStates[messageId],
+              isVerifying,
+              verificationError: isVerifying
+                ? undefined
+                : state.messageStates[messageId]?.verificationError,
+            },
+          },
+        }))
+      },
+
+      setVerificationResult: (
+        messageId: string,
+        verificationResult: VerifyOutput
+      ) => {
+        set((state) => ({
+          messageStates: {
+            ...state.messageStates,
+            [messageId]: {
+              ...state.messageStates[messageId],
+              verificationResult,
+              isVerifying: false,
+              verificationError: undefined,
+            },
+          },
+        }))
+      },
+
+      setVerificationError: (messageId: string, error: string) => {
+        set((state) => ({
+          messageStates: {
+            ...state.messageStates,
+            [messageId]: {
+              ...state.messageStates[messageId],
+              isVerifying: false,
+              verificationError: error,
+            },
+          },
+        }))
+      },
+
       clearMessageState: (messageId: string) => {
         set((state) => {
           const { [messageId]: _, ...rest } = state.messageStates
@@ -184,12 +257,33 @@ export const useAttestationStore = create<AttestationState>()(
       getMessageState: (messageId: string) => {
         return get().messageStates[messageId]
       },
+
+      openVerificationDialog: (messageId: string, result: VerifyOutput) => {
+        set({
+          verificationDialog: {
+            isOpen: true,
+            messageId,
+            verificationResult: result,
+          },
+        })
+      },
+
+      closeVerificationDialog: () => {
+        set({
+          verificationDialog: {
+            isOpen: false,
+            messageId: null,
+            verificationResult: null,
+          },
+        })
+      },
     }),
     {
       name: 'attestation-store',
-      // Only persist settings, not message states (they're session-specific)
+      // Persist settings and message states (including receipts)
       partialize: (state) => ({
         settings: state.settings,
+        messageStates: state.messageStates,
       }),
     }
   )

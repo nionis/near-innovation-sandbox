@@ -52,6 +52,7 @@ import { Button } from '@/components/ui/button'
 import { IconAlertCircle } from '@tabler/icons-react'
 import { useToolApproval } from '@/hooks/useToolApproval'
 import DropdownModelProvider from '@/containers/DropdownModelProvider'
+import { VerificationResultDialog } from '@/components/VerificationResultDialog'
 
 const CHAT_STATUS = {
   STREAMING: 'streaming',
@@ -78,8 +79,9 @@ function ThreadDetail() {
 
   useTools()
 
-  // Attestation hook for generating proofs
-  const { generateProof } = useAttestation()
+  // Attestation hook for generating and verifying proofs
+  const { generateProof, verifyProof } = useAttestation()
+  const getMessageState = useAttestationStore((state) => state.getMessageState)
 
   // Get attachments for this thread
   const attachmentsKey = threadId ?? NEW_THREAD_ATTACHMENT_KEY
@@ -660,11 +662,19 @@ function ThreadDetail() {
   )
 
   // Handle generate proof for NEAR AI attestation
+  // If a receipt already exists, verify instead
   const handleGenerateProof = useCallback(
     (messageId: string) => {
-      generateProof(messageId)
+      const messageState = getMessageState(messageId)
+      if (messageState?.receipt) {
+        // If receipt exists, verify the proof
+        verifyProof(messageId)
+      } else {
+        // Otherwise, generate the proof
+        generateProof(messageId)
+      }
     },
-    [generateProof]
+    [generateProof, verifyProof, getMessageState]
   )
 
   // Handler for increasing context size
@@ -803,6 +813,9 @@ function ThreadDetail() {
           />
         </div>
       </div>
+
+      {/* Verification Result Dialog */}
+      <VerificationResultDialog />
     </div>
   )
 }

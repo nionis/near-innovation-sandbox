@@ -87,7 +87,11 @@ export const MessageItem = memo(
     const canGenerateProof =
       isNearAiProvider && hasAttestationData && !attestationState?.receipt
     const isAttesting = attestationState?.isAttesting ?? false
+    const isVerifying = attestationState?.isVerifying ?? false
     const hasReceipt = !!attestationState?.receipt
+    const verificationResult = attestationState?.verificationResult
+    const hasVerificationResult = !!verificationResult
+    const isVerified = verificationResult?.result.valid ?? false
 
     // console.debug('[MessageItem] Attestation state:', {
     //   isNearAiProvider,
@@ -445,21 +449,37 @@ export const MessageItem = memo(
                     variant={hasReceipt ? 'ghost' : 'ghost'}
                     size="icon-xs"
                     onClick={handleGenerateProof}
-                    disabled={isAttesting || !canGenerateProof}
+                    disabled={
+                      isAttesting ||
+                      isVerifying ||
+                      (!canGenerateProof && !hasReceipt)
+                    }
                     title={
-                      hasReceipt
-                        ? 'Proof generated'
+                      isVerifying
+                        ? 'Verifying proof...'
                         : isAttesting
                           ? 'Generating proof...'
-                          : canGenerateProof
-                            ? 'Generate verifiable proof'
-                            : 'Proof not available'
+                          : hasVerificationResult
+                            ? isVerified
+                              ? 'Proof verified - click to verify again'
+                              : 'Verification failed - click to verify again'
+                            : hasReceipt
+                              ? 'Proof generated - click to verify'
+                              : canGenerateProof
+                                ? 'Generate verifiable proof'
+                                : 'Proof not available'
                     }
                     className={cn(
-                      hasReceipt && 'text-green-500 hover:text-green-600'
+                      hasVerificationResult &&
+                        (isVerified
+                          ? 'text-green-500 hover:text-green-600'
+                          : 'text-yellow-500 hover:text-yellow-600'),
+                      hasReceipt &&
+                        !hasVerificationResult &&
+                        'text-blue-500 hover:text-blue-600'
                     )}
                   >
-                    {isAttesting ? (
+                    {isAttesting || isVerifying ? (
                       <IconLoader2 size={16} className="animate-spin" />
                     ) : (
                       <IconShieldCheck size={16} />

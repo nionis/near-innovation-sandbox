@@ -6,14 +6,10 @@ import type {
   VerifyOutput,
   VerificationResult,
 } from '@repo/packages-attestations';
+import type { NearBlockchainNetwork } from '@repo/packages-utils/near';
 import { verify } from '@repo/packages-attestations';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
-import {
-  type NearBlockchainNetwork,
-  NEAR_AI_BASE_URL,
-  NRAS_BASE_URL,
-} from '@repo/packages-utils/near';
 import { proxyFetch } from '../lib/utils';
 
 const NETWORK_ID: NearBlockchainNetwork = 'testnet';
