@@ -24,8 +24,8 @@ import { computeProofHash } from '@repo/packages-attestations/crypto';
 import {
   generateKeyPairFromPassphrase,
   parseRequestBody,
-  extractAndDecryptResponseBodyOutput,
   extractOutputFromResponseBody,
+  decryptSSEStream,
 } from '@repo/packages-utils/e2ee';
 import {
   SHARE_API_URL,
@@ -97,6 +97,10 @@ program
   )
   .option('--disable-e2ee', 'Disable E2EE (defaults to false)')
   .option(
+    '--disable-store',
+    'Disable upload to share API and record store on blockchain (defaults to false)'
+  )
+  .option(
     '-e, --export <path>',
     'Export file for the chat (default: prints to stdout)'
   )
@@ -105,6 +109,9 @@ program
       // --disable-e2ee flag takes precedence, then env var, then default to false
       const disableE2ee =
         options.disableE2ee ?? process.env.DISABLE_E2EE === 'true';
+      // --disable-upload flag takes precedence, then env var, then default to false
+      const disableStore =
+        options.disableStore ?? process.env.DISABLE_STORE === 'true';
 
       const nearAiApiKey = options.apiKey;
       if (!nearAiApiKey) {
@@ -164,6 +171,7 @@ program
 
       let output = '';
       for await (const chunk of stream.textStream) {
+        console.log('chunk', chunk);
         output += chunk;
       }
 
@@ -188,17 +196,11 @@ program
       );
       const now = Date.now();
 
-      console.log('Storing attestation record on blockchain...');
-      const { txHash } = await storeAttestationRecordWithBlockchain(
-        blockchain,
-        { proofHash, timestamp: now }
-      );
-
       const chatExport: ChatExport = {
         version: '1.0.0',
         timestamp: now,
         proofHash,
-        txHash,
+        txHash: '',
         model: options.model,
         requestBody: captured.requestBody,
         responseBody: captured.responseBody,
@@ -213,24 +215,34 @@ program
         ourPassphrase: captured.ourPassphrase,
       } as ChatExport;
 
-      const encryptedBinary = encryptString(
-        JSON.stringify(chatExport),
-        chatExport.ourPassphrase
-      );
-      const { id: shareId } = await uploadBinary(shareApiUrl, {
-        requestHash: chatAttestation.requestHash,
-        responseHash: chatAttestation.responseHash,
-        signature: chatAttestation.signature,
-        binary: encryptedBinary,
-      });
-      if (shareId !== proofHash) {
-        console.error('Share ID mismatch');
-        console.error(`  Share ID: ${shareId}`);
-        console.error(`  Proof Hash: ${proofHash}`);
-        process.exit(1);
+      let txHash = '';
+      if (!disableStore) {
+        console.log('Storing attestation record on blockchain...');
+        txHash = (
+          await storeAttestationRecordWithBlockchain(blockchain, {
+            proofHash,
+            timestamp: now,
+          })
+        ).txHash;
+        const encryptedBinary = encryptString(
+          JSON.stringify(chatExport),
+          chatExport.ourPassphrase
+        );
+        const { id: shareId } = await uploadBinary(shareApiUrl, {
+          requestHash: chatAttestation.requestHash,
+          responseHash: chatAttestation.responseHash,
+          signature: chatAttestation.signature,
+          binary: encryptedBinary,
+        });
+        if (shareId !== proofHash) {
+          console.error('Share ID mismatch');
+          console.error(`  Share ID: ${shareId}`);
+          console.error(`  Proof Hash: ${proofHash}`);
+          process.exit(1);
+        }
+        console.log(`Shared chat export with id: ${shareId}`);
       }
-
-      console.log(`Shared chat export with id: ${shareId}`);
+      chatExport.txHash = txHash;
 
       if (options.export) {
         console.log(`Exporting chat to ${options.export}`);
@@ -239,6 +251,8 @@ program
       console.log('Result:');
       console.log(`  Signature: ${chatAttestation.signature}`);
       console.log(`  Proof Hash: ${proofHash}`);
+
+      console.log('output', output);
     } catch (error) {
       console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);
@@ -329,10 +343,7 @@ program
         const ourKeyPair = generateKeyPairFromPassphrase(
           chatExport.ourPassphrase
         );
-        output = extractAndDecryptResponseBodyOutput(
-          ourKeyPair,
-          chatExport.responseBody
-        );
+        output = decryptSSEStream(ourKeyPair, chatExport.responseBody).content;
       } else {
         output = extractOutputFromResponseBody(chatExport.responseBody);
       }

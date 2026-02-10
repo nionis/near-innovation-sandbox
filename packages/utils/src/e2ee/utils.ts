@@ -94,29 +94,35 @@ export function encryptRequestBody(
   };
 }
 
-/** decrypt a response body */
-export function extractAndDecryptResponseBodyOutput(
-  ourKeyPair: KeyPair,
-  responseBody: string
-): string {
-  return decryptSSEResponseBodyOutput(
-    (ciphertext: string) => decryptCiphertext(ourKeyPair, ciphertext),
-    responseBody
-  );
+/** decrypt a ciphertext string using ECIES */
+function decryptCiphertext(ourKeyPair: KeyPair, ciphertext: string): string {
+  const packedCiphertext = hexToBytes(ciphertext);
+  const plaintextBytes = decryptFromModel(ourKeyPair, packedCiphertext);
+  return new TextDecoder().decode(plaintextBytes);
 }
 
-/** decrypt an SSE response body and extract the output */
-function decryptSSEResponseBodyOutput(
-  decrypt: (ciphertext: string) => string,
+/** decrypt an SSE stream */
+export function decryptSSEStream(
+  ourKeyPair: KeyPair,
   buffer: string
-) {
-  let responseBody = '';
+): { buffer: string; chunk: string; content: string } {
+  let content = '';
+  let chunk = '';
   // Process complete lines from the SSE stream
   const lines = buffer.split('\n');
   buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
+  const transformedLines: string[] = [];
+
   for (const line of lines) {
-    if (!line.trim() || line.trim() === 'data: [DONE]') {
+    // Pass through empty lines and [DONE] marker
+    if (!line.trim()) {
+      transformedLines.push(line);
+      continue;
+    }
+
+    if (line.trim() === 'data: [DONE]') {
+      transformedLines.push(line);
       continue;
     }
 
@@ -136,24 +142,29 @@ function decryptSSEResponseBodyOutput(
           const delta = choices[0].delta;
           if (delta && delta.content) {
             // Decrypt the content
-            const decryptedContent = decrypt(delta.content);
-            responseBody += decryptedContent;
+            const decryptedContent = decryptCiphertext(
+              ourKeyPair,
+              delta.content
+            );
+            // Replace the encrypted content with decrypted content
+            parsed.choices[0].delta.content = decryptedContent;
+            content += decryptedContent;
           }
         }
+
+        // Reconstruct the SSE line with decrypted content
+        transformedLines.push('data: ' + JSON.stringify(parsed));
       } catch (err) {
         // If parsing or decryption fails, throw the error
         console.error('Error processing SSE line:', err);
         throw err;
       }
+    } else {
+      // Pass through any other lines
+      transformedLines.push(line);
     }
   }
-
-  return responseBody;
-}
-
-/** decrypt a ciphertext string using ECIES */
-function decryptCiphertext(ourKeyPair: KeyPair, ciphertext: string): string {
-  const packedCiphertext = hexToBytes(ciphertext);
-  const plaintextBytes = decryptFromModel(ourKeyPair, packedCiphertext);
-  return new TextDecoder().decode(plaintextBytes);
+  chunk =
+    transformedLines.join('\n') + (transformedLines.length > 0 ? '\n' : '');
+  return { buffer, chunk, content };
 }

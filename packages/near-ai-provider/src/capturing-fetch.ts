@@ -8,7 +8,7 @@ import {
   generateKeyPair,
   generateKeyPairFromPassphrase,
   parseRequestBody,
-  encryptRequestBody,
+  decryptSSEStream,
 } from '@repo/packages-utils/e2ee';
 import { bytesToHex } from '@noble/curves/utils.js';
 
@@ -18,6 +18,7 @@ export let capturedResponsePromise = Promise.resolve<CapturedResponse | null>(
 
 /** a wrapper around fetch that captures the raw request and response bodies
  * will encrypt the request body if E2EE is enabled
+ * will decrypt the response body if E2EE is enabled
  */
 export function createCapturingFetch(
   createE2EEContext?: (model: NearAIChatModelId) => Promise<E2EEContext>
@@ -75,44 +76,57 @@ export function createCapturingFetch(
     });
 
     if (parsedBody.stream) {
-      const [captureStream, stream] = response.body!.tee();
+      let responseBody = '';
+      let buffer = '';
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
 
-      // read the captured stream in the background
-      (async () => {
-        const reader = captureStream.getReader();
-        const decoder = new TextDecoder();
-        let responseBody = '';
+      // Create a transform stream that captures data as it passes through
+      const transformStream = new TransformStream({
+        transform(_chunk, controller) {
+          const decodedChunk = decoder.decode(_chunk, { stream: true });
+          // Capture the chunk
+          responseBody += decodedChunk;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          responseBody += chunk;
-        }
+          let chunk = _chunk;
+          if (e2eeContext) {
+            const { chunk: decryptedChunk, buffer: newBuffer } =
+              decryptSSEStream(ourKeyPair!, buffer + decodedChunk);
+            chunk = encoder.encode(decryptedChunk);
+            buffer = newBuffer;
+          }
 
-        capturedResponsePromise = Promise.resolve(
-          e2eeContext
-            ? {
-                e2ee: true as const,
-                modelsPublicKey: bytesToHex(modelsPublicKey!),
-                ephemeralPrivateKeys: ephemeralKeyPairs!.map((k) =>
-                  bytesToHex(k.privateKey)
-                ),
-                ourPassphrase: ourPassphrase!,
-                requestBody,
-                responseBody,
-              }
-            : {
-                e2ee: false as const,
-                ourPassphrase: ourPassphrase!,
-                requestBody,
-                responseBody,
-              }
-        );
-      })();
+          // Pass it through to the consumer
+          controller.enqueue(chunk);
+        },
+        flush() {
+          // When the stream is done, resolve the captured response
+          capturedResponsePromise = Promise.resolve(
+            e2eeContext
+              ? {
+                  e2ee: true as const,
+                  modelsPublicKey: bytesToHex(modelsPublicKey!),
+                  ephemeralPrivateKeys: ephemeralKeyPairs!.map((k) =>
+                    bytesToHex(k.privateKey)
+                  ),
+                  ourPassphrase: ourPassphrase!,
+                  requestBody,
+                  responseBody,
+                }
+              : {
+                  e2ee: false as const,
+                  ourPassphrase: ourPassphrase!,
+                  requestBody,
+                  responseBody,
+                }
+          );
+        },
+      });
 
-      // return new stream
-      return new Response(stream, {
+      // Pipe the response through the transform stream
+      const transformedStream = response.body!.pipeThrough(transformStream);
+
+      return new Response(transformedStream, {
         status: response.status,
         statusText: response.statusText,
         headers: response.headers,

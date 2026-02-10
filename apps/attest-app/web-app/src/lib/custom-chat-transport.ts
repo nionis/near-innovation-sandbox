@@ -19,10 +19,6 @@ import {
   type AttestationChatData,
 } from '@/stores/attestation-store'
 import { capturedResponsePromise } from '@repo/packages-near-ai-provider'
-import {
-  generateKeyPairFromPassphrase,
-  extractAndDecryptResponseBodyOutput,
-} from '@repo/packages-utils/e2ee'
 
 export type TokenUsageCallback = (
   usage: LanguageModelUsage,
@@ -230,7 +226,7 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
     }
 
     // Convert UI messages to model messages
-    const modelMessages = convertToModelMessages(
+    const modelMessages = await convertToModelMessages(
       this.mapUserInlineAttachments(options.messages)
     )
 
@@ -272,23 +268,15 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
         (async (): Promise<AttestationChatData | null> => {
           try {
             // Wait for the stream to complete first
-            await result.text
+            const output = await result.text
 
             // Get the captured E2EE data from the fetch wrapper
             // This promise resolves when the fetch wrapper finishes reading the response
             const capturedData = await capturedResponsePromise
 
-            console.debug('[Attestation] Captured data:', capturedData)
+            console.debug('[Attestation] Captured data:', capturedData, output)
 
             if (capturedData) {
-              // Extract the output text from the response
-              const output = extractAndDecryptResponseBodyOutput(
-                generateKeyPairFromPassphrase(capturedData.ourPassphrase),
-                capturedData.responseBody
-              )
-
-              console.debug('[Attestation] Output:', output)
-
               // Convert CapturedResponse to AttestationChatData
               return {
                 id: options.chatId,

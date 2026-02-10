@@ -2,8 +2,8 @@
 
 1. attest AI
 
-- ensure E2EE to works again OR custom encryption
 - tailor UI and UX
+- share button
 - verify with camera
 
 2. factors
