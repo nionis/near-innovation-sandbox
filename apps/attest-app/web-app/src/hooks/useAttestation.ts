@@ -14,15 +14,14 @@ import {
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain'
 import { computeProofHash } from '@repo/packages-attestations/crypto'
 import { toast } from 'sonner'
-// import { fetch as fetchTauri } from '@tauri-apps/plugin-http'
+import { fetch as fetchTauri } from '@tauri-apps/plugin-http'
 import type { NearAIChatModelId } from '@repo/packages-utils/near'
 import type { NearBlockchainNetwork } from '@repo/packages-utils/near'
 import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment'
 
-const DEFAULT_ATTESTATION_API_URL =
-  process.env.NODE_ENV === 'production'
-    ? 'https://near-innovation-sandbox-attest-web.vercel.app'
-    : 'http://localhost:3000'
+const DEFAULT_ATTESTATION_API_URL = IS_DEV
+  ? 'http://localhost:3000'
+  : 'https://near-innovation-sandbox-attest-web.vercel.app'
 
 const NETWORK_ID: NearBlockchainNetwork = 'testnet'
 const CONTRACT_ID = SMART_CONTRACTS[NETWORK_ID].contractId
@@ -184,7 +183,7 @@ export function useAttestation() {
           },
           apiKey,
           {
-            fetch: proxyFetch,
+            fetch: fetchTauri,
           }
         )
 

@@ -13,7 +13,7 @@ export function isAllowedUrl(url: string): boolean {
   return ALLOWED_URL_PREFIXES.some((prefix) => url.startsWith(prefix));
 }
 
-//** cors headers for cross-origin requests */
+/** CORS headers for cross-origin requests (allow all headers and content) */
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',

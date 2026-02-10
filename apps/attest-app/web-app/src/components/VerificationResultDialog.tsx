@@ -8,12 +8,40 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useAttestationStore } from '@/stores/attestation-store'
-import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
+import {
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Share2,
+  Copy,
+  Check,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useState, useEffect } from 'react'
+import {
+  encryptString,
+  uploadBinary,
+  SHARE_API_URL as DEFAULT_SHARE_API_URL,
+} from '@repo/packages-utils/share'
+
+const SHARE_API_URL = IS_DEV ? 'http://localhost:3000' : DEFAULT_SHARE_API_URL
 
 export function VerificationResultDialog() {
-  const { verificationDialog, closeVerificationDialog } = useAttestationStore()
-  const { isOpen, verificationResult } = verificationDialog
+  const { verificationDialog, closeVerificationDialog, getMessageState } =
+    useAttestationStore()
+  const { isOpen, verificationResult, messageId } = verificationDialog
+  const [isSharing, setIsSharing] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  // Reset share state when dialog opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShareUrl(null)
+      setCopied(false)
+      setIsSharing(false)
+    }
+  }, [isOpen])
 
   if (!verificationResult) return null
 
@@ -47,6 +75,65 @@ export function VerificationResultDialog() {
       message: gateway_tdx.message,
     },
   ]
+
+  const handleShare = async () => {
+    if (!messageId) return
+
+    try {
+      setIsSharing(true)
+      setShareUrl(null)
+
+      // Get the message state to retrieve receipt and chat data
+      const messageState = getMessageState(messageId)
+      if (!messageState?.receipt || !messageState?.chatData) {
+        throw new Error('Missing receipt or chat data')
+      }
+
+      const { receipt, chatData } = messageState
+
+      // Use the passphrase from the captured data (used for E2EE)
+      if (!chatData.ourPassphrase || chatData.ourPassphrase.length === 0) {
+        throw new Error('Missing passphrase in chat data')
+      }
+      const passphrase = chatData.ourPassphrase
+
+      // Prepare the content to share - store ALL captured data
+      const contentToShare = JSON.stringify({
+        verificationResult,
+        chatData,
+        receipt,
+        timestamp: Date.now(),
+      })
+
+      // Encrypt the content using the original passphrase
+      const encryptedBinary = encryptString(contentToShare, passphrase)
+
+      // Upload the encrypted binary
+      const { id } = await uploadBinary(SHARE_API_URL, {
+        requestHash: receipt.requestHash,
+        responseHash: receipt.responseHash,
+        signature: receipt.signature,
+        binary: encryptedBinary,
+      })
+
+      // Generate the share URL
+      const url = `http://localhost:3000/id=${id}`
+      setShareUrl(url)
+    } catch (error) {
+      console.error('Failed to share:', error)
+      alert('Failed to share verification result. Please try again.')
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  const handleCopyUrl = async () => {
+    if (shareUrl) {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={closeVerificationDialog}>
@@ -116,10 +203,50 @@ export function VerificationResultDialog() {
           ))}
         </div>
 
-        <DialogFooter>
-          <Button onClick={closeVerificationDialog} className="w-full sm:w-auto">
-            Close
-          </Button>
+        <DialogFooter className="flex-col gap-3 sm:flex-col">
+          {shareUrl && (
+            <div className="flex items-center gap-2 w-full p-3 bg-muted rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground mb-1">Share URL:</p>
+                <p className="text-sm font-mono break-all">{shareUrl}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyUrl}
+                className="shrink-0"
+              >
+                {copied ? (
+                  <Check className="size-4" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+              </Button>
+            </div>
+          )}
+
+          <div className="flex gap-2 w-full">
+            {result.valid && !shareUrl && (
+              <Button
+                onClick={handleShare}
+                disabled={isSharing}
+                variant="outline"
+                className="flex-1 sm:flex-initial"
+              >
+                <Share2 className="size-4 mr-2" />
+                {isSharing ? 'Sharing...' : 'Share'}
+              </Button>
+            )}
+            <Button
+              onClick={closeVerificationDialog}
+              className={cn(
+                'flex-1 sm:flex-initial',
+                !result.valid || shareUrl ? 'w-full' : ''
+              )}
+            >
+              Close
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

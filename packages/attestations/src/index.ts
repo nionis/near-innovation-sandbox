@@ -66,8 +66,6 @@ export async function verify(
   blockchain: AttestationsBlockchain,
   options?: AttestationsOptions
 ): Promise<VerifyOutput> {
-  console.log('input', input);
-
   // compute hashes for the request and response
   const requestHash = sha256_utf8_str(input.requestBody);
   const responseHash = sha256_utf8_str(input.responseBody);

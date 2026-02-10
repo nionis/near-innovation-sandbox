@@ -2,10 +2,11 @@
 
 1. attest AI
 
+- store verification results
+- insert link button
+- store attestations locally and verification UI
 - better parse SSE
 - ensure files, docs, and other tools work E2EE
-- store attestations locally and verification UI
-- share button and insert link button
 - show balance
 - image model
 - verify with camera?

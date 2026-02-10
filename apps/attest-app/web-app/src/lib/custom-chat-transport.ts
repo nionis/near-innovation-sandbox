@@ -279,11 +279,17 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
 
             if (capturedData) {
               // Convert CapturedResponse to AttestationChatData
+              // Include all captured data including passphrase and E2EE info
               return {
                 id: chatId,
                 requestBody: capturedData.requestBody,
                 responseBody: capturedData.responseBody,
                 output,
+                ourPassphrase: capturedData.ourPassphrase,
+                ...(capturedData.e2ee && {
+                  modelsPublicKey: capturedData.modelsPublicKey,
+                  ephemeralPrivateKeys: capturedData.ephemeralPrivateKeys,
+                }),
               }
             } else {
               console.warn(

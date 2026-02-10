@@ -4,13 +4,17 @@ import type { VerifyOutput } from '@repo/packages-attestations'
 
 /**
  * Chat data required for attestation
- * Matches the Chat interface from @repo/packages-attestations
+ * Includes all captured E2EE data from the near.ai provider
  */
 export interface AttestationChatData {
   id: string
   requestBody: string
   responseBody: string
   output: string
+  // E2EE captured data
+  ourPassphrase: string[]
+  modelsPublicKey?: string
+  ephemeralPrivateKeys?: string[]
 }
 
 /**
@@ -86,10 +90,9 @@ interface AttestationState {
 }
 
 // Default attestation API URL (can be overridden in settings)
-const DEFAULT_ATTESTATION_API_URL =
-  process.env.NODE_ENV === 'production'
-    ? 'https://near-innovation-sandbox-attest-web.vercel.app'
-    : 'http://localhost:3000'
+const DEFAULT_ATTESTATION_API_URL = IS_DEV
+  ? 'http://localhost:3000'
+  : 'https://near-innovation-sandbox-attest-web.vercel.app'
 
 export const useAttestationStore = create<AttestationState>()(
   persist(
