@@ -5,20 +5,10 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { gcm } from '@noble/ciphers/aes.js';
 import { asciiToBytes, randomBytes } from '@noble/curves/utils.js';
 
-const HKDF_INFO_E2EE_KEYPAIR = asciiToBytes('e2ee_keypair');
-
-/** generate a key pair from a passphrase */
-export function generateKeyPairFromPassphrase(passphrase: string[]): KeyPair {
-  const passphraseBytes = asciiToBytes(passphrase.join('-'));
-  const privateKey = hkdf(
-    sha256,
-    passphraseBytes,
-    undefined,
-    HKDF_INFO_E2EE_KEYPAIR,
-    32
-  );
+/** generate a random key pair */
+export function generateKeyPair(): KeyPair {
+  const privateKey = randomBytes(32);
   const publicKey = secp256k1.getPublicKey(privateKey, false);
-
   return { privateKey, publicKey };
 }
 
@@ -47,15 +37,15 @@ export function deriveSharedSecret(
 
 /** encrypt a plaintext string using ECIES to send to a model */
 export function encryptForModel(
-  ourKeyPair: KeyPair,
   modelsPublicKey: Uint8Array,
   plaintext: string
 ): Uint8Array {
+  // Generate ephemeral key pair
+  const { privateKey: ephemeralPrivateKey, publicKey: ephemeralPublicKey } =
+    generateKeyPair();
+
   // Derive shared secret
-  const sharedSecret = deriveSharedSecret(
-    ourKeyPair.privateKey,
-    modelsPublicKey
-  );
+  const sharedSecret = deriveSharedSecret(ephemeralPrivateKey, modelsPublicKey);
 
   // Generate random IV (12 bytes for AES-GCM)
   const iv = randomBytes(12);
@@ -67,11 +57,11 @@ export function encryptForModel(
 
   // Pack: ephemeralPublicKey (65 bytes with 04 prefix) || iv (12 bytes) || ciphertext (variable)
   const packed = new Uint8Array(
-    ourKeyPair.publicKey.length + iv.length + ciphertext.length
+    ephemeralPublicKey.length + iv.length + ciphertext.length
   );
-  packed.set(ourKeyPair.publicKey, 0);
-  packed.set(iv, ourKeyPair.publicKey.length);
-  packed.set(ciphertext, ourKeyPair.publicKey.length + iv.length);
+  packed.set(ephemeralPublicKey, 0);
+  packed.set(iv, ephemeralPublicKey.length);
+  packed.set(ciphertext, ephemeralPublicKey.length + iv.length);
 
   return packed;
 }
@@ -97,4 +87,16 @@ export function decryptFromModel(
   const plaintextBytes = cipher.decrypt(ciphertext);
 
   return plaintextBytes;
+}
+
+/** add 0x04 prefix to a public key */
+export function toPrefixedPublicKey(publicKey: Uint8Array): Uint8Array {
+  return publicKey.length === 64
+    ? Uint8Array.from([0x04, ...publicKey])
+    : publicKey;
+}
+
+/** remove 0x04 prefix from a public key */
+export function toUnprefixedPublicKey(publicKey: Uint8Array): Uint8Array {
+  return publicKey.length === 65 ? publicKey.slice(1) : publicKey;
 }

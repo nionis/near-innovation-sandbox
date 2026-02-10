@@ -49,3 +49,49 @@ export function parseOutputFromResponseBody(responseBody: string): string {
     return parsed?.choices?.[0]?.message?.content ?? '';
   }
 }
+
+/** decrypt an SSE response body */
+export function decryptSSEResponseBody(
+  decrypt: (ciphertext: string) => string,
+  buffer: string
+) {
+  let responseBody = '';
+  // Process complete lines from the SSE stream
+  const lines = buffer.split('\n');
+  buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+  for (const line of lines) {
+    if (!line.trim() || line.trim() === 'data: [DONE]') {
+      continue;
+    }
+
+    if (line.startsWith('data: ')) {
+      try {
+        const jsonStr = line.slice(6); // Remove "data: " prefix
+        const parsed = JSON.parse(jsonStr);
+
+        // Check if it's an error response (not encrypted)
+        if (parsed.error) {
+          throw new Error(parsed.error.message || 'Unknown error');
+        }
+
+        // Decrypt the content field if present
+        const choices = parsed.choices;
+        if (choices && choices.length > 0) {
+          const delta = choices[0].delta;
+          if (delta && delta.content) {
+            // Decrypt the content
+            const decryptedContent = decrypt(delta.content);
+            responseBody += decryptedContent;
+          }
+        }
+      } catch (err) {
+        // If parsing or decryption fails, throw the error
+        console.error('Error processing SSE line:', err);
+        throw err;
+      }
+    }
+  }
+
+  return responseBody;
+}

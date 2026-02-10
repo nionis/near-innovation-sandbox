@@ -1,10 +1,10 @@
 import type { ModelMessage } from 'ai';
 import type { NearAIChatModelId } from '@repo/packages-utils/near';
 import type { CapturedResponse } from './types.js';
-import type { E2EEContext, KeyPairFromPassphrase } from './e2ee/types.js';
-import { generatePassphrase } from './passphrase.js';
-import { generateKeyPairFromPassphrase } from './e2ee/crypto.js';
+import type { E2EEContext, KeyPair } from './e2ee/types.js';
 import { bytesToHex } from '@noble/curves/utils.js';
+import { toUnprefixedPublicKey, generateKeyPair } from './e2ee/crypto.js';
+import { decryptSSEResponseBody } from './utils.js';
 
 export let capturedResponsePromise = Promise.resolve<CapturedResponse | null>(
   null
@@ -16,7 +16,6 @@ export function createCapturingFetch(
 ): typeof fetch {
   const capturingFetch: typeof fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input.toString();
-
     const headers = new Headers(init?.headers);
     let requestBody = init?.body;
     let encryptedRequestBody: string | undefined;
@@ -47,29 +46,23 @@ export function createCapturingFetch(
       ? await createE2EEContext(parsedBody.model)
       : undefined;
 
-    let ourKeyPair: KeyPairFromPassphrase | undefined;
-    let modelsPublicKeyHex: string | undefined;
+    let ourKeyPair: KeyPair | undefined;
+    let modelsPublicKey: Uint8Array | undefined;
     if (e2eeContext) {
-      const _passphrase = generatePassphrase(6);
-      const _ourKeyPair = generateKeyPairFromPassphrase(_passphrase);
-      ourKeyPair = {
-        passphrase: _passphrase,
-        privateKey: _ourKeyPair.privateKey,
-        publicKey: _ourKeyPair.publicKey,
-      };
-      modelsPublicKeyHex = bytesToHex(e2eeContext.modelsPublicKey);
-
+      ourKeyPair = generateKeyPair();
+      modelsPublicKey = e2eeContext.modelsPublicKey;
       headers.set('X-Signing-Algo', 'ecdsa');
       headers.set('X-Client-Pub-Key', bytesToHex(ourKeyPair.publicKey));
-      headers.set('X-Model-Pub-Key', modelsPublicKeyHex);
+      headers.set(
+        'X-Model-Pub-Key',
+        // remove 0x04 prefix
+        bytesToHex(toUnprefixedPublicKey(modelsPublicKey))
+      );
     }
 
     // encrypt the request body
     if (e2eeContext && ourKeyPair) {
-      const encryptedMessages = e2eeContext.encrypt(
-        ourKeyPair,
-        parsedBody.messages
-      );
+      const encryptedMessages = e2eeContext.encrypt(parsedBody.messages);
       encryptedRequestBody = JSON.stringify({
         ...parsedBody,
         messages: encryptedMessages,
@@ -91,14 +84,26 @@ export function createCapturingFetch(
         const reader = captureStream.getReader();
         const decoder = new TextDecoder();
         let _responseBody = '';
-        let _decryptedResponseBody = '';
+        let _encryptedResponseBody = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
-          _responseBody += chunk;
-          _decryptedResponseBody += chunk;
+
+          if (e2eeContext) {
+            _encryptedResponseBody += chunk;
+            _responseBody += chunk;
+          } else {
+            _responseBody += chunk;
+          }
+        }
+
+        if (e2eeContext) {
+          _responseBody = decryptSSEResponseBody(
+            (ciphertext) => e2eeContext.decrypt(ourKeyPair!, ciphertext),
+            _encryptedResponseBody
+          );
         }
 
         capturedResponsePromise = Promise.resolve(
@@ -108,14 +113,14 @@ export function createCapturingFetch(
                 requestBody,
                 encryptedRequestBody: encryptedRequestBody!,
                 responseBody: _responseBody,
-                decryptedResponseBody: _decryptedResponseBody!,
-                passphrase: ourKeyPair.passphrase,
-                modelsPublicKey: modelsPublicKeyHex!,
+                encryptedResponseBody: _encryptedResponseBody!,
               }
             : {
                 e2ee: false as const,
                 requestBody,
                 responseBody: _responseBody,
+                encryptedRequestBody: undefined,
+                encryptedResponseBody: undefined,
               }
         );
       })();
@@ -137,16 +142,14 @@ export function createCapturingFetch(
               requestBody,
               encryptedRequestBody: encryptedRequestBody!,
               responseBody: e2eeContext.decrypt(ourKeyPair, responseBody!),
-              decryptedResponseBody: responseBody!,
-              passphrase: ourKeyPair.passphrase,
-              modelsPublicKey: modelsPublicKeyHex!,
+              encryptedResponseBody: responseBody!,
             }
           : {
               e2ee: false as const,
               requestBody,
               responseBody: responseBody!,
-              decryptedResponseBody: undefined,
-              passphrase: undefined,
+              encryptedRequestBody: undefined,
+              encryptedResponseBody: undefined,
             }
       );
       return response;

@@ -37,14 +37,9 @@ export interface KeyPair {
   privateKey: Uint8Array;
 }
 
-/** a key pair */
-export interface KeyPairFromPassphrase extends KeyPair {
-  passphrase: string[];
-}
-
 /** E2EE context for a model */
 export interface E2EEContext {
   modelsPublicKey: Uint8Array;
-  encrypt: (ourKeyPair: KeyPair, messages: ModelMessage[]) => ModelMessage[];
+  encrypt: (messages: ModelMessage[]) => ModelMessage[];
   decrypt: (ourKeyPair: KeyPair, ciphertext: string) => string;
 }

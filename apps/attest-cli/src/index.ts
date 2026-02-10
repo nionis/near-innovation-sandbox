@@ -7,7 +7,6 @@ import {
   capturedResponsePromise,
   fetchAvailableModels,
   parseMessagesFromRequestBody,
-  parseOutputFromResponseBody,
 } from '@repo/packages-near-ai-provider';
 import {
   NearBlockchainNetwork,
@@ -159,8 +158,12 @@ program
       const chatAttestation = await attest(
         {
           chatId,
-          requestBody: captured.requestBody,
-          responseBody: captured.responseBody,
+          requestBody: captured.e2ee
+            ? captured.encryptedRequestBody
+            : captured.requestBody,
+          responseBody: captured.e2ee
+            ? captured.encryptedResponseBody
+            : captured.responseBody,
         },
         nearAiApiKey
       );
@@ -178,44 +181,29 @@ program
         { proofHash, timestamp: now }
       );
 
-      const chatExport: ChatExport = captured.e2ee
-        ? {
-            version: '1.0.0',
-            timestamp: now,
-            proofHash,
-            txHash,
-            model: options.model,
-            requestBody: captured.requestBody,
-            responseBody: captured.responseBody,
-            signature: chatAttestation.signature,
-            signingAddress: chatAttestation.signingAddress,
-            signingAlgo: chatAttestation.signingAlgo,
-            e2ee: true,
-            passphrase: captured.passphrase.join('-'),
-            modelsPublicKey: captured.modelsPublicKey,
-          }
-        : {
-            version: '1.0.0',
-            timestamp: now,
-            proofHash,
-            txHash,
-            model: options.model,
-            requestBody: captured.requestBody,
-            responseBody: captured.responseBody,
-            signature: chatAttestation.signature,
-            signingAddress: chatAttestation.signingAddress,
-            signingAlgo: chatAttestation.signingAlgo,
-            e2ee: false,
-            passphrase: undefined,
-            modelsPublicKey: undefined,
-          };
+      const chatExport: ChatExport = {
+        version: '1.0.0',
+        timestamp: now,
+        proofHash,
+        txHash,
+        model: options.model,
+        requestBody: captured.e2ee
+          ? captured.encryptedRequestBody
+          : captured.requestBody,
+        responseBody: captured.e2ee
+          ? captured.encryptedResponseBody
+          : captured.responseBody,
+        signature: chatAttestation.signature,
+        signingAddress: chatAttestation.signingAddress,
+        signingAlgo: chatAttestation.signingAlgo,
+        e2ee: captured.e2ee,
+      };
 
       if (options.export) {
         console.log(`Exporting chat to ${options.export}`);
         fs.writeFileSync(options.export, JSON.stringify(chatExport, null, 2));
       }
       console.log('Result:');
-      console.log(`  Output: ${output}`);
       console.log(`  Signature: ${chatAttestation.signature}`);
       console.log(`  Proof Hash: ${proofHash}`);
     } catch (error) {
@@ -273,13 +261,12 @@ program
 
       const messages = parseMessagesFromRequestBody(chatExport.requestBody);
       const prompt = messages[messages.length - 1]!.content;
-      const output = parseOutputFromResponseBody(chatExport.responseBody);
+      // const output = parseOutputFromResponseBody(chatExport.responseBody);
 
       if (result.valid) {
         console.log('Verified AI output!');
         console.log(`  Model: ${chatExport.model}`);
         console.log(`  Prompt: ${prompt}`);
-        console.log(`  Output: ${output}`);
       } else {
         console.log('Verification failed!');
         console.log(`  Reason: ${result.message}`);

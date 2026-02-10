@@ -2,7 +2,11 @@ import type { ModelMessage } from 'ai';
 import type { NearAIChatModelId } from '@repo/packages-utils/near';
 import type { KeyPair, E2EEContext } from './types.js';
 import { ModelPublicKeys } from './model-public-keys.js';
-import { encryptForModel, decryptFromModel } from './crypto.js';
+import {
+  toPrefixedPublicKey,
+  encryptForModel,
+  decryptFromModel,
+} from './crypto.js';
 import { hexToBytes, bytesToHex } from '@noble/curves/utils.js';
 
 export class E2EE {
@@ -13,17 +17,14 @@ export class E2EE {
   }
 
   public async createContext(model: NearAIChatModelId): Promise<E2EEContext> {
+    // get the model's public key and add 0x04 prefix
     const modelsPublicKey = await this.modelPubKeyCache.get(model).then((o) => {
-      return hexToBytes(o.signingPublicKey);
+      return toPrefixedPublicKey(hexToBytes(o.signingPublicKey));
     });
-    const prefixedModelsPublicKey = Uint8Array.from([0x04, ...modelsPublicKey]);
 
     return {
-      modelsPublicKey: prefixedModelsPublicKey,
-      encrypt: (
-        ourKeyPair: KeyPair,
-        messages: ModelMessage[]
-      ): ModelMessage[] => {
+      modelsPublicKey,
+      encrypt: (messages: ModelMessage[]): ModelMessage[] => {
         const encryptedMessages = messages.map<ModelMessage>((message) => {
           if (
             typeof message.content === 'string' &&
@@ -32,11 +33,7 @@ export class E2EE {
             return {
               ...message,
               content: bytesToHex(
-                encryptForModel(
-                  ourKeyPair,
-                  prefixedModelsPublicKey,
-                  message.content
-                )
+                encryptForModel(modelsPublicKey, message.content)
               ),
             } as unknown as ModelMessage;
           }

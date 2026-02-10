@@ -36,16 +36,12 @@ export type CapturedResponse =
       requestBody: string;
       encryptedRequestBody: string;
       responseBody: string;
-      decryptedResponseBody: string;
-      passphrase: string[];
-      modelsPublicKey: string;
+      encryptedResponseBody: string;
     }
   | {
       e2ee: false;
       requestBody: string;
       encryptedRequestBody: undefined;
       responseBody: string;
-      decryptedResponseBody: undefined;
-      passphrase: undefined;
-      modelsPublicKey: undefined;
+      encryptedResponseBody: undefined;
     };
