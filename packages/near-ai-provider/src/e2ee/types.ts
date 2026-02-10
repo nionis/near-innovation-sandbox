@@ -40,6 +40,9 @@ export interface KeyPair {
 /** E2EE context for a model */
 export interface E2EEContext {
   modelsPublicKey: Uint8Array;
-  encrypt: (messages: ModelMessage[]) => ModelMessage[];
+  encrypt: (
+    ephemeralKeyPairs: KeyPair[],
+    messages: ModelMessage[]
+  ) => ModelMessage[];
   decrypt: (ourKeyPair: KeyPair, ciphertext: string) => string;
 }

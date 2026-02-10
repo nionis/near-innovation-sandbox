@@ -3,7 +3,12 @@ import type { NearAIChatModelId } from '@repo/packages-utils/near';
 import type { CapturedResponse } from './types.js';
 import type { E2EEContext, KeyPair } from './e2ee/types.js';
 import { bytesToHex } from '@noble/curves/utils.js';
-import { toUnprefixedPublicKey, generateKeyPair } from './e2ee/crypto.js';
+import {
+  toUnprefixedPublicKey,
+  generateKeyPair,
+  generateKeyPairFromPassphrase,
+} from './e2ee/crypto.js';
+import { generatePassphrase } from './passphrase.js';
 import { decryptSSEResponseBody } from './utils.js';
 
 export let capturedResponsePromise = Promise.resolve<CapturedResponse | null>(
@@ -46,10 +51,13 @@ export function createCapturingFetch(
       ? await createE2EEContext(parsedBody.model)
       : undefined;
 
+    let ephemeralKeyPairs: KeyPair[] | undefined;
+    let ourPassphrase: string[] | undefined;
     let ourKeyPair: KeyPair | undefined;
     let modelsPublicKey: Uint8Array | undefined;
     if (e2eeContext) {
-      ourKeyPair = generateKeyPair();
+      ourPassphrase = generatePassphrase(6);
+      ourKeyPair = generateKeyPairFromPassphrase(ourPassphrase);
       modelsPublicKey = e2eeContext.modelsPublicKey;
       headers.set('X-Signing-Algo', 'ecdsa');
       headers.set('X-Client-Pub-Key', bytesToHex(ourKeyPair.publicKey));
@@ -62,7 +70,11 @@ export function createCapturingFetch(
 
     // encrypt the request body
     if (e2eeContext && ourKeyPair) {
-      const encryptedMessages = e2eeContext.encrypt(parsedBody.messages);
+      ephemeralKeyPairs = parsedBody.messages.map(() => generateKeyPair());
+      const encryptedMessages = e2eeContext.encrypt(
+        ephemeralKeyPairs,
+        parsedBody.messages
+      );
       encryptedRequestBody = JSON.stringify({
         ...parsedBody,
         messages: encryptedMessages,
@@ -107,9 +119,13 @@ export function createCapturingFetch(
         }
 
         capturedResponsePromise = Promise.resolve(
-          e2eeContext && ourKeyPair
+          e2eeContext
             ? {
                 e2ee: true as const,
+                ephemeralPrivateKeys: ephemeralKeyPairs!.map((k) =>
+                  bytesToHex(k.privateKey)
+                ),
+                ourPassphrase: ourPassphrase!,
                 requestBody,
                 encryptedRequestBody: encryptedRequestBody!,
                 responseBody: _responseBody,
@@ -139,6 +155,10 @@ export function createCapturingFetch(
         e2eeContext && ourKeyPair
           ? {
               e2ee: true as const,
+              ephemeralPrivateKeys: ephemeralKeyPairs!.map((k) =>
+                bytesToHex(k.privateKey)
+              ),
+              ourPassphrase: ourPassphrase!,
               requestBody,
               encryptedRequestBody: encryptedRequestBody!,
               responseBody: e2eeContext.decrypt(ourKeyPair, responseBody!),

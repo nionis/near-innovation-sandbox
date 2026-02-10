@@ -56,9 +56,18 @@ export type ChatExport = VerifyInput & {
   timestamp: number;
   proofHash: string;
   txHash: string;
-  e2ee: boolean;
-  // passphrase: undefined;
-};
+} & (
+    | {
+        e2ee: true;
+        ephemeralPrivateKeys: string[];
+        ourPassphrase: string[];
+      }
+    | {
+        e2ee: false;
+        ephemeralPrivateKeys: undefined;
+        ourPassphrase: undefined;
+      }
+  );
 
 /** pre-formatted chat that can be displayed to the user */
 export type Chat = {

@@ -197,7 +197,11 @@ program
         signingAddress: chatAttestation.signingAddress,
         signingAlgo: chatAttestation.signingAlgo,
         e2ee: captured.e2ee,
-      };
+        ephemeralPrivateKeys: captured.e2ee
+          ? captured.ephemeralPrivateKeys
+          : undefined,
+        ourPassphrase: captured.e2ee ? captured.ourPassphrase : undefined,
+      } as ChatExport;
 
       if (options.export) {
         console.log(`Exporting chat to ${options.export}`);

@@ -24,21 +24,30 @@ export class E2EE {
 
     return {
       modelsPublicKey,
-      encrypt: (messages: ModelMessage[]): ModelMessage[] => {
-        const encryptedMessages = messages.map<ModelMessage>((message) => {
-          if (
-            typeof message.content === 'string' &&
-            message.content.length > 0
-          ) {
-            return {
-              ...message,
-              content: bytesToHex(
-                encryptForModel(modelsPublicKey, message.content)
-              ),
-            } as unknown as ModelMessage;
+      encrypt: (
+        ephemeralKeyPairs: KeyPair[],
+        messages: ModelMessage[]
+      ): ModelMessage[] => {
+        const encryptedMessages = messages.map<ModelMessage>(
+          (message, index) => {
+            if (
+              typeof message.content === 'string' &&
+              message.content.length > 0
+            ) {
+              return {
+                ...message,
+                content: bytesToHex(
+                  encryptForModel(
+                    ephemeralKeyPairs[index]!,
+                    modelsPublicKey,
+                    message.content
+                  )
+                ),
+              } as unknown as ModelMessage;
+            }
+            return message;
           }
-          return message;
-        });
+        );
         return encryptedMessages;
       },
       decrypt: (ourKeyPair: KeyPair, ciphertext: string): string => {

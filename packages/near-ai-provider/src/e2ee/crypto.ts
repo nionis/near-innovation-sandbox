@@ -12,6 +12,23 @@ export function generateKeyPair(): KeyPair {
   return { privateKey, publicKey };
 }
 
+const HKDF_INFO_E2EE_KEYPAIR = asciiToBytes('e2ee_keypair');
+
+/** generate a key pair from a passphrase */
+export function generateKeyPairFromPassphrase(passphrase: string[]): KeyPair {
+  const passphraseBytes = asciiToBytes(passphrase.join('-'));
+  const privateKey = hkdf(
+    sha256,
+    passphraseBytes,
+    undefined,
+    HKDF_INFO_E2EE_KEYPAIR,
+    32
+  );
+  const publicKey = secp256k1.getPublicKey(privateKey, false);
+
+  return { privateKey, publicKey };
+}
+
 const HKDF_INFO_NEAR_AI = asciiToBytes('ecdsa_encryption');
 
 /** derive a shared secret */
@@ -37,12 +54,12 @@ export function deriveSharedSecret(
 
 /** encrypt a plaintext string using ECIES to send to a model */
 export function encryptForModel(
+  ephemeralKeyPair: KeyPair,
   modelsPublicKey: Uint8Array,
   plaintext: string
 ): Uint8Array {
-  // Generate ephemeral key pair
   const { privateKey: ephemeralPrivateKey, publicKey: ephemeralPublicKey } =
-    generateKeyPair();
+    ephemeralKeyPair;
 
   // Derive shared secret
   const sharedSecret = deriveSharedSecret(ephemeralPrivateKey, modelsPublicKey);

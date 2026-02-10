@@ -33,6 +33,8 @@ export interface ListModelsResponse {
 export type CapturedResponse =
   | {
       e2ee: true;
+      ephemeralPrivateKeys: string[];
+      ourPassphrase: string[];
       requestBody: string;
       encryptedRequestBody: string;
       responseBody: string;
@@ -40,6 +42,8 @@ export type CapturedResponse =
     }
   | {
       e2ee: false;
+      ephemeralPrivateKeys: undefined;
+      ourPassphrase: undefined;
       requestBody: string;
       encryptedRequestBody: undefined;
       responseBody: string;
