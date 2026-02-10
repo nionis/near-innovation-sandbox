@@ -1,6 +1,6 @@
 import type { OpenAICompatibleProvider } from '@ai-sdk/openai-compatible';
 import type { NearAIChatModelId } from '@repo/packages-utils/near';
-import type { E2EESettings } from './e2ee/types.js';
+import type { E2EESettings } from './e2ee-context.js';
 
 /** extended near.ai provider with signature and attestation methods */
 export type NearAIProvider = OpenAICompatibleProvider<
@@ -30,22 +30,19 @@ export interface ListModelsResponse {
 }
 
 /** captured response from the near.ai API */
-export type CapturedResponse =
+export type CapturedResponse = {
+  requestBody: string;
+  responseBody: string;
+  ourPassphrase: string[];
+} & (
   | {
       e2ee: true;
+      modelsPublicKey: string;
       ephemeralPrivateKeys: string[];
-      ourPassphrase: string[];
-      requestBody: string;
-      encryptedRequestBody: string;
-      responseBody: string;
-      encryptedResponseBody: string;
     }
   | {
       e2ee: false;
+      modelsPublicKey: undefined;
       ephemeralPrivateKeys: undefined;
-      ourPassphrase: undefined;
-      requestBody: string;
-      encryptedRequestBody: undefined;
-      responseBody: string;
-      encryptedResponseBody: undefined;
-    };
+    }
+);

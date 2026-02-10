@@ -1,5 +1,5 @@
-import { randomNumber } from '@repo/packages-utils/crypto';
-import { EEFLongWordList } from './passphrase-words.js';
+import { randomNumber } from '../crypto/index.js';
+import { EEFLongWordList } from './words.js';
 
 /* generate a passphrase that includes random numbers */
 export function generatePassphrase(numWords: number): string[] {

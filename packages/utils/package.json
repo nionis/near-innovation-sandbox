@@ -4,17 +4,25 @@
   "type": "module",
   "private": true,
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+    "./crypto": {
+      "types": "./dist/crypto/index.d.ts",
+      "import": "./dist/crypto/index.js"
+    },
+    "./e2ee": {
+      "types": "./dist/e2ee/index.d.ts",
+      "import": "./dist/e2ee/index.js"
     },
     "./near": {
       "types": "./dist/near/index.d.ts",
       "import": "./dist/near/index.js"
     },
-    "./crypto": {
-      "types": "./dist/crypto/index.d.ts",
-      "import": "./dist/crypto/index.js"
+    "./passphrase": {
+      "types": "./dist/passphrase/index.d.ts",
+      "import": "./dist/passphrase/index.js"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "scripts": {
@@ -23,6 +31,9 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "ai": "^6.0.73",
+    "@noble/ciphers": "^2.1.1",
+    "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1"
   },
   "devDependencies": {

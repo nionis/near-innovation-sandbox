@@ -5,16 +5,12 @@ import {
 } from '@repo/packages-utils/near';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { createCapturingFetch } from './capturing-fetch.js';
-import { E2EE } from './e2ee/index.js';
+import { E2EE } from './e2ee-context.js';
 
 export type * from './types.js';
-export type * from './e2ee/types.js';
-export {
-  parseMessagesFromRequestBody,
-  parseOutputFromResponseBody,
-} from './utils.js';
-export { capturedResponsePromise } from './capturing-fetch.js';
+
 export { fetchAvailableModels } from './list-models.js';
+export { capturedResponsePromise } from './capturing-fetch.js';
 
 /** create a NEAR AI provider, optionally with E2EE enabled */
 export function createNearAI(options: NearAIProviderSettings): NearAIProvider {

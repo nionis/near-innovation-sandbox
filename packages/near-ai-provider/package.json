@@ -17,9 +17,7 @@
   "dependencies": {
     "ai": "^6.0.73",
     "@ai-sdk/openai-compatible": "^2.0.0",
-    "@noble/ciphers": "^2.1.1",
     "@noble/curves": "^2.0.1",
-    "@noble/hashes": "^2.0.1",
     "@repo/packages-utils": "*",
     "zod": "^4.3.6"
   },

@@ -59,11 +59,13 @@ export type ChatExport = VerifyInput & {
 } & (
     | {
         e2ee: true;
+        modelsPublicKey: string;
         ephemeralPrivateKeys: string[];
         ourPassphrase: string[];
       }
     | {
         e2ee: false;
+        modelsPublicKey: undefined;
         ephemeralPrivateKeys: undefined;
         ourPassphrase: undefined;
       }
@@ -90,6 +92,12 @@ export type ModelAndGatewayVerificationResult = {
   model_compose: VerificationResult;
   gateway_tdx: VerificationResult;
   gateway_compose: VerificationResult;
+};
+
+/** verification result for E2EE */
+export type E2EEVerificationResult = {
+  outgoing_enc: VerificationResult;
+  incoming_enc: VerificationResult;
 };
 
 // below are API types for NEAR AI Cloud and NRAS

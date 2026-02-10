@@ -6,7 +6,6 @@ import {
   createNearAI,
   capturedResponsePromise,
   fetchAvailableModels,
-  parseMessagesFromRequestBody,
 } from '@repo/packages-near-ai-provider';
 import {
   NearBlockchainNetwork,
@@ -22,6 +21,12 @@ import {
   verify,
 } from '@repo/packages-attestations';
 import { computeProofHash } from '@repo/packages-attestations/crypto';
+import {
+  generateKeyPairFromPassphrase,
+  parseRequestBody,
+  extractAndDecryptResponseBodyOutput,
+  extractOutputFromResponseBody,
+} from '@repo/packages-utils/e2ee';
 import { streamText } from 'ai';
 import { Command } from 'commander';
 import dotenv from 'dotenv';
@@ -158,12 +163,8 @@ program
       const chatAttestation = await attest(
         {
           chatId,
-          requestBody: captured.e2ee
-            ? captured.encryptedRequestBody
-            : captured.requestBody,
-          responseBody: captured.e2ee
-            ? captured.encryptedResponseBody
-            : captured.responseBody,
+          requestBody: captured.requestBody,
+          responseBody: captured.responseBody,
         },
         nearAiApiKey
       );
@@ -187,16 +188,13 @@ program
         proofHash,
         txHash,
         model: options.model,
-        requestBody: captured.e2ee
-          ? captured.encryptedRequestBody
-          : captured.requestBody,
-        responseBody: captured.e2ee
-          ? captured.encryptedResponseBody
-          : captured.responseBody,
+        requestBody: captured.requestBody,
+        responseBody: captured.responseBody,
         signature: chatAttestation.signature,
         signingAddress: chatAttestation.signingAddress,
         signingAlgo: chatAttestation.signingAlgo,
         e2ee: captured.e2ee,
+        modelsPublicKey: captured.e2ee ? captured.modelsPublicKey : undefined,
         ephemeralPrivateKeys: captured.e2ee
           ? captured.ephemeralPrivateKeys
           : undefined,
@@ -263,9 +261,8 @@ program
       printVerificationResult('gateway_compose', gateway_compose);
       printVerificationResult('notorized', notorized);
 
-      const messages = parseMessagesFromRequestBody(chatExport.requestBody);
+      const { messages } = parseRequestBody(chatExport.requestBody);
       const prompt = messages[messages.length - 1]!.content;
-      // const output = parseOutputFromResponseBody(chatExport.responseBody);
 
       if (result.valid) {
         console.log('Verified AI output!');
@@ -277,6 +274,39 @@ program
       }
 
       process.exit(result.valid ? 0 : 1);
+    } catch (error) {
+      console.error(error);
+      console.error('Error:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// show command
+program
+  .command('show')
+  .description('Show a chat export')
+  .requiredOption('-i, --import <path>', 'Path to the import JSON file')
+  .action(async (options) => {
+    try {
+      const chatExport = JSON.parse(
+        fs.readFileSync(options.import, 'utf-8')
+      ) as ChatExport;
+
+      let output = '';
+
+      if (chatExport.e2ee) {
+        const ourKeyPair = generateKeyPairFromPassphrase(
+          chatExport.ourPassphrase
+        );
+        output = extractAndDecryptResponseBodyOutput(
+          ourKeyPair,
+          chatExport.responseBody
+        );
+      } else {
+        output = chatExport.responseBody;
+      }
+
+      console.log('Output:', output);
     } catch (error) {
       console.error(error);
       console.error('Error:', error instanceof Error ? error.message : error);

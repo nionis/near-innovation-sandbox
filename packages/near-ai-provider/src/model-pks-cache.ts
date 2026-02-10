@@ -1,19 +1,18 @@
 import type { NearAIChatModelId } from '@repo/packages-utils/near';
-import type {
-  ModelPublicKeyRecord as Record,
-  AttestationReport,
-} from './types.js';
 import { randomNonce } from '@repo/packages-utils/crypto';
 
-export class ModelPublicKeys {
+/** cache for model public keys */
+export class ModelPublicKeysCache {
   private cacheTTL: number = 5 * 60 * 1000; // 5 minutes
-  private cache: Map<string, Record> = new Map();
+  private cache: Map<string, ModelPublicKeyRecord> = new Map();
 
   constructor(private nearAiBaseURL: string) {
     this.nearAiBaseURL = nearAiBaseURL;
   }
 
-  private async fetchPublicKey(model: NearAIChatModelId): Promise<Record> {
+  private async fetchPublicKey(
+    model: NearAIChatModelId
+  ): Promise<ModelPublicKeyRecord> {
     const nonce = randomNonce();
     const url = new URL(`${this.nearAiBaseURL}/attestation/report`);
     url.searchParams.set('model', model);
@@ -60,7 +59,7 @@ export class ModelPublicKeys {
   }
 
   /** get or fetch a model's public key record */
-  public async get(model: NearAIChatModelId): Promise<Record> {
+  public async get(model: NearAIChatModelId): Promise<ModelPublicKeyRecord> {
     const cached = this.cache.get(model);
 
     if (cached && Date.now() - cached.updatedAt < this.cacheTTL) {
@@ -71,4 +70,25 @@ export class ModelPublicKeys {
     this.cache.set(model, record);
     return record;
   }
+}
+
+/** a record of a model's public key */
+export interface ModelPublicKeyRecord {
+  signingPublicKey: string;
+  signingAddress: string;
+  updatedAt: number;
+}
+
+/** a report of a model's attestation */
+export interface AttestationReport {
+  gateway_attestation: {
+    signing_address: string;
+    signing_algo: string;
+  };
+  model_attestations: Array<{
+    signing_address: string;
+    signing_algo: string;
+    signing_public_key: string;
+    request_nonce: string;
+  }>;
 }

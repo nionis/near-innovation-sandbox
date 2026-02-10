@@ -1,6 +1,8 @@
+import type { ModelMessage } from 'ai';
 import type {
   AttestationsOptions,
   ModelAndGatewayVerificationResult,
+  E2EEVerificationResult,
   ModelAttestation,
   GatewayAttestation,
   AttestationInfo,
@@ -96,6 +98,26 @@ export async function verifyModelAndGatewayAttestation(
     ...gatewayVerifications,
   };
 }
+
+// export async function verifyE2EE(input: {
+//   ephemeralPrivateKeys: string[];
+//   ourPassphrase: string[];
+//   plainRequestBody: string;
+//   plainResponseBody: string;
+// }): Promise<E2EEVerificationResult> {
+//   let parsedRequestBody: {
+//     messages: ModelMessage[];
+//   };
+//   try {
+//     parsedRequestBody = JSON.parse(input.plainRequestBody);
+//   } catch {
+//     throw new Error('failed to parse request body');
+//   }
+
+//   // const encryptedMessages = parsedRequestBody.messages.map(message => {
+//   //   ...
+//   // })
+// }
 
 async function verifyModelAttestation(
   attestation: ModelAttestation,

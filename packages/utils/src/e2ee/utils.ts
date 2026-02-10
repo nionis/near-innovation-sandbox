@@ -1,17 +1,21 @@
+import type { KeyPair, ParsedRequestBody } from './types.js';
 import { type ModelMessage, modelMessageSchema } from 'ai';
+import { encryptForModel, decryptFromModel } from './index.js';
+import { bytesToHex, hexToBytes } from '@noble/curves/utils.js';
 
-/** extract the model from a request body */
-export function parseMessagesFromRequestBody(
-  requestBody: string
-): ModelMessage[] {
-  const messages = JSON.parse(requestBody)?.messages;
-  return messages.map((message: ModelMessage) =>
+/** parse a request body from AI SDK */
+export function parseRequestBody(requestBody: string): ParsedRequestBody {
+  const parsedBody: ParsedRequestBody = JSON.parse(
+    requestBody
+  ) as ParsedRequestBody;
+  parsedBody.messages = parsedBody.messages.map((message) =>
     modelMessageSchema.parse(message)
   );
+  return parsedBody;
 }
 
-/** extract the output from a response body (streaming or non-streaming) */
-export function parseOutputFromResponseBody(responseBody: string): string {
+/** parse a response body from AI SDK to output text */
+export function extractOutputFromResponseBody(responseBody: string): string {
   // Check if it's a streaming response (SSE format with "data:" lines)
   if (responseBody.includes('data: {')) {
     // Parse Server-Sent Events (SSE) format
@@ -50,8 +54,59 @@ export function parseOutputFromResponseBody(responseBody: string): string {
   }
 }
 
-/** decrypt an SSE response body */
-export function decryptSSEResponseBody(
+/** encrypt a list of messages using ECIES */
+function encryptMessagesForModel(
+  modelsPublicKey: Uint8Array,
+  ephemeralKeyPairs: KeyPair[],
+  messages: ModelMessage[]
+): ModelMessage[] {
+  const encryptedMessages = messages.map<ModelMessage>((message, index) => {
+    if (typeof message.content === 'string' && message.content.length > 0) {
+      return {
+        ...message,
+        content: bytesToHex(
+          encryptForModel(
+            ephemeralKeyPairs[index]!,
+            modelsPublicKey,
+            message.content
+          )
+        ),
+      } as unknown as ModelMessage;
+    }
+    return message;
+  });
+  return encryptedMessages;
+}
+
+/** encrypt a request body */
+export function encryptRequestBody(
+  modelsPublicKey: Uint8Array,
+  ephemeralKeyPairs: KeyPair[],
+  parsedBody: ParsedRequestBody
+): ParsedRequestBody {
+  return {
+    ...parsedBody,
+    messages: encryptMessagesForModel(
+      modelsPublicKey,
+      ephemeralKeyPairs,
+      parsedBody.messages
+    ),
+  };
+}
+
+/** decrypt a response body */
+export function extractAndDecryptResponseBodyOutput(
+  ourKeyPair: KeyPair,
+  responseBody: string
+): string {
+  return decryptSSEResponseBodyOutput(
+    (ciphertext: string) => decryptCiphertext(ourKeyPair, ciphertext),
+    responseBody
+  );
+}
+
+/** decrypt an SSE response body and extract the output */
+function decryptSSEResponseBodyOutput(
   decrypt: (ciphertext: string) => string,
   buffer: string
 ) {
@@ -94,4 +149,11 @@ export function decryptSSEResponseBody(
   }
 
   return responseBody;
+}
+
+/** decrypt a ciphertext string using ECIES */
+function decryptCiphertext(ourKeyPair: KeyPair, ciphertext: string): string {
+  const packedCiphertext = hexToBytes(ciphertext);
+  const plaintextBytes = decryptFromModel(ourKeyPair, packedCiphertext);
+  return new TextDecoder().decode(plaintextBytes);
 }

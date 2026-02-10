@@ -5,6 +5,9 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { gcm } from '@noble/ciphers/aes.js';
 import { asciiToBytes, randomBytes } from '@noble/curves/utils.js';
 
+export * from './types.js';
+export * from './utils.js';
+
 /** generate a random key pair */
 export function generateKeyPair(): KeyPair {
   const privateKey = randomBytes(32);
