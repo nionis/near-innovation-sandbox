@@ -280,7 +280,7 @@ export class ModelFactory {
       apiKey: provider.api_key,
       baseURL: provider.base_url,
       headers: Object.keys(headers).length > 0 ? headers : undefined,
-      e2ee: { enabled: false },
+      e2ee: { enabled: true },
     })
 
     // Cast to LanguageModel for compatibility - generateText accepts both v2 and v3

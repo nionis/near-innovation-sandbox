@@ -18,10 +18,11 @@ import {
   useAttestationStore,
   type AttestationChatData,
 } from '@/stores/attestation-store'
+import { capturedResponsePromise } from '@repo/packages-near-ai-provider'
 import {
-  capturedResponsePromise,
-  parseOutputFromResponseBody,
-} from '@repo/packages-near-ai-provider'
+  generateKeyPairFromPassphrase,
+  extractAndDecryptResponseBodyOutput,
+} from '@repo/packages-utils/e2ee'
 
 export type TokenUsageCallback = (
   usage: LanguageModelUsage,
@@ -267,70 +268,48 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
       )
       // Create a promise that captures the E2EE attestation data from the fetch wrapper
       // The fetch wrapper captures the encrypted request/response bodies for proper hash verification
-      attestationDataPromise = (async (): Promise<AttestationChatData | null> => {
-        try {
-          // Wait for the stream to complete first
-          await result.text
+      attestationDataPromise =
+        (async (): Promise<AttestationChatData | null> => {
+          try {
+            // Wait for the stream to complete first
+            await result.text
 
-          // Get the captured E2EE data from the fetch wrapper
-          // This promise resolves when the fetch wrapper finishes reading the response
-          const capturedData = await capturedResponsePromise
+            // Get the captured E2EE data from the fetch wrapper
+            // This promise resolves when the fetch wrapper finishes reading the response
+            const capturedData = await capturedResponsePromise
 
-          if (capturedData) {
-            // Parse the response to extract the chat ID
-            let chatId: string
-            try {
-              // For streaming responses, parse the first chunk to get the ID
-              // For non-streaming, parse the full response
-              const firstLine = capturedData.responseBody
-                .split('\n')
-                .find((line) => line.startsWith('data: {'))
-              if (firstLine) {
-                // Streaming response
-                const chunk = JSON.parse(firstLine.slice(6))
-                chatId = chunk.id
-              } else {
-                // Non-streaming response
-                const response = JSON.parse(capturedData.responseBody)
-                chatId = response.id
+            console.debug('[Attestation] Captured data:', capturedData)
+
+            if (capturedData) {
+              // Extract the output text from the response
+              const output = extractAndDecryptResponseBodyOutput(
+                generateKeyPairFromPassphrase(capturedData.ourPassphrase),
+                capturedData.responseBody
+              )
+
+              console.debug('[Attestation] Output:', output)
+
+              // Convert CapturedResponse to AttestationChatData
+              return {
+                id: options.chatId,
+                requestBody: capturedData.requestBody,
+                responseBody: capturedData.responseBody,
+                output,
               }
-            } catch (error) {
-              console.error('[Attestation] Failed to parse chat ID:', error)
+            } else {
+              console.warn(
+                '[Attestation] No E2EE data captured from fetch wrapper'
+              )
               return null
             }
-
-            // Extract the output text from the response
-            const output = parseOutputFromResponseBody(capturedData.responseBody)
-
-            console.debug(
-              '[Attestation] E2EE response captured from fetch wrapper:',
-              {
-                responseId: chatId,
-                requestBodyLength: capturedData.requestBody.length,
-                responseBodyLength: capturedData.responseBody.length,
-                outputLength: output.length,
-              }
+          } catch (error) {
+            console.warn(
+              '[Attestation] Failed to capture E2EE attestation data:',
+              error
             )
-
-            // Convert CapturedResponse to AttestationChatData
-            return {
-              id: chatId,
-              requestBody: capturedData.requestBody,
-              responseBody: capturedData.responseBody,
-              output,
-            }
-          } else {
-            console.warn('[Attestation] No E2EE data captured from fetch wrapper')
             return null
           }
-        } catch (error) {
-          console.warn(
-            '[Attestation] Failed to capture E2EE attestation data:',
-            error
-          )
-          return null
-        }
-      })()
+        })()
     }
 
     return result.toUIMessageStream({

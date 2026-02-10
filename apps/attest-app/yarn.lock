@@ -3869,6 +3869,7 @@ __metadata:
     unified: "npm:11.0.5"
     unist-util-visit: "npm:^5.0.0"
     use-stick-to-bottom: "npm:^1.0.48"
+    utils: "link:../../../packages/utils"
     uuid: "npm:11.1.0"
     vaul: "npm:^1.1.2"
     vite: "npm:6.3.2"
@@ -21698,6 +21699,12 @@ __metadata:
   checksum: 10c0/c27054de2cea2229a66c09522d0fa1415fb12d861d08523a8846bf2e4cbf0079d4c3f725f09dcb87493549bcbf05f5798dce1688b53c6c17201a45759e7253f3
   languageName: node
   linkType: hard
+
+"utils@link:../../../packages/utils::locator=%40janhq%2Fweb-app%40workspace%3Aweb-app":
+  version: 0.0.0-use.local
+  resolution: "utils@link:../../../packages/utils::locator=%40janhq%2Fweb-app%40workspace%3Aweb-app"
+  languageName: node
+  linkType: soft
 
 "uuid@npm:11.1.0, uuid@npm:^11.1.0":
   version: 11.1.0
