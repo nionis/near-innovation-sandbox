@@ -136,19 +136,38 @@ export function decryptSSEStream(
           throw new Error(parsed.error.message || 'Unknown error');
         }
 
-        // Decrypt the content field if present
+        // Decrypt all encrypted fields in delta if present
         const choices = parsed.choices;
         if (choices && choices.length > 0) {
           const delta = choices[0].delta;
-          if (delta && delta.content) {
-            // Decrypt the content
-            const decryptedContent = decryptCiphertext(
-              ourKeyPair,
-              delta.content
-            );
-            // Replace the encrypted content with decrypted content
-            parsed.choices[0].delta.content = decryptedContent;
-            content += decryptedContent;
+          if (delta) {
+            // Decrypt delta.content if present
+            if (delta.content && typeof delta.content === 'string') {
+              const decryptedContent = decryptCiphertext(
+                ourKeyPair,
+                delta.content
+              );
+              parsed.choices[0].delta.content = decryptedContent;
+              content += decryptedContent;
+            }
+            
+            // Decrypt delta.reasoning if present (for reasoning models)
+            if (delta.reasoning && typeof delta.reasoning === 'string') {
+              const decryptedReasoning = decryptCiphertext(
+                ourKeyPair,
+                delta.reasoning
+              );
+              parsed.choices[0].delta.reasoning = decryptedReasoning;
+            }
+            
+            // Decrypt delta.reasoning_content if present (for reasoning models)
+            if (delta.reasoning_content && typeof delta.reasoning_content === 'string') {
+              const decryptedReasoningContent = decryptCiphertext(
+                ourKeyPair,
+                delta.reasoning_content
+              );
+              parsed.choices[0].delta.reasoning_content = decryptedReasoningContent;
+            }
           }
         }
 

@@ -2,8 +2,10 @@
 
 1. attest AI
 
-- tailor UI and UX
-- share button
-- verify with camera
+- better parse SSE
+- ensure files, docs, and other tools work E2EE
+- store attestations locally and verification UI
+- share button and insert link button
+- verify with camera?
 
 2. factors
