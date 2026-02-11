@@ -43,6 +43,8 @@ export function VerificationResultDialog() {
     getMessageState,
     addReference,
     removeReference,
+    setShareUrl: setStoreShareUrl,
+    getShareUrl: getStoreShareUrl,
   } = useAttestationStore()
   const { isOpen, verificationResult, messageId, references } =
     verificationDialog
@@ -61,8 +63,14 @@ export function VerificationResultDialog() {
       setIsSharing(false)
       setShowQRCode(false)
       setExpandedChecks(new Set())
+    } else if (messageId) {
+      // Load cached share URL if available
+      const cachedShare = getStoreShareUrl(messageId)
+      if (cachedShare) {
+        setShareUrl(cachedShare.url)
+      }
     }
-  }, [isOpen])
+  }, [isOpen, messageId, getStoreShareUrl])
 
   if (!verificationResult) return null
 
@@ -135,7 +143,6 @@ export function VerificationResultDialog() {
 
     try {
       setIsSharing(true)
-      setShareUrl(null)
 
       // Get the message state to retrieve receipt and chat data
       const messageState = getMessageState(messageId)
@@ -151,7 +158,32 @@ export function VerificationResultDialog() {
       }
       const passphrase = chatData.ourPassphrase
 
-      // Prepare the content to share - store ALL captured data
+      // Prepare the content to share - store ALL captured data (excluding timestamp for hash)
+      const contentForHash = JSON.stringify({
+        verificationResult,
+        chatData,
+        receipt,
+      })
+
+      // Create a hash of the content to detect changes
+      const encoder = new TextEncoder()
+      const data = encoder.encode(contentForHash)
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+      const hashArray = Array.from(new Uint8Array(hashBuffer))
+      const contentHash = hashArray
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('')
+
+      // Check if we have a cached share URL with matching content
+      const cachedShare = getStoreShareUrl(messageId)
+      if (cachedShare && cachedShare.hash === contentHash) {
+        // Content hasn't changed, reuse the existing URL
+        setShareUrl(cachedShare.url)
+        setIsSharing(false)
+        return
+      }
+
+      // Content changed or no cache exists, generate new share URL
       const contentToShare = JSON.stringify({
         verificationResult,
         chatData,
@@ -174,6 +206,9 @@ export function VerificationResultDialog() {
       const url = `${SHARE_API_URL}/?id=${id}&passphrase=${chatData.ourPassphrase.join(
         '-'
       )}`
+
+      // Store the URL and hash in the store
+      setStoreShareUrl(messageId, url, contentHash)
       setShareUrl(url)
     } catch (error) {
       console.error('Failed to share:', error)

@@ -56,6 +56,9 @@ export interface MessageAttestationState {
   isVerifying: boolean
   error?: string
   verificationError?: string
+  shareUrl?: string // Cached share URL to avoid regenerating
+  shareContentHash?: string // Hash of content to detect changes
+  references: ReferenceMetadata[] // References for this message
 }
 
 interface AttestationSettings {
@@ -107,6 +110,12 @@ interface AttestationState {
   removeReference: (referenceId: string) => void
   clearReferences: () => void
   getReferences: () => ReferenceMetadata[]
+  setShareUrl: (
+    messageId: string,
+    shareUrl: string,
+    contentHash: string
+  ) => void
+  getShareUrl: (messageId: string) => { url: string; hash: string } | undefined
 }
 
 // Default attestation API URL (can be overridden in settings)
@@ -149,6 +158,7 @@ export const useAttestationStore = create<AttestationState>()(
               ...state.messageStates[messageId],
               chatData,
               isAttesting: false,
+              references: state.messageStates[messageId]?.references || [],
             },
           },
         }))
@@ -194,6 +204,7 @@ export const useAttestationStore = create<AttestationState>()(
               error: isAttesting
                 ? undefined
                 : state.messageStates[messageId]?.error,
+              references: state.messageStates[messageId]?.references || [],
             },
           },
         }))
@@ -285,12 +296,13 @@ export const useAttestationStore = create<AttestationState>()(
       },
 
       openVerificationDialog: (messageId: string, result: VerifyOutput) => {
+        const messageState = get().messageStates[messageId]
         set({
           verificationDialog: {
             isOpen: true,
             messageId,
             verificationResult: result,
-            references: [],
+            references: messageState?.references || [],
           },
         })
       },
@@ -307,23 +319,52 @@ export const useAttestationStore = create<AttestationState>()(
       },
 
       addReference: (reference: ReferenceMetadata) => {
-        set((state) => ({
-          verificationDialog: {
-            ...state.verificationDialog,
-            references: [...state.verificationDialog.references, reference],
-          },
-        }))
+        set((state) => {
+          const messageId = state.verificationDialog.messageId
+          const updatedReferences = [
+            ...state.verificationDialog.references,
+            reference,
+          ]
+          return {
+            verificationDialog: {
+              ...state.verificationDialog,
+              references: updatedReferences,
+            },
+            messageStates: messageId
+              ? {
+                  ...state.messageStates,
+                  [messageId]: {
+                    ...state.messageStates[messageId],
+                    references: updatedReferences,
+                  },
+                }
+              : state.messageStates,
+          }
+        })
       },
 
       removeReference: (referenceId: string) => {
-        set((state) => ({
-          verificationDialog: {
-            ...state.verificationDialog,
-            references: state.verificationDialog.references.filter(
-              (ref) => ref.id !== referenceId
-            ),
-          },
-        }))
+        set((state) => {
+          const messageId = state.verificationDialog.messageId
+          const updatedReferences = state.verificationDialog.references.filter(
+            (ref) => ref.id !== referenceId
+          )
+          return {
+            verificationDialog: {
+              ...state.verificationDialog,
+              references: updatedReferences,
+            },
+            messageStates: messageId
+              ? {
+                  ...state.messageStates,
+                  [messageId]: {
+                    ...state.messageStates[messageId],
+                    references: updatedReferences,
+                  },
+                }
+              : state.messageStates,
+          }
+        })
       },
 
       clearReferences: () => {
@@ -337,6 +378,35 @@ export const useAttestationStore = create<AttestationState>()(
 
       getReferences: () => {
         return get().verificationDialog.references
+      },
+
+      setShareUrl: (
+        messageId: string,
+        shareUrl: string,
+        contentHash: string
+      ) => {
+        set((state) => ({
+          messageStates: {
+            ...state.messageStates,
+            [messageId]: {
+              ...state.messageStates[messageId],
+              shareUrl,
+              shareContentHash: contentHash,
+              references: state.messageStates[messageId]?.references || [],
+            },
+          },
+        }))
+      },
+
+      getShareUrl: (messageId: string) => {
+        const messageState = get().messageStates[messageId]
+        if (messageState?.shareUrl && messageState?.shareContentHash) {
+          return {
+            url: messageState.shareUrl,
+            hash: messageState.shareContentHash,
+          }
+        }
+        return undefined
       },
     }),
     {
