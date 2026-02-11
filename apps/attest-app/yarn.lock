@@ -3852,6 +3852,7 @@ __metadata:
     fuse.js: "npm:7.1.0"
     fzf: "npm:0.5.2"
     globals: "npm:16.0.0"
+    html5-qrcode: "npm:^2.3.8"
     i18next: "npm:25.0.2"
     istanbul-api: "npm:3.0.0"
     istanbul-lib-coverage: "npm:2.0.5"
@@ -14053,6 +14054,13 @@ __metadata:
   version: 3.0.0
   resolution: "html-void-elements@npm:3.0.0"
   checksum: 10c0/a8b9ec5db23b7c8053876dad73a0336183e6162bf6d2677376d8b38d654fdc59ba74fdd12f8812688f7db6fad451210c91b300e472afc0909224e0a44c8610d2
+  languageName: node
+  linkType: hard
+
+"html5-qrcode@npm:^2.3.8":
+  version: 2.3.8
+  resolution: "html5-qrcode@npm:2.3.8"
+  checksum: 10c0/3d7d0b3687e41a6fc0a06345f67e89ad3c7c00a3d0d8846d6fd31985e1ed2ac1c310e625f0b650dbc689f6b83469e3378417e7431ae5a9194178f1172bf6a93a
   languageName: node
   linkType: hard
 

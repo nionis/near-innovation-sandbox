@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import {
   Dialog,
@@ -11,7 +11,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Link as LinkIcon, AlertCircle } from 'lucide-react'
+import { Loader2, Link as LinkIcon, AlertCircle, Camera, X } from 'lucide-react'
+import { Html5Qrcode } from 'html5-qrcode'
 import {
   downloadBinary,
   decryptString,
@@ -53,11 +54,92 @@ export function LoadFromUrlDialog({
   const [needsPassphrase, setNeedsPassphrase] = useState(false)
   const [downloadedData, setDownloadedData] = useState<Uint8Array | null>(null)
   const [shareId, setShareId] = useState<string | null>(null)
+  const [isScanning, setIsScanning] = useState(false)
+  const [scannerError, setScannerError] = useState<string | null>(null)
+
+  const html5QrCodeRef = useRef<Html5Qrcode | null>(null)
+  const scannerContainerRef = useRef<HTMLDivElement>(null)
 
   const { openVerificationDialog } = useAttestationStore()
   const { createThread, setCurrentThreadId } = useThreads()
   const { addMessage } = useMessages()
   const navigate = useNavigate()
+
+  // Cleanup scanner on unmount or when dialog closes
+  useEffect(() => {
+    if (!open && isScanning) {
+      stopScanner()
+    }
+  }, [open])
+
+  useEffect(() => {
+    return () => {
+      if (html5QrCodeRef.current) {
+        html5QrCodeRef.current
+          .stop()
+          .catch((err) => console.error('Error stopping scanner:', err))
+      }
+    }
+  }, [])
+
+  const startScanner = async () => {
+    setScannerError(null)
+    setError(null)
+    setIsScanning(true)
+
+    // Wait for the DOM element to be rendered
+    setTimeout(async () => {
+      try {
+        const scannerId = 'qr-reader'
+        const element = document.getElementById(scannerId)
+
+        if (!element) {
+          throw new Error('Scanner element not found')
+        }
+
+        html5QrCodeRef.current = new Html5Qrcode(scannerId)
+
+        await html5QrCodeRef.current.start(
+          { facingMode: 'environment' }, // Use back camera on mobile
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+          },
+          (decodedText) => {
+            // Success callback when QR code is scanned
+            setUrl(decodedText)
+            stopScanner()
+            setScannerError(null)
+          },
+          (_errorMessage) => {
+            // Error callback (called frequently, not an actual error)
+            // We can ignore this as it's called on every frame without a QR code
+          }
+        )
+      } catch (err) {
+        console.error('Error starting scanner:', err)
+        setScannerError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to access camera. Please ensure camera permissions are granted.'
+        )
+        setIsScanning(false)
+      }
+    }, 100) // Small delay to ensure DOM is ready
+  }
+
+  const stopScanner = async () => {
+    try {
+      if (html5QrCodeRef.current) {
+        await html5QrCodeRef.current.stop()
+        html5QrCodeRef.current = null
+      }
+      setIsScanning(false)
+      setScannerError(null)
+    } catch (err) {
+      console.error('Error stopping scanner:', err)
+    }
+  }
 
   const parseUrl = (urlString: string) => {
     try {
@@ -395,6 +477,10 @@ export function LoadFromUrlDialog({
     setNeedsPassphrase(false)
     setDownloadedData(null)
     setShareId(null)
+    setScannerError(null)
+    if (isScanning) {
+      stopScanner()
+    }
     onOpenChange(false)
   }
 
@@ -404,12 +490,12 @@ export function LoadFromUrlDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <LinkIcon className="size-5" />
-            Load from URL
+            Scan QR Code
           </DialogTitle>
           <DialogDescription>
             {needsPassphrase
               ? 'Enter the passphrase to decrypt this conversation'
-              : 'Enter a shared conversation URL to load it'}
+              : 'Enter a shared conversation URL to load it or scan a QR code'}
           </DialogDescription>
         </DialogHeader>
 
@@ -421,17 +507,65 @@ export function LoadFromUrlDialog({
             </Alert>
           )}
 
+          {scannerError && (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription>{scannerError}</AlertDescription>
+            </Alert>
+          )}
+
           {!needsPassphrase ? (
-            <div className="space-y-2">
-              <Label htmlFor="url">Conversation URL</Label>
-              <Input
-                id="url"
-                placeholder="http://example.com/id=xxx&passphrase=yyy-zzz"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="url">Conversation URL</Label>
+                  {!isScanning ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={startScanner}
+                      disabled={isLoading}
+                      className="gap-2"
+                    >
+                      <Camera className="size-4" />
+                      Scan QR Code
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={stopScanner}
+                      className="gap-2"
+                    >
+                      <X className="size-4" />
+                      Cancel Scan
+                    </Button>
+                  )}
+                </div>
+                <Input
+                  id="url"
+                  placeholder="http://example.com/id=xxx&passphrase=yyy-zzz"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={isLoading || isScanning}
+                />
+              </div>
+
+              {isScanning && (
+                <div className="space-y-2">
+                  <div
+                    id="qr-reader"
+                    ref={scannerContainerRef}
+                    className="w-full rounded-lg overflow-hidden border border-border"
+                  />
+                  <p className="text-xs text-muted-foreground text-center">
+                    Position the QR code within the frame to scan
+                  </p>
+                </div>
+              )}
+            </>
           ) : (
             <div className="space-y-2">
               <Label htmlFor="passphrase">Passphrase</Label>
@@ -461,7 +595,10 @@ export function LoadFromUrlDialog({
             Cancel
           </Button>
           {!needsPassphrase ? (
-            <Button onClick={handleLoad} disabled={isLoading || !url.trim()}>
+            <Button
+              onClick={handleLoad}
+              disabled={isLoading || !url.trim() || isScanning}
+            >
               {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
               Load
             </Button>
