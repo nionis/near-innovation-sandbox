@@ -15,6 +15,7 @@ import {
   Share2,
   Copy,
   Check,
+  QrCode,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
@@ -23,6 +24,7 @@ import {
   uploadBinary,
   SHARE_API_URL as DEFAULT_SHARE_API_URL,
 } from '@repo/packages-utils/share'
+import { QRCodeSVG } from 'qrcode.react'
 
 const SHARE_API_URL = IS_DEV ? 'http://localhost:3000' : DEFAULT_SHARE_API_URL
 
@@ -33,6 +35,7 @@ export function VerificationResultDialog() {
   const [isSharing, setIsSharing] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showQRCode, setShowQRCode] = useState(false)
 
   // Reset share state when dialog opens/closes
   useEffect(() => {
@@ -40,6 +43,7 @@ export function VerificationResultDialog() {
       setShareUrl(null)
       setCopied(false)
       setIsSharing(false)
+      setShowQRCode(false)
     }
   }, [isOpen])
 
@@ -207,23 +211,51 @@ export function VerificationResultDialog() {
 
         <DialogFooter className="flex-col gap-3 sm:flex-col">
           {shareUrl && (
-            <div className="flex items-center gap-2 w-full p-3 bg-muted rounded-lg">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground mb-1">Share URL:</p>
-                <p className="text-sm font-mono break-all">{shareUrl}</p>
+            <div className="w-full space-y-3">
+              <div className="flex items-center gap-2 w-full p-3 bg-muted rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Share URL:
+                  </p>
+                  <p className="text-sm font-mono break-all">{shareUrl}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyUrl}
+                  className="shrink-0"
+                >
+                  {copied ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowQRCode(!showQRCode)}
+                  className="shrink-0"
+                >
+                  <QrCode className="size-4" />
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyUrl}
-                className="shrink-0"
-              >
-                {copied ? (
-                  <Check className="size-4" />
-                ) : (
-                  <Copy className="size-4" />
-                )}
-              </Button>
+
+              {showQRCode && (
+                <div className="flex flex-col items-center gap-2 w-full p-4 bg-muted rounded-lg">
+                  <p className="text-xs text-muted-foreground">
+                    Scan QR Code to share:
+                  </p>
+                  <div className="bg-white p-4 rounded-lg">
+                    <QRCodeSVG
+                      value={shareUrl}
+                      size={200}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
