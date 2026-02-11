@@ -1,8 +1,6 @@
-import type { ModelMessage } from 'ai';
 import type {
   AttestationsOptions,
   ModelAndGatewayVerificationResult,
-  E2EEVerificationResult,
   ModelAttestation,
   GatewayAttestation,
   AttestationInfo,

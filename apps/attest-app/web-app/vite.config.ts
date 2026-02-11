@@ -5,6 +5,7 @@ import path from 'path'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import packageJson from './package.json'
+
 const host = process.env.TAURI_DEV_HOST
 
 // https://vite.dev/config/
@@ -23,7 +24,21 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       nodePolyfills({
         include: ['path', 'buffer'],
+        globals: {
+          Buffer: true,
+        },
       }),
+      // Resolve node polyfill shims for files outside web-app (linked packages, root node_modules)
+      {
+        name: 'resolve-node-polyfill-shims',
+        enforce: 'pre',
+        resolveId(id) {
+          if (id.startsWith('vite-plugin-node-polyfills/shims/')) {
+            return { id: path.resolve(__dirname, 'node_modules', id, 'dist/index.js'), moduleSideEffects: false }
+          }
+          return null
+        },
+      },
       // injectGoogleAnalytics(env.GA_MEASUREMENT_ID),
     ],
     resolve: {
