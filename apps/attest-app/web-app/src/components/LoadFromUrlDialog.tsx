@@ -1,0 +1,481 @@
+import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Loader2, Link as LinkIcon, AlertCircle } from 'lucide-react'
+import {
+  downloadBinary,
+  decryptString,
+  SHARE_API_URL as DEFAULT_SHARE_API_URL,
+} from '@repo/packages-utils/share'
+import { useAttestationStore } from '@/stores/attestation-store'
+import { useThreads } from '@/hooks/useThreads'
+import { useMessages } from '@/hooks/useMessages'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ulid } from 'ulidx'
+import {
+  generateKeyPairFromPassphrase,
+  parseRequestBody,
+  toPrefixedPublicKey,
+  deriveSharedSecret,
+  decryptSSEStream,
+} from '@repo/packages-utils/e2ee'
+import { hexToBytes } from '@noble/curves/utils.js'
+import { gcm } from '@noble/ciphers/aes.js'
+import type { AttestationChatData } from '@/stores/attestation-store'
+import { convertUIMessageToThreadMessage } from '@/lib/messages'
+import type { UIMessage } from '@ai-sdk/react'
+
+const SHARE_API_URL = IS_DEV ? 'http://localhost:3000' : DEFAULT_SHARE_API_URL
+
+interface LoadFromUrlDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function LoadFromUrlDialog({
+  open,
+  onOpenChange,
+}: LoadFromUrlDialogProps) {
+  const [url, setUrl] = useState('')
+  const [passphrase, setPassphrase] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [needsPassphrase, setNeedsPassphrase] = useState(false)
+  const [downloadedData, setDownloadedData] = useState<Uint8Array | null>(null)
+  const [shareId, setShareId] = useState<string | null>(null)
+
+  const { openVerificationDialog } = useAttestationStore()
+  const { createThread, setCurrentThreadId } = useThreads()
+  const { addMessage } = useMessages()
+  const navigate = useNavigate()
+
+  const parseUrl = (urlString: string) => {
+    try {
+      // Handle multiple URL formats:
+      // 1. http://localhost:3000/id=xxx&passphrase=yyy-zzz
+      // 2. http://localhost:3000/?id=xxx&passphrase=yyy-zzz
+      // 3. Direct paste of id and passphrase: id=xxx&passphrase=yyy-zzz
+
+      let queryString = ''
+
+      if (urlString.startsWith('http://') || urlString.startsWith('https://')) {
+        const urlObj = new URL(urlString)
+        queryString = urlObj.search.substring(1) // Remove leading ?
+
+        // If no query string with ?, check if it's in the pathname (format: /id=xxx&passphrase=yyy)
+        if (!queryString && urlObj.pathname.includes('=')) {
+          queryString = urlObj.pathname.substring(1) // Remove leading /
+        }
+      } else {
+        // Assume it's just the query string
+        queryString = urlString
+      }
+
+      const params = new URLSearchParams(queryString)
+      const id = params.get('id')
+      const passphraseParam = params.get('passphrase')
+
+      if (!id) {
+        throw new Error('URL must contain an id parameter')
+      }
+
+      return {
+        id,
+        passphrase: passphraseParam
+          ? passphraseParam.split('-').filter((s) => s.trim())
+          : null,
+      }
+    } catch (err) {
+      throw new Error(
+        'Invalid URL format. Expected format: http://example.com/id=xxx&passphrase=yyy-zzz or id=xxx&passphrase=yyy-zzz'
+      )
+    }
+  }
+
+  const handleLoad = async () => {
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      // Parse URL to get id and passphrase
+      const { id, passphrase: urlPassphrase } = parseUrl(url)
+      setShareId(id)
+
+      // Download encrypted data
+      const encryptedData = await downloadBinary(SHARE_API_URL, id)
+      setDownloadedData(encryptedData)
+
+      // If URL has passphrase, try to decrypt immediately
+      if (urlPassphrase && urlPassphrase.length > 0) {
+        await decryptAndLoad(encryptedData, urlPassphrase, id)
+      } else {
+        // Need user to provide passphrase
+        setNeedsPassphrase(true)
+        setIsLoading(false)
+      }
+    } catch (err) {
+      console.error('Failed to load from URL:', err)
+      setError(
+        err instanceof Error ? err.message : 'Failed to load conversation'
+      )
+      setIsLoading(false)
+    }
+  }
+
+  const handleDecryptWithPassphrase = async () => {
+    if (!downloadedData || !shareId) return
+
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      const passphraseArray = passphrase
+        .split('-')
+        .map((s) => s.trim())
+        .filter((s) => s)
+      if (passphraseArray.length === 0) {
+        throw new Error('Please enter a valid passphrase')
+      }
+
+      await decryptAndLoad(downloadedData, passphraseArray, shareId)
+    } catch (err) {
+      console.error('Failed to decrypt:', err)
+      setError(
+        err instanceof Error ? err.message : 'Failed to decrypt conversation'
+      )
+      setIsLoading(false)
+    }
+  }
+
+  const reconstructConversation = async (
+    chatData: AttestationChatData,
+    messageId: string,
+    timestamp: number
+  ): Promise<string | null> => {
+    try {
+      // Decrypt the E2EE encrypted content if necessary
+      let requestData: any
+      let output = chatData.output
+
+      if (chatData.modelsPublicKey && chatData.ephemeralPrivateKeys) {
+        // E2EE is enabled - need to decrypt
+        const modelsPublicKey = toPrefixedPublicKey(
+          hexToBytes(chatData.modelsPublicKey)
+        )
+        const ephemeralPrivateKeys = chatData.ephemeralPrivateKeys.map(
+          (key: string) => hexToBytes(key)
+        )
+        const ourKeyPair = generateKeyPairFromPassphrase(chatData.ourPassphrase)
+
+        // Parse the encrypted request body
+        const encryptedRequestData = parseRequestBody(chatData.requestBody)
+
+        // Decrypt each message in the request
+        requestData = {
+          ...encryptedRequestData,
+          messages: encryptedRequestData.messages.map(
+            (msg: any, index: number) => {
+              if (typeof msg.content === 'string' && msg.content.length > 0) {
+                try {
+                  // The message was encrypted using: ephemeralPrivateKey + modelsPublicKey
+                  // To decrypt, derive the same shared secret
+                  const ciphertextHex = msg.content
+                  const packedCiphertext = hexToBytes(ciphertextHex)
+
+                  // Unpack: ephemeralPublicKey (65 bytes) || iv (12 bytes) || ciphertext
+                  // Note: ephemeralPublicKey is packed in the ciphertext but we don't need it
+                  // since we already have the ephemeral private keys
+                  const iv = packedCiphertext.slice(65, 77)
+                  const ciphertext = packedCiphertext.slice(77)
+
+                  // Derive the shared secret using ephemeral private key + model's public key
+                  const sharedSecret = deriveSharedSecret(
+                    ephemeralPrivateKeys[index],
+                    modelsPublicKey
+                  )
+
+                  // Decrypt using AES-256-GCM
+                  const cipher = gcm(sharedSecret, iv)
+                  const plaintextBytes = cipher.decrypt(ciphertext)
+                  const plaintext = new TextDecoder().decode(plaintextBytes)
+
+                  return {
+                    ...msg,
+                    content: plaintext,
+                  }
+                } catch (err) {
+                  console.error('Failed to decrypt message:', err)
+                  return msg
+                }
+              }
+              return msg
+            }
+          ),
+        }
+
+        // Decrypt the response body using the existing decryptSSEStream utility
+        try {
+          const { content: decryptedContent } = decryptSSEStream(
+            ourKeyPair,
+            chatData.responseBody
+          )
+          output = decryptedContent || chatData.output
+        } catch (err) {
+          console.error('Failed to decrypt response:', err)
+          output = chatData.output
+        }
+      } else {
+        // No E2EE - just parse normally
+        requestData = parseRequestBody(chatData.requestBody)
+      }
+
+      // Extract model information
+      const model: ThreadModel = {
+        id: requestData.model || 'llama3.1-8b',
+        provider: 'near-ai', // Default to near-ai since that's what we use for attestation
+      }
+
+      // Create a new thread
+      const threadTitle = `Shared Conversation - ${new Date(
+        timestamp || Date.now()
+      ).toLocaleString()}`
+
+      const newThread = await createThread(
+        model,
+        threadTitle,
+        undefined, // assistant
+        undefined, // projectMetadata
+        false // isTemporary
+      )
+
+      // Reconstruct and add messages from the shared data
+      if (requestData.messages && Array.isArray(requestData.messages)) {
+        // Convert each message to UIMessage format first, then to ThreadMessage
+        for (let i = 0; i < requestData.messages.length; i++) {
+          const msg = requestData.messages[i]
+
+          if (msg.role && msg.content) {
+            // Create UIMessage from the decrypted message
+            const uiMessage: any = {
+              id: `msg-${i}-${ulid()}`,
+              role: msg.role as 'user' | 'assistant' | 'system',
+              parts: [],
+              createdAt: timestamp || Date.now(),
+            }
+
+            // Convert content to parts based on type
+            if (typeof msg.content === 'string') {
+              uiMessage.parts.push({
+                type: 'text',
+                text: msg.content,
+              })
+            } else if (Array.isArray(msg.content)) {
+              // Handle multimodal content
+              for (const contentPart of msg.content) {
+                if (contentPart.type === 'text') {
+                  uiMessage.parts.push({
+                    type: 'text',
+                    text: contentPart.text,
+                  })
+                } else if (contentPart.type === 'image_url') {
+                  uiMessage.parts.push({
+                    type: 'file',
+                    mediaType: 'image/jpeg',
+                    url: contentPart.image_url?.url || '',
+                  })
+                }
+              }
+            }
+
+            // Ensure at least one part exists
+            if (uiMessage.parts.length === 0) {
+              uiMessage.parts.push({
+                type: 'text',
+                text: '',
+              })
+            }
+
+            // Convert UIMessage to ThreadMessage using the utility function
+            const threadMessage = convertUIMessageToThreadMessage(
+              uiMessage,
+              newThread.id
+            )
+            addMessage(threadMessage)
+          }
+        }
+      }
+
+      // Add the assistant response message
+      const assistantUIMessage: any = {
+        id: messageId,
+        role: 'assistant',
+        parts: [
+          {
+            type: 'text',
+            text: output,
+          },
+        ],
+        createdAt: timestamp || Date.now(),
+      }
+
+      const assistantThreadMessage = convertUIMessageToThreadMessage(
+        assistantUIMessage as UIMessage,
+        newThread.id
+      )
+      addMessage(assistantThreadMessage)
+
+      setCurrentThreadId(newThread.id)
+      return newThread.id
+    } catch (err) {
+      console.error('Failed to reconstruct conversation:', err)
+      return null
+    }
+  }
+
+  const decryptAndLoad = async (
+    encryptedData: Uint8Array,
+    passphraseArray: string[],
+    messageId: string
+  ) => {
+    try {
+      // Decrypt the data
+      const decryptedString = decryptString(encryptedData, passphraseArray)
+      const data = JSON.parse(decryptedString)
+
+      // Validate the data structure
+      if (!data.verificationResult || !data.chatData || !data.receipt) {
+        throw new Error('Invalid data format: missing required fields')
+      }
+
+      // Store the data in attestation store first
+      const { setChatData, setReceipt, setVerificationResult } =
+        useAttestationStore.getState()
+      setChatData(messageId, data.chatData)
+      setReceipt(messageId, data.receipt)
+      setVerificationResult(messageId, data.verificationResult)
+
+      // Reconstruct the conversation thread
+      const threadId = await reconstructConversation(
+        data.chatData,
+        messageId,
+        data.timestamp
+      )
+
+      // Open verification dialog with the loaded data
+      openVerificationDialog(messageId, data.verificationResult)
+
+      // Reset and close dialog
+      handleClose()
+
+      // Navigate to the new thread if created successfully
+      if (threadId) {
+        navigate({ to: '/threads/$threadId', params: { threadId } })
+      }
+    } catch (err) {
+      console.error('Failed to decrypt and load:', err)
+      throw new Error('Failed to decrypt: Invalid passphrase or corrupted data')
+    }
+  }
+
+  const handleClose = () => {
+    setUrl('')
+    setPassphrase('')
+    setError(null)
+    setIsLoading(false)
+    setNeedsPassphrase(false)
+    setDownloadedData(null)
+    setShareId(null)
+    onOpenChange(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <LinkIcon className="size-5" />
+            Load from URL
+          </DialogTitle>
+          <DialogDescription>
+            {needsPassphrase
+              ? 'Enter the passphrase to decrypt this conversation'
+              : 'Enter a shared conversation URL to load it'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {!needsPassphrase ? (
+            <div className="space-y-2">
+              <Label htmlFor="url">Conversation URL</Label>
+              <Input
+                id="url"
+                placeholder="http://example.com/id=xxx&passphrase=yyy-zzz"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="passphrase">Passphrase</Label>
+              <Input
+                id="passphrase"
+                type="password"
+                placeholder="word1-word2-word3"
+                value={passphrase}
+                onChange={(e) => setPassphrase(e.target.value)}
+                disabled={isLoading}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !isLoading) {
+                    handleDecryptWithPassphrase()
+                  }
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the passphrase separated by dashes (e.g.,
+                word1-word2-word3)
+              </p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex gap-2">
+          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          {!needsPassphrase ? (
+            <Button onClick={handleLoad} disabled={isLoading || !url.trim()}>
+              {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
+              Load
+            </Button>
+          ) : (
+            <Button
+              onClick={handleDecryptWithPassphrase}
+              disabled={isLoading || !passphrase.trim()}
+            >
+              {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
+              Decrypt & Load
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

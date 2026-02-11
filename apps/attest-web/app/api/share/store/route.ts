@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { type PutBlobResult, put } from '@vercel/blob';
 import { computeProofHash } from '@repo/packages-attestations/crypto';
 
 const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN!;
@@ -61,13 +61,28 @@ export async function POST(
 
     // Store the binary data in Vercel Blob
     // Use the SHA hash as the blob name (with .bin extension)
-    const blob = await put(`share/${id}.bin`, binaryData, {
-      access: 'public',
-      token: BLOB_READ_WRITE_TOKEN,
-      contentType: 'application/octet-stream',
-    });
+    let blob: PutBlobResult | undefined;
+    try {
+      blob = await put(`share/${id}.bin`, binaryData, {
+        access: 'public',
+        token: BLOB_READ_WRITE_TOKEN,
+        contentType: 'application/octet-stream',
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      if (message.includes('already exists')) {
+        return NextResponse.json(
+          {
+            id,
+          },
+          { status: 200, headers: corsHeaders }
+        );
+      }
+      throw error;
+    }
 
-    console.log(`Stored binary data with id: ${id} at ${blob.url}`);
+    console.log(`Stored binary data with id: ${id}`);
 
     return NextResponse.json(
       {

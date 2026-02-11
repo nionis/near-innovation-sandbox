@@ -117,7 +117,9 @@ export function VerificationResultDialog() {
       })
 
       // Generate the share URL
-      const url = `http://localhost:3000/id=${id}`
+      const url = `${SHARE_API_URL}/?id=${id}&passphrase=${chatData.ourPassphrase.join(
+        '-'
+      )}`
       setShareUrl(url)
     } catch (error) {
       console.error('Failed to share:', error)

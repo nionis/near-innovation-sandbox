@@ -1,4 +1,4 @@
-import { LucideIcon } from "lucide-react"
+import { LucideIcon, Link2 } from "lucide-react"
 import { route } from '@/constants/routes'
 
 import {
@@ -11,7 +11,7 @@ import { useTranslation } from "@/i18n/react-i18next-compat"
 
 import { Link, useNavigate } from "@tanstack/react-router"
 import { PlatformMetaKey } from "@/containers/PlatformMetaKey"
-import React, { useRef } from "react"
+import React, { useRef, useState } from "react"
 import { SearchIcon, type SearchIconHandle } from "@/components/animated-icon/search"
 import { FolderPlusIcon, type FolderPlusIconHandle } from "@/components/animated-icon/folder-plus"
 import { MessageCircleIcon, type MessageCircleIconHandle } from "@/components/animated-icon/message-circle"
@@ -19,6 +19,7 @@ import { SettingsIcon, type SettingsIconHandle } from "@/components/animated-ico
 import { BlocksIcon, type BlocksIconHandle } from "../animated-icon/blocks"
 import AddProjectDialog from "@/containers/dialogs/AddProjectDialog"
 import { SearchDialog } from "@/containers/dialogs/SearchDialog"
+import { LoadFromUrlDialog } from "@/components/LoadFromUrlDialog"
 import { useThreadManagement } from "@/hooks/useThreadManagement"
 import { useSearchDialog } from "@/hooks/useSearchDialog"
 import { useProjectDialog } from "@/hooks/useProjectDialog"
@@ -37,7 +38,11 @@ type NavMainItem = {
   onClick?: () => void
 }
 
-const getNavMainItems = (onNewProject: () => void, onSearch: () => void): NavMainItem[] => [
+const getNavMainItems = (
+  onNewProject: () => void,
+  onSearch: () => void,
+  onLoadFromUrl: () => void
+): NavMainItem[] => [
   {
     title: 'common:newChat',
     url: route.home,
@@ -70,6 +75,11 @@ const getNavMainItems = (onNewProject: () => void, onSearch: () => void): NavMai
         <Kbd className="bg-transparent size-3 min-w-3">K</Kbd>
       </KbdGroup>
     ),
+  },
+  {
+    title: "From URL",
+    icon: Link2,
+    onClick: onLoadFromUrl,
   },
   {
     title: "common:settings",
@@ -121,10 +131,12 @@ export function NavMain() {
   const { addFolder } = useThreadManagement()
   const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog()
   const { open: projectDialogOpen, setOpen: setProjectDialogOpen } = useProjectDialog()
+  const [loadFromUrlOpen, setLoadFromUrlOpen] = useState(false)
 
   const navMainItems = getNavMainItems(
     () => setProjectDialogOpen(true),
-    () => setSearchOpen(true)
+    () => setSearchOpen(true),
+    () => setLoadFromUrlOpen(true)
   )
 
   const handleCreateProject = async (name: string) => {
@@ -160,7 +172,7 @@ export function NavMain() {
                 ) : (
                   <>
                     {Icon && <Icon className="text-foreground/70" />}
-                    <span>{t(item.title)}</span>
+                    <span>{item.title.startsWith('common:') ? t(item.title) : item.title}</span>
                     {item.shortcut}
                   </>
                 )}
@@ -180,6 +192,11 @@ export function NavMain() {
       <SearchDialog
         open={searchOpen}
         onOpenChange={setSearchOpen}
+      />
+
+      <LoadFromUrlDialog
+        open={loadFromUrlOpen}
+        onOpenChange={setLoadFromUrlOpen}
       />
     </>
   )
