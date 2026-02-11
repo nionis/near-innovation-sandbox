@@ -33,7 +33,7 @@ import {
 import { hexToBytes } from '@noble/curves/utils.js'
 import { gcm } from '@noble/ciphers/aes.js'
 import type { AttestationChatData } from '@/stores/attestation-store'
-import { convertUIMessageToThreadMessage } from '@/lib/messages'
+import { convertUIMessageToThreadMessage, parseReasoning } from '@/lib/messages'
 import type { UIMessage } from '@ai-sdk/react'
 
 const SHARE_API_URL = IS_DEV ? 'http://localhost:3000' : DEFAULT_SHARE_API_URL
@@ -239,6 +239,113 @@ export function LoadFromUrlDialog({
     }
   }
 
+  // Helper function to parse message content and create proper UIMessage parts
+  const parseMessageContentToParts = (content: any): any[] => {
+    const parts: any[] = []
+
+    if (typeof content === 'string') {
+      // Parse the string to extract reasoning/thinking content
+      const { reasoningSegment, textSegment } = parseReasoning(content)
+
+      // Add reasoning part if present
+      if (reasoningSegment) {
+        const completedMatch = reasoningSegment.match(/<think>([\s\S]*?)<\/think>/)
+        if (completedMatch) {
+          parts.push({
+            type: 'reasoning',
+            text: completedMatch[1],
+          })
+        } else {
+          // In-progress reasoning - extract content after <think> tag
+          const inProgressMatch = reasoningSegment.match(/<think>([\s\S]*)/)
+          if (inProgressMatch) {
+            parts.push({
+              type: 'reasoning',
+              text: inProgressMatch[1],
+            })
+          }
+        }
+      }
+
+      // Add text part if present
+      if (textSegment) {
+        const trimmedText = textSegment.trim()
+        if (trimmedText) {
+          parts.push({
+            type: 'text',
+            text: trimmedText,
+          })
+        }
+      } else if (!reasoningSegment) {
+        // No reasoning, just add the text as-is
+        parts.push({
+          type: 'text',
+          text: content,
+        })
+      }
+    } else if (Array.isArray(content)) {
+      // Handle multimodal content
+      for (const contentPart of content) {
+        if (contentPart.type === 'text') {
+          // Parse each text part for thinking content
+          const textContent = contentPart.text || ''
+          const { reasoningSegment, textSegment } = parseReasoning(textContent)
+
+          // Add reasoning part if present
+          if (reasoningSegment) {
+            const completedMatch = reasoningSegment.match(/<think>([\s\S]*?)<\/think>/)
+            if (completedMatch) {
+              parts.push({
+                type: 'reasoning',
+                text: completedMatch[1],
+              })
+            } else {
+              const inProgressMatch = reasoningSegment.match(/<think>([\s\S]*)/)
+              if (inProgressMatch) {
+                parts.push({
+                  type: 'reasoning',
+                  text: inProgressMatch[1],
+                })
+              }
+            }
+          }
+
+          // Add text part if present
+          if (textSegment) {
+            const trimmedText = textSegment.trim()
+            if (trimmedText) {
+              parts.push({
+                type: 'text',
+                text: trimmedText,
+              })
+            }
+          } else if (!reasoningSegment && textContent) {
+            parts.push({
+              type: 'text',
+              text: textContent,
+            })
+          }
+        } else if (contentPart.type === 'image_url') {
+          parts.push({
+            type: 'file',
+            mediaType: 'image/jpeg',
+            url: contentPart.image_url?.url || '',
+          })
+        }
+      }
+    }
+
+    // Ensure at least one part exists
+    if (parts.length === 0) {
+      parts.push({
+        type: 'text',
+        text: '',
+      })
+    }
+
+    return parts
+  }
+
   const reconstructConversation = async (
     chatData: AttestationChatData,
     messageId: string,
@@ -347,44 +454,15 @@ export function LoadFromUrlDialog({
           const msg = requestData.messages[i]
 
           if (msg.role && msg.content) {
+            // Parse content and create proper parts (including reasoning if present)
+            const parts = parseMessageContentToParts(msg.content)
+
             // Create UIMessage from the decrypted message
             const uiMessage: any = {
               id: `msg-${i}-${ulid()}`,
               role: msg.role as 'user' | 'assistant' | 'system',
-              parts: [],
+              parts,
               createdAt: timestamp || Date.now(),
-            }
-
-            // Convert content to parts based on type
-            if (typeof msg.content === 'string') {
-              uiMessage.parts.push({
-                type: 'text',
-                text: msg.content,
-              })
-            } else if (Array.isArray(msg.content)) {
-              // Handle multimodal content
-              for (const contentPart of msg.content) {
-                if (contentPart.type === 'text') {
-                  uiMessage.parts.push({
-                    type: 'text',
-                    text: contentPart.text,
-                  })
-                } else if (contentPart.type === 'image_url') {
-                  uiMessage.parts.push({
-                    type: 'file',
-                    mediaType: 'image/jpeg',
-                    url: contentPart.image_url?.url || '',
-                  })
-                }
-              }
-            }
-
-            // Ensure at least one part exists
-            if (uiMessage.parts.length === 0) {
-              uiMessage.parts.push({
-                type: 'text',
-                text: '',
-              })
             }
 
             // Convert UIMessage to ThreadMessage using the utility function
@@ -398,15 +476,13 @@ export function LoadFromUrlDialog({
       }
 
       // Add the assistant response message
+      // Parse the output to extract reasoning (thinking) content if present
+      const assistantParts = parseMessageContentToParts(output)
+      
       const assistantUIMessage: any = {
         id: messageId,
         role: 'assistant',
-        parts: [
-          {
-            type: 'text',
-            text: output,
-          },
-        ],
+        parts: assistantParts,
         createdAt: timestamp || Date.now(),
       }
 
