@@ -1,9 +1,5 @@
 # TODO
 
-1. attest AI
-
-- explain each verification
+- open app with URL
 - ensure docs, and other tools work E2EE
 - show balance
-
-2. factors
