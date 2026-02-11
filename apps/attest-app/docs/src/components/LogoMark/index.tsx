@@ -13,7 +13,7 @@ export default function LogoMark({ width = 24, height = 24 }: Props) {
       height={height}
       className="w-6 h-6"
       src="/assets/images/general/logo-mark.svg"
-      alt="Jan - Logo"
+      alt="Attest AI - Logo"
     />
   )
 }

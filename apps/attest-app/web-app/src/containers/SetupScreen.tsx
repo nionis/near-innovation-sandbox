@@ -13,10 +13,10 @@ function SetupScreen() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { updateProvider, providers } = useModelProvider()
-  
+
   const [apiKey, setApiKey] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  
+
   const nearAIProvider = providers.find((p) => p.provider === 'near-ai')
 
   const handleContinue = async () => {
@@ -63,13 +63,13 @@ function SetupScreen() {
         <div className="w-full max-w-md mx-auto">
           <div className="mb-6 text-center">
             <h1 className="font-studio font-medium text-2xl mb-2">
-              Welcome to Jan!
+              Welcome to Attest AI!
             </h1>
             <p className="text-muted-foreground">
               To get started, you'll need a NEAR AI API key.
             </p>
           </div>
-          
+
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="api-key" className="text-sm font-medium">
@@ -98,7 +98,7 @@ function SetupScreen() {
               >
                 {isSaving ? 'Saving...' : 'Continue'}
               </Button>
-              
+
               <a
                 href="https://app.near.ai"
                 target="_blank"

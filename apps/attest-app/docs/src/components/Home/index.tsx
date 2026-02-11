@@ -116,7 +116,7 @@ const Home = () => {
                     <img
                       src={LogoJanSVG.src}
                       alt="Logo Jan"
-                      className="size-20 animate-wave"
+                      className="size-20 test-animation"
                     />
                   </span>
                   <h1 className="text-[40px] lg:text-[80px] font-semibold -tracking-[2px] text-white">

@@ -6,8 +6,8 @@
       "checking": "Checking extension status..."
     },
     "notInstalled": {
-      "title": "Jan completes tasks in your browser",
-      "description": "Install the extension to give Jan browser access",
+      "title": "Attest AI completes tasks in your browser",
+      "description": "Install the extension to give Attest AI browser access",
       "getExtension": "Get Extension"
     }
   },
@@ -56,7 +56,7 @@
   "serverStatusInactive": "Server {{serverKey}} deactivated successfully",
   "runtimeSettings": {
     "title": "Runtime Settings",
-    "description": "Configure how Jan manages and retries MCP servers.",
+    "description": "Configure how Attest AI manages and retries MCP servers.",
     "toolCallTimeout": "Tool call timeout (seconds)",
     "toolCallTimeoutDesc": "Maximum time to wait for an MCP tool response before timing out."
   }

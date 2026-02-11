@@ -17,7 +17,7 @@ const defaultImage = 'https://jan.ai/assets/images/general/og-image.png'
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  'name': 'Jan',
+  'name': 'Attest AI',
   'url': `${defaultUrl}`,
   'logo': `${defaultImage}`,
 }
@@ -41,7 +41,7 @@ const config: DocsThemeConfig = {
   },
   useNextSeoProps() {
     return {
-      titleTemplate: '%s - Jan',
+      titleTemplate: '%s - Attest AI',
       twitter: {
         cardType: 'summary_large_image',
         site: '@jandotai',
@@ -56,7 +56,7 @@ const config: DocsThemeConfig = {
   },
   sidebar: {
     defaultMenuCollapseLevel: 1,
-    autoCollapse: true
+    autoCollapse: true,
   },
   darkMode: false,
   toc: {
@@ -70,7 +70,7 @@ const config: DocsThemeConfig = {
       <Fragment>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta httpEquiv="Content-Language" content="en" />
-        <title>{frontMatter?.title || title || 'Jan'}</title>
+        <title>{frontMatter?.title || title || 'Attest AI'}</title>
         <meta name="og:title" content={frontMatter?.title || title || 'Jan'} />
         <meta
           name="description"
