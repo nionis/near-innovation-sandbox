@@ -122,6 +122,19 @@ pub fn write_file_sync<R: Runtime>(
 }
 
 #[tauri::command]
+pub fn write_binary_file(path: String, base64_data: String) -> Result<(), String> {
+    use base64::{engine::general_purpose, Engine as _};
+    
+    // Decode base64 to bytes
+    let bytes = general_purpose::STANDARD
+        .decode(&base64_data)
+        .map_err(|e| format!("Failed to decode base64: {}", e))?;
+    
+    // Write bytes to file
+    fs::write(&path, bytes).map_err(|e| format!("Failed to write file: {}", e))
+}
+
+#[tauri::command]
 pub fn readdir_sync<R: Runtime>(
     app_handle: tauri::AppHandle<R>,
     args: Vec<String>,

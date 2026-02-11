@@ -16,15 +16,17 @@ import {
   Copy,
   Check,
   QrCode,
+  Download,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   encryptString,
   uploadBinary,
   SHARE_API_URL as DEFAULT_SHARE_API_URL,
 } from '@repo/packages-utils/share'
 import { QRCodeSVG } from 'qrcode.react'
+import { invoke } from '@tauri-apps/api/core'
 
 const SHARE_API_URL = IS_DEV ? 'http://localhost:3000' : DEFAULT_SHARE_API_URL
 
@@ -36,6 +38,7 @@ export function VerificationResultDialog() {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [showQRCode, setShowQRCode] = useState(false)
+  const qrCodeRef = useRef<HTMLDivElement>(null)
 
   // Reset share state when dialog opens/closes
   useEffect(() => {
@@ -141,6 +144,127 @@ export function VerificationResultDialog() {
     }
   }
 
+  const handleDownloadQR = async () => {
+    if (!qrCodeRef.current || !shareUrl) return
+
+    try {
+      // Get the SVG element
+      const svgElement = qrCodeRef.current.querySelector('svg')
+      if (!svgElement) {
+        console.error('SVG element not found')
+        return
+      }
+
+      // Clone the SVG to avoid modifying the original
+      const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement
+
+      // Ensure SVG has proper dimensions
+      const svgWidth = clonedSvg.width.baseVal.value || 200
+      const svgHeight = clonedSvg.height.baseVal.value || 200
+
+      // Create canvas with padding
+      const padding = 32
+      const canvas = document.createElement('canvas')
+      canvas.width = svgWidth + padding * 2
+      canvas.height = svgHeight + padding * 2
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        console.error('Canvas context not available')
+        return
+      }
+
+      // Fill white background
+      ctx.fillStyle = 'white'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Serialize SVG to string
+      const svgString = new XMLSerializer().serializeToString(clonedSvg)
+      const svgBlob = new Blob([svgString], {
+        type: 'image/svg+xml;charset=utf-8',
+      })
+
+      // Create image from SVG
+      const img = new Image()
+      const url = URL.createObjectURL(svgBlob)
+
+      img.onload = async () => {
+        try {
+          // Draw the SVG image onto canvas
+          ctx.drawImage(img, padding, padding, svgWidth, svgHeight)
+
+          // Clean up blob URL
+          URL.revokeObjectURL(url)
+
+          // Convert canvas to blob
+          canvas.toBlob(
+            async (blob) => {
+              if (!blob) {
+                console.error('Failed to create blob from canvas')
+                return
+              }
+
+              try {
+                // Convert blob to base64
+                const arrayBuffer = await blob.arrayBuffer()
+                const bytes = new Uint8Array(arrayBuffer)
+                let binary = ''
+                for (let i = 0; i < bytes.length; i++) {
+                  binary += String.fromCharCode(bytes[i])
+                }
+                const base64Data = btoa(binary)
+
+                // Open save dialog
+                const savePath = await invoke<string | null>('save_dialog', {
+                  options: {
+                    defaultPath: `verification-qr-${Date.now()}.png`,
+                    filters: [
+                      {
+                        name: 'PNG Image',
+                        extensions: ['png'],
+                      },
+                    ],
+                  },
+                })
+
+                if (!savePath) {
+                  // User cancelled the dialog
+                  return
+                }
+
+                // Write the binary file
+                await invoke('write_binary_file', {
+                  path: savePath,
+                  base64Data: base64Data,
+                })
+
+                console.log('QR code saved successfully to:', savePath)
+              } catch (error) {
+                console.error('Error saving QR code:', error)
+                alert('Failed to save QR code. Please try again.')
+              }
+            },
+            'image/png',
+            1.0
+          )
+        } catch (error) {
+          console.error('Error processing QR code:', error)
+          URL.revokeObjectURL(url)
+        }
+      }
+
+      img.onerror = (error) => {
+        console.error('Failed to load SVG image:', error)
+        URL.revokeObjectURL(url)
+      }
+
+      img.src = url
+    } catch (error) {
+      console.error('Error downloading QR code:', error)
+      alert('Failed to download QR code. Please try again.')
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={closeVerificationDialog}>
       <DialogContent className="sm:max-w-[600px]">
@@ -242,11 +366,11 @@ export function VerificationResultDialog() {
               </div>
 
               {showQRCode && (
-                <div className="flex flex-col items-center gap-2 w-full p-4 bg-muted rounded-lg">
+                <div className="flex flex-col items-center gap-3 w-full p-4 bg-muted rounded-lg">
                   <p className="text-xs text-muted-foreground">
                     Scan QR Code to share:
                   </p>
-                  <div className="bg-white p-4 rounded-lg">
+                  <div ref={qrCodeRef} className="bg-white p-4 rounded-lg">
                     <QRCodeSVG
                       value={shareUrl}
                       size={200}
@@ -254,6 +378,15 @@ export function VerificationResultDialog() {
                       includeMargin={true}
                     />
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadQR}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="size-4" />
+                    Download
+                  </Button>
                 </div>
               )}
             </div>
