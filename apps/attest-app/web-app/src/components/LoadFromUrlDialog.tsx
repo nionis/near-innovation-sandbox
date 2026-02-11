@@ -516,11 +516,17 @@ export function LoadFromUrlDialog({
       }
 
       // Store the data in attestation store first
-      const { setChatData, setReceipt, setVerificationResult } =
+      const { setChatData, setReceipt, setVerificationResult, setShareUrl } =
         useAttestationStore.getState()
       setChatData(messageId, data.chatData)
       setReceipt(messageId, data.receipt)
       setVerificationResult(messageId, data.verificationResult)
+      
+      // Store the share URL so reference scanning can work
+      // Reconstruct the full share URL from the share ID and passphrase
+      const shareUrl = `${SHARE_API_URL}/?id=${messageId}&passphrase=${passphraseArray.join('-')}`
+      const contentHash = data.receipt?.proofHash || messageId // Use proofHash as content identifier
+      setShareUrl(messageId, shareUrl, contentHash)
 
       // Reconstruct the conversation thread
       const threadId = await reconstructConversation(
