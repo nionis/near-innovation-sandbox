@@ -87,7 +87,7 @@ function ThreadDetail() {
   const getMessageState = useAttestationStore((state) => state.getMessageState)
   const getShareUrl = useAttestationStore((state) => state.getShareUrl)
   const messageStates = useAttestationStore((state) => state.messageStates)
-  
+
   // Get share data for the most recent assistant message with attestation
   const currentShareData = useMemo(() => {
     const messages = useMessages.getState().getMessages(threadId)
@@ -99,14 +99,14 @@ function ThreadDetail() {
         const state = getMessageState(m.id)
         return state?.chatData && getShareUrl(m.id)
       })
-    
+
     if (!assistantMessage) {
       return null
     }
 
     const messageState = getMessageState(assistantMessage.id)
     const shareUrlData = getShareUrl(assistantMessage.id)
-    
+
     if (!messageState?.chatData || !shareUrlData?.url) {
       return null
     }
@@ -116,7 +116,7 @@ function ThreadDetail() {
       const url = new URL(shareUrlData.url)
       const shareId = url.searchParams.get('id')
       if (!shareId) return null
-      
+
       return {
         shareId,
         chatData: messageState.chatData,
@@ -781,7 +781,7 @@ function ThreadDetail() {
   return (
     <div className="flex flex-col h-[calc(100dvh-(env(safe-area-inset-bottom)+env(safe-area-inset-top)))]">
       <HeaderPage>
-        <div className="flex items-center justify-between w-full pr-2">
+        <div className="flex items-center w-full pr-2">
           <DropdownModelProvider model={threadModel} />
           <Button
             variant="outline"
@@ -789,6 +789,7 @@ function ThreadDetail() {
             onClick={() => setIsScanDialogOpen(true)}
             className="ml-2"
           >
+            Verify References
             <QrCode className="size-4" />
           </Button>
         </div>

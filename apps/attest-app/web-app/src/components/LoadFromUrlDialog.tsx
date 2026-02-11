@@ -249,7 +249,9 @@ export function LoadFromUrlDialog({
 
       // Add reasoning part if present
       if (reasoningSegment) {
-        const completedMatch = reasoningSegment.match(/<think>([\s\S]*?)<\/think>/)
+        const completedMatch = reasoningSegment.match(
+          /<think>([\s\S]*?)<\/think>/
+        )
         if (completedMatch) {
           parts.push({
             type: 'reasoning',
@@ -293,7 +295,9 @@ export function LoadFromUrlDialog({
 
           // Add reasoning part if present
           if (reasoningSegment) {
-            const completedMatch = reasoningSegment.match(/<think>([\s\S]*?)<\/think>/)
+            const completedMatch = reasoningSegment.match(
+              /<think>([\s\S]*?)<\/think>/
+            )
             if (completedMatch) {
               parts.push({
                 type: 'reasoning',
@@ -478,7 +482,7 @@ export function LoadFromUrlDialog({
       // Add the assistant response message
       // Parse the output to extract reasoning (thinking) content if present
       const assistantParts = parseMessageContentToParts(output)
-      
+
       const assistantUIMessage: any = {
         id: messageId,
         role: 'assistant',
@@ -511,17 +515,16 @@ export function LoadFromUrlDialog({
       const data = JSON.parse(decryptedString)
 
       // Validate the data structure
-      if (!data.verificationResult || !data.chatData || !data.receipt) {
+      if (!data.chatData || !data.receipt) {
         throw new Error('Invalid data format: missing required fields')
       }
 
       // Store the data in attestation store first
-      const { setChatData, setReceipt, setVerificationResult, setShareUrl } =
+      const { setChatData, setReceipt, setShareUrl } =
         useAttestationStore.getState()
       setChatData(messageId, data.chatData)
       setReceipt(messageId, data.receipt)
-      setVerificationResult(messageId, data.verificationResult)
-      
+
       // Store the share URL so reference scanning can work
       // Reconstruct the full share URL from the share ID and passphrase
       const shareUrl = `${SHARE_API_URL}/?id=${messageId}&passphrase=${passphraseArray.join('-')}`

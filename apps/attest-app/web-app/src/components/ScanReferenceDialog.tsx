@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button'
 import { Html5Qrcode } from 'html5-qrcode'
 import { Scan, AlertCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { decryptMessages, extractTextRange } from '@/lib/conversation-serializer'
+import {
+  decryptMessages,
+  extractTextRange,
+} from '@/lib/conversation-serializer'
 import type { AttestationChatData } from '@/stores/attestation-store'
 
 interface ScannedReference {
@@ -131,7 +134,9 @@ export function ScanReferenceDialog({
 
       const shareId = parts[0]
       const messageIndex = parseInt(parts[1], 10)
-      const [startChar, endChar] = parts[2].split('-').map((n) => parseInt(n, 10))
+      const [startChar, endChar] = parts[2]
+        .split('-')
+        .map((n) => parseInt(n, 10))
 
       if (
         isNaN(messageIndex) ||
@@ -157,7 +162,9 @@ export function ScanReferenceDialog({
     try {
       // Check if we have the necessary data
       if (!shareId || !chatData) {
-        throw new Error('No conversation data available. Please verify the conversation first.')
+        throw new Error(
+          'No conversation data available. Please verify the conversation first.'
+        )
       }
 
       // Parse the reference QR code
@@ -168,31 +175,40 @@ export function ScanReferenceDialog({
 
       // Verify the reference belongs to this conversation
       if (reference.shareId !== shareId) {
-        throw new Error('This reference QR code belongs to a different conversation')
+        throw new Error(
+          'This reference QR code belongs to a different conversation'
+        )
       }
 
       // Decrypt messages
       const messages = decryptMessages(chatData)
-      
+
       console.log('Total messages:', messages.length)
       console.log('All messages:', messages)
       console.log('Reference:', reference)
-      
+
       if (reference.messageIndex >= messages.length) {
-        throw new Error(`Message index ${reference.messageIndex} out of range (total: ${messages.length})`)
+        throw new Error(
+          `Message index ${reference.messageIndex} out of range (total: ${messages.length})`
+        )
       }
 
       const message = messages[reference.messageIndex]
       console.log('Target message:', message)
       console.log('Message content length:', message.content.length)
-      console.log('Extracting chars:', reference.startChar, '-', reference.endChar)
-      
+      console.log(
+        'Extracting chars:',
+        reference.startChar,
+        '-',
+        reference.endChar
+      )
+
       const referencedText = extractTextRange(
         message.content,
         reference.startChar,
         reference.endChar
       )
-      
+
       console.log('Referenced text:', referencedText)
       console.log('Referenced text length:', referencedText.length)
 
@@ -204,7 +220,11 @@ export function ScanReferenceDialog({
       })
     } catch (err) {
       console.error('Error processing reference QR code:', err)
-      setError(err instanceof Error ? err.message : 'Failed to process reference QR code')
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to process reference QR code'
+      )
     } finally {
       setIsLoading(false)
     }
@@ -227,7 +247,8 @@ export function ScanReferenceDialog({
             Scan Reference QR Code
           </DialogTitle>
           <DialogDescription>
-            Scan a reference QR code to view the specific text portion it references.
+            Scan a reference QR code to view the specific text portion it
+            references.
           </DialogDescription>
         </DialogHeader>
 
@@ -237,7 +258,8 @@ export function ScanReferenceDialog({
               <AlertCircle className="size-5 text-yellow-600 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  Please verify and share this conversation first to enable reference scanning.
+                  Please verify this conversation first to enable reference
+                  scanning.
                 </p>
               </div>
             </div>
@@ -314,7 +336,8 @@ export function ScanReferenceDialog({
                 <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
                   <span className="font-semibold uppercase">
                     {referenceContent.messageRole === 'user' && '👤 User'}
-                    {referenceContent.messageRole === 'assistant' && '🤖 Assistant'}
+                    {referenceContent.messageRole === 'assistant' &&
+                      '🤖 Assistant'}
                     {referenceContent.messageRole === 'system' && '⚙️ System'}
                   </span>
                   <span>•</span>

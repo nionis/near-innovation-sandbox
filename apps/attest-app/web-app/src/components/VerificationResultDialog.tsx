@@ -185,7 +185,6 @@ export function VerificationResultDialog() {
 
       // Content changed or no cache exists, generate new share URL
       const contentToShare = JSON.stringify({
-        verificationResult,
         chatData,
         receipt,
         timestamp: Date.now(),
