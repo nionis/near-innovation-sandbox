@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useAttestationStore } from '@/stores/attestation-store'
+import type { ReferenceMetadata } from '@/stores/attestation-store'
 import {
   CheckCircle2,
   XCircle,
@@ -29,13 +30,22 @@ import {
 } from '@repo/packages-utils/share'
 import { QRCodeSVG } from 'qrcode.react'
 import { invoke } from '@tauri-apps/api/core'
+import { SelectableConversation } from './SelectableConversation'
+import { ReferenceQR } from './ReferenceQR'
+import { getPreviewText } from '@/lib/conversation-serializer'
 
 const SHARE_API_URL = IS_DEV ? 'http://localhost:3000' : DEFAULT_SHARE_API_URL
 
 export function VerificationResultDialog() {
-  const { verificationDialog, closeVerificationDialog, getMessageState } =
-    useAttestationStore()
-  const { isOpen, verificationResult, messageId } = verificationDialog
+  const {
+    verificationDialog,
+    closeVerificationDialog,
+    getMessageState,
+    addReference,
+    removeReference,
+  } = useAttestationStore()
+  const { isOpen, verificationResult, messageId, references } =
+    verificationDialog
   const [isSharing, setIsSharing] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -302,6 +312,156 @@ export function VerificationResultDialog() {
     }
   }
 
+  const handleTextSelected = (
+    messageIndex: number,
+    startChar: number,
+    endChar: number,
+    selectedText: string
+  ) => {
+    if (!messageId || !shareUrl) return
+
+    // Extract share ID from URL
+    const url = new URL(shareUrl)
+    const shareId = url.searchParams.get('id')
+    if (!shareId) return
+
+    const reference: ReferenceMetadata = {
+      id: crypto.randomUUID(),
+      shareId,
+      messageIndex,
+      startChar,
+      endChar,
+      previewText: getPreviewText(selectedText),
+      createdAt: Date.now(),
+    }
+
+    addReference(reference)
+  }
+
+  const handleDownloadReference = async (reference: ReferenceMetadata) => {
+    try {
+      const qrValue = `${reference.shareId}:${reference.messageIndex}:${reference.startChar}-${reference.endChar}`
+
+      // Use QRCode library to generate
+      const QRCode = (await import('qrcode')).default
+      const qrDataUrl = await QRCode.toDataURL(qrValue, {
+        width: 80,
+        margin: 1,
+        errorCorrectionLevel: 'M',
+      })
+
+      // Convert data URL to blob
+      const response = await fetch(qrDataUrl)
+      const blob = await response.blob()
+
+      // Convert blob to base64
+      const arrayBuffer = await blob.arrayBuffer()
+      const bytes = new Uint8Array(arrayBuffer)
+      let binary = ''
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i])
+      }
+      const base64Data = btoa(binary)
+
+      // Open save dialog
+      const savePath = await invoke<string | null>('save_dialog', {
+        options: {
+          defaultPath: `reference-${reference.id.slice(0, 8)}-${Date.now()}.png`,
+          filters: [
+            {
+              name: 'PNG Image',
+              extensions: ['png'],
+            },
+          ],
+        },
+      })
+
+      if (!savePath) {
+        // User cancelled the dialog
+        return
+      }
+
+      // Write the binary file
+      await invoke('write_binary_file', {
+        path: savePath,
+        base64Data: base64Data,
+      })
+
+      console.log('Reference QR code saved successfully to:', savePath)
+    } catch (error) {
+      console.error('Error downloading reference QR code:', error)
+      alert('Failed to download reference QR code. Please try again.')
+    }
+  }
+
+  const handleDownloadAllReferences = async () => {
+    if (references.length === 0) return
+
+    try {
+      const JSZip = (await import('jszip')).default
+      const QRCode = (await import('qrcode')).default
+      const zip = new JSZip()
+
+      // Generate QR codes for all references
+      for (const ref of references) {
+        const qrValue = `${ref.shareId}:${ref.messageIndex}:${ref.startChar}-${ref.endChar}`
+        const qrDataUrl = await QRCode.toDataURL(qrValue, {
+          width: 80,
+          margin: 1,
+          errorCorrectionLevel: 'M',
+        })
+
+        // Convert data URL to blob
+        const response = await fetch(qrDataUrl)
+        const blob = await response.blob()
+
+        // Add to zip
+        zip.file(`reference-${ref.id.slice(0, 8)}.png`, blob)
+      }
+
+      // Generate zip file
+      const zipBlob = await zip.generateAsync({ type: 'blob' })
+
+      // Convert blob to base64
+      const arrayBuffer = await zipBlob.arrayBuffer()
+      const bytes = new Uint8Array(arrayBuffer)
+      let binary = ''
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i])
+      }
+      const base64Data = btoa(binary)
+
+      // Open save dialog
+      const savePath = await invoke<string | null>('save_dialog', {
+        options: {
+          defaultPath: `references-${Date.now()}.zip`,
+          filters: [
+            {
+              name: 'ZIP Archive',
+              extensions: ['zip'],
+            },
+          ],
+        },
+      })
+
+      if (!savePath) {
+        // User cancelled the dialog
+        return
+      }
+
+      // Write the binary file
+      await invoke('write_binary_file', {
+        path: savePath,
+        base64Data: base64Data,
+      })
+
+      console.log('All references saved successfully to:', savePath)
+    } catch (error) {
+      console.error('Error downloading all references:', error)
+      alert('Failed to download all references. Please try again.')
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={closeVerificationDialog}>
       <DialogContent className="sm:max-w-[600px]">
@@ -451,6 +611,55 @@ export function VerificationResultDialog() {
                   </Button>
                 </div>
               )}
+
+              {/* Reference QR Codes Section */}
+              <div className="w-full space-y-3 border-t pt-3 mt-3">
+                <h3 className="text-sm font-medium">
+                  Create Reference QR Codes
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Select text from the conversation below to create reference QR
+                  codes that link to specific parts of this verified
+                  conversation.
+                </p>
+
+                {/* Selectable Conversation Display */}
+                {messageState?.chatData && (
+                  <SelectableConversation
+                    chatData={messageState.chatData}
+                    onTextSelected={handleTextSelected}
+                  />
+                )}
+
+                {/* Generated References List */}
+                {references.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">
+                        Generated References ({references.length})
+                      </h4>
+                      {references.length > 1 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleDownloadAllReferences}
+                        >
+                          <Download className="size-4 mr-2" />
+                          Download All (ZIP)
+                        </Button>
+                      )}
+                    </div>
+                    {references.map((ref) => (
+                      <ReferenceQR
+                        key={ref.id}
+                        reference={ref}
+                        onDownload={() => handleDownloadReference(ref)}
+                        onDelete={() => removeReference(ref.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

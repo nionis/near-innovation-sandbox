@@ -32,6 +32,19 @@ export interface AttestationReceipt {
 }
 
 /**
+ * Reference metadata for QR code references
+ */
+export interface ReferenceMetadata {
+  id: string // unique reference ID (uuid)
+  shareId: string // the master share ID from upload
+  messageIndex: number // index of the message in the conversation
+  startChar: number // start position within the message content
+  endChar: number // end position within the message content
+  previewText: string // first 50 chars for UI preview
+  createdAt: number // timestamp
+}
+
+/**
  * Attestation state for a single message
  */
 export interface MessageAttestationState {
@@ -53,6 +66,7 @@ interface VerificationDialogState {
   isOpen: boolean
   messageId: string | null
   verificationResult: VerifyOutput | null
+  references: ReferenceMetadata[]
 }
 
 interface AttestationState {
@@ -89,6 +103,10 @@ interface AttestationState {
   getMessageState: (messageId: string) => MessageAttestationState | undefined
   openVerificationDialog: (messageId: string, result: VerifyOutput) => void
   closeVerificationDialog: () => void
+  addReference: (reference: ReferenceMetadata) => void
+  removeReference: (referenceId: string) => void
+  clearReferences: () => void
+  getReferences: () => ReferenceMetadata[]
 }
 
 // Default attestation API URL (can be overridden in settings)
@@ -111,6 +129,7 @@ export const useAttestationStore = create<AttestationState>()(
         isOpen: false,
         messageId: null,
         verificationResult: null,
+        references: [],
       },
 
       setAttestationApiUrl: (url: string) => {
@@ -271,6 +290,7 @@ export const useAttestationStore = create<AttestationState>()(
             isOpen: true,
             messageId,
             verificationResult: result,
+            references: [],
           },
         })
       },
@@ -281,8 +301,42 @@ export const useAttestationStore = create<AttestationState>()(
             isOpen: false,
             messageId: null,
             verificationResult: null,
+            references: [],
           },
         })
+      },
+
+      addReference: (reference: ReferenceMetadata) => {
+        set((state) => ({
+          verificationDialog: {
+            ...state.verificationDialog,
+            references: [...state.verificationDialog.references, reference],
+          },
+        }))
+      },
+
+      removeReference: (referenceId: string) => {
+        set((state) => ({
+          verificationDialog: {
+            ...state.verificationDialog,
+            references: state.verificationDialog.references.filter(
+              (ref) => ref.id !== referenceId
+            ),
+          },
+        }))
+      },
+
+      clearReferences: () => {
+        set((state) => ({
+          verificationDialog: {
+            ...state.verificationDialog,
+            references: [],
+          },
+        }))
+      },
+
+      getReferences: () => {
+        return get().verificationDialog.references
       },
     }),
     {
