@@ -17,6 +17,8 @@ import {
   Check,
   QrCode,
   Download,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect, useRef } from 'react'
@@ -38,6 +40,7 @@ export function VerificationResultDialog() {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [showQRCode, setShowQRCode] = useState(false)
+  const [expandedChecks, setExpandedChecks] = useState<Set<number>>(new Set())
   const qrCodeRef = useRef<HTMLDivElement>(null)
 
   // Reset share state when dialog opens/closes
@@ -47,6 +50,7 @@ export function VerificationResultDialog() {
       setCopied(false)
       setIsSharing(false)
       setShowQRCode(false)
+      setExpandedChecks(new Set())
     }
   }, [isOpen])
 
@@ -55,33 +59,66 @@ export function VerificationResultDialog() {
   const { result, chat, notorized, model_gpu, model_tdx, gateway_tdx } =
     verificationResult
 
+  // Check if E2EE was used
+  const messageState = messageId ? getMessageState(messageId) : null
+  const isE2EE = !!messageState?.chatData?.ephemeralPrivateKeys
+
   const checks = [
+    {
+      label: 'End-to-End Encryption (E2EE)',
+      valid: isE2EE,
+      message: '',
+      description:
+        'End-to-end encryption ensures that your conversation is encrypted on your device and can only be decrypted by the intended recipient. This prevents any intermediate servers or network observers from reading the message contents.',
+    },
     {
       label: 'Chat Signature',
       valid: chat.valid,
       message: chat.message,
+      description:
+        'Cryptographic signature verification ensures the chat messages have not been tampered with and were signed by the expected parties.',
     },
     {
       label: 'Blockchain Record',
       valid: notorized.valid,
       message: notorized.message,
+      description:
+        'The conversation record is notarized on the blockchain, providing an immutable proof of when the interaction occurred and its integrity.',
     },
     {
       label: 'Model GPU Attestation',
       valid: model_gpu.valid,
       message: model_gpu.message,
+      description:
+        "NVIDIA's Remote Attestation Service verifies that the GPU executing this model matches trusted hardware specifications. This confirms the model is running on authentic hardware.",
     },
     {
       label: 'Model TDX Attestation',
       valid: model_tdx.valid,
       message: model_tdx.message,
+      description:
+        'Intel TDX (Trust Domain Extensions) provides a hardware-isolated environment and issues cryptographically signed attestation reports. This ensures the model runs in a secure, isolated trusted execution environment.',
     },
     {
       label: 'Gateway TDX Attestation',
       valid: gateway_tdx.valid,
       message: gateway_tdx.message,
+      description:
+        'Intel TDX attestation for the NEAR AI Cloud private LLM gateway environment where your conversations are privately and securely stored. This confirms the gateway infrastructure operates in a trusted, hardware-isolated environment.',
     },
   ]
+
+  const toggleCheckExpanded = (index: number) => {
+    setExpandedChecks((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(index)) {
+        newSet.delete(index)
+      } else {
+        newSet.add(index)
+      }
+      return newSet
+    })
+  }
 
   const handleShare = async () => {
     if (!messageId) return
@@ -273,12 +310,12 @@ export function VerificationResultDialog() {
             {result.valid ? (
               <>
                 <CheckCircle2 className="size-6 text-green-500" />
-                Proof Verified Successfully
+                Chat Verified Successfully
               </>
             ) : (
               <>
                 <AlertCircle className="size-6 text-yellow-500" />
-                Proof Verification Completed with Issues
+                Chat Verification Completed with Issues
               </>
             )}
           </DialogTitle>
@@ -290,47 +327,72 @@ export function VerificationResultDialog() {
         </DialogHeader>
 
         <div className="space-y-3 py-4">
-          {checks.map((check, index) => (
-            <div
-              key={index}
-              className={cn(
-                'flex items-start gap-3 p-3 rounded-lg border',
-                check.valid
-                  ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900/50'
-                  : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900/50'
-              )}
-            >
-              {check.valid ? (
-                <CheckCircle2 className="size-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
-              ) : (
-                <XCircle className="size-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p
-                  className={cn(
-                    'text-sm font-medium',
-                    check.valid
-                      ? 'text-green-900 dark:text-green-100'
-                      : 'text-red-900 dark:text-red-100'
-                  )}
+          {checks.map((check, index) => {
+            const isExpanded = expandedChecks.has(index)
+            return (
+              <div
+                key={index}
+                className={cn(
+                  'rounded-lg border',
+                  check.valid
+                    ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900/50'
+                    : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900/50'
+                )}
+              >
+                <button
+                  onClick={() => toggleCheckExpanded(index)}
+                  className="w-full flex items-start gap-3 p-3 text-left hover:opacity-80 transition-opacity"
                 >
-                  {check.label}
-                </p>
-                {check.message && (
-                  <p
+                  {check.valid ? (
+                    <CheckCircle2 className="size-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="size-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={cn(
+                        'text-sm font-medium',
+                        check.valid
+                          ? 'text-green-900 dark:text-green-100'
+                          : 'text-red-900 dark:text-red-100'
+                      )}
+                    >
+                      {check.label}
+                    </p>
+                    {check.message && (
+                      <p
+                        className={cn(
+                          'text-xs mt-1',
+                          check.valid
+                            ? 'text-green-700 dark:text-green-300'
+                            : 'text-red-700 dark:text-red-300'
+                        )}
+                      >
+                        {check.message}
+                      </p>
+                    )}
+                  </div>
+                  {isExpanded ? (
+                    <ChevronDown className="size-4 text-gray-500 shrink-0 mt-0.5" />
+                  ) : (
+                    <ChevronRight className="size-4 text-gray-500 shrink-0 mt-0.5" />
+                  )}
+                </button>
+                {isExpanded && check.description && (
+                  <div
                     className={cn(
-                      'text-xs mt-1',
+                      'px-3 pb-3 pt-0 text-xs border-t',
                       check.valid
-                        ? 'text-green-700 dark:text-green-300'
-                        : 'text-red-700 dark:text-red-300'
+                        ? 'text-green-800 dark:text-green-200 border-green-200 dark:border-green-900/50'
+                        : 'text-red-800 dark:text-red-200 border-red-200 dark:border-red-900/50'
                     )}
                   >
-                    {check.message}
-                  </p>
+                    <p className="mt-2">{check.description}</p>
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         <DialogFooter className="flex-col gap-3 sm:flex-col">
