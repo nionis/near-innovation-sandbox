@@ -20,6 +20,7 @@ export function SelectableConversation({
 }: SelectableConversationProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const contentRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const [selectedRange, setSelectedRange] = useState<{
     messageIndex: number
     start: number
@@ -31,7 +32,8 @@ export function SelectableConversation({
 
   const handleMouseUp = (messageIndex: number) => {
     const messageRef = messageRefs.current.get(messageIndex)
-    if (!messageRef) return
+    const contentRef = contentRefs.current.get(messageIndex)
+    if (!messageRef || !contentRef) return
 
     const selection = window.getSelection()
     if (!selection || selection.toString().length === 0) {
@@ -42,18 +44,27 @@ export function SelectableConversation({
     try {
       const range = selection.getRangeAt(0)
 
-      // Check if selection is within this specific message
-      if (!messageRef.contains(range.commonAncestorContainer)) {
+      // Check if selection is within the content div specifically
+      if (!contentRef.contains(range.commonAncestorContainer)) {
         setSelectedRange(null)
         return
       }
 
+      // Calculate offsets relative to the content div
       const preSelectionRange = range.cloneRange()
-      preSelectionRange.selectNodeContents(messageRef)
+      preSelectionRange.selectNodeContents(contentRef)
       preSelectionRange.setEnd(range.startContainer, range.startOffset)
 
       const startChar = preSelectionRange.toString().length
       const endChar = startChar + selection.toString().length
+      
+      console.log('Selection calculation:', {
+        messageIndex,
+        contentLength: contentRef.textContent?.length,
+        startChar,
+        endChar,
+        selectedText: selection.toString(),
+      })
 
       setSelectedRange({
         messageIndex,
@@ -102,7 +113,7 @@ export function SelectableConversation({
                 }
               }}
               onMouseUp={() => handleMouseUp(index)}
-              className="!select-text cursor-text"
+              className="select-text! cursor-text"
             >
               <div className="flex items-start gap-2 mb-1">
                 <span className="text-xs font-semibold text-muted-foreground uppercase">
@@ -118,7 +129,16 @@ export function SelectableConversation({
                   (Message #{index})
                 </span>
               </div>
-              <div className="text-sm whitespace-pre-wrap wrap-break-word pl-6">
+              <div
+                ref={(el) => {
+                  if (el) {
+                    contentRefs.current.set(index, el)
+                  } else {
+                    contentRefs.current.delete(index)
+                  }
+                }}
+                className="text-sm whitespace-pre-wrap wrap-break-word pl-6"
+              >
                 {message.content}
               </div>
             </div>

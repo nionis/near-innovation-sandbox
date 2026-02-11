@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createFileRoute, useParams } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 
@@ -53,6 +53,8 @@ import { IconAlertCircle } from '@tabler/icons-react'
 import { useToolApproval } from '@/hooks/useToolApproval'
 import DropdownModelProvider from '@/containers/DropdownModelProvider'
 import { VerificationResultDialog } from '@/components/VerificationResultDialog'
+import { ScanReferenceDialog } from '@/components/ScanReferenceDialog'
+import { QrCode } from 'lucide-react'
 
 const CHAT_STATUS = {
   STREAMING: 'streaming',
@@ -76,12 +78,53 @@ function ThreadDetail() {
   const updateMessage = useMessages((state) => state.updateMessage)
   const deleteMessage = useMessages((state) => state.deleteMessage)
   const currentThread = useRef<string | undefined>(undefined)
+  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false)
 
   useTools()
 
   // Attestation hook for generating and verifying proofs
   const { generateProof, verifyProof } = useAttestation()
   const getMessageState = useAttestationStore((state) => state.getMessageState)
+  const getShareUrl = useAttestationStore((state) => state.getShareUrl)
+  const messageStates = useAttestationStore((state) => state.messageStates)
+  
+  // Get share data for the most recent assistant message with attestation
+  const currentShareData = useMemo(() => {
+    const messages = useMessages.getState().getMessages(threadId)
+    // Find the most recent assistant message that has a share URL
+    const assistantMessage = messages
+      ?.filter((m) => m.role === 'assistant')
+      .reverse()
+      .find((m) => {
+        const state = getMessageState(m.id)
+        return state?.chatData && getShareUrl(m.id)
+      })
+    
+    if (!assistantMessage) {
+      return null
+    }
+
+    const messageState = getMessageState(assistantMessage.id)
+    const shareUrlData = getShareUrl(assistantMessage.id)
+    
+    if (!messageState?.chatData || !shareUrlData?.url) {
+      return null
+    }
+
+    // Extract share ID from URL
+    try {
+      const url = new URL(shareUrlData.url)
+      const shareId = url.searchParams.get('id')
+      if (!shareId) return null
+      
+      return {
+        shareId,
+        chatData: messageState.chatData,
+      }
+    } catch {
+      return null
+    }
+  }, [threadId, getMessageState, getShareUrl, messageStates])
 
   // Get attachments for this thread
   const attachmentsKey = threadId ?? NEW_THREAD_ATTACHMENT_KEY
@@ -740,6 +783,14 @@ function ThreadDetail() {
       <HeaderPage>
         <div className="flex items-center justify-between w-full pr-2">
           <DropdownModelProvider model={threadModel} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsScanDialogOpen(true)}
+            className="ml-2"
+          >
+            <QrCode className="size-4" />
+          </Button>
         </div>
       </HeaderPage>
       <div className="flex flex-1 flex-col h-full overflow-hidden">
@@ -816,6 +867,14 @@ function ThreadDetail() {
 
       {/* Verification Result Dialog */}
       <VerificationResultDialog />
+
+      {/* Scan Reference Dialog */}
+      <ScanReferenceDialog
+        isOpen={isScanDialogOpen}
+        onClose={() => setIsScanDialogOpen(false)}
+        shareId={currentShareData?.shareId}
+        chatData={currentShareData?.chatData}
+      />
     </div>
   )
 }
