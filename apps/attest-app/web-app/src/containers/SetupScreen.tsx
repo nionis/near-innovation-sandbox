@@ -100,7 +100,7 @@ function SetupScreen() {
               </Button>
 
               <a
-                href="https://app.near.ai"
+                href="https://cloud.near.ai"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-primary hover:underline inline-flex items-center justify-center gap-1"
@@ -113,12 +113,12 @@ function SetupScreen() {
             <div className="text-xs text-muted-foreground text-center mt-2">
               Visit{' '}
               <a
-                href="https://app.near.ai"
+                href="https://cloud.near.ai"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                app.near.ai
+                cloud.near.ai
               </a>{' '}
               to create an account and get your API key.
             </div>

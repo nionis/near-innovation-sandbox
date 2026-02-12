@@ -200,7 +200,7 @@ function NearAI() {
                   <span>
                     Your NEAR AI API key. Visit{' '}
                     <a
-                      href="https://app.near.ai"
+                      href="https://cloud.near.ai"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline inline-flex items-center gap-1"

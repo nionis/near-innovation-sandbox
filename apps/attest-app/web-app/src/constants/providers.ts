@@ -29,14 +29,14 @@ export const predefinedProviders = [
     active: true,
     api_key: '',
     base_url: 'https://cloud-api.near.ai/v1',
-    explore_models_url: 'https://docs.near.ai/cloud',
+    explore_models_url: 'https://docs.near.ai/cloud/models/overview',
     provider: 'near-ai',
     settings: [
       {
         key: 'api-key',
         title: 'API Key',
         description:
-          'Your NEAR AI API key. Visit [NEAR AI](https://app.near.ai) to get your API key.',
+          'Your NEAR AI API key. Visit [NEAR AI](https://cloud.near.ai) to get your API key.',
         controller_type: 'input',
         controller_props: {
           placeholder: 'Insert API Key',
