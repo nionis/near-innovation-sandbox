@@ -120,6 +120,8 @@ function ThreadDetail() {
       return {
         shareId,
         chatData: messageState.chatData,
+        receipt: messageState.receipt,
+        verificationResult: messageState.verificationResult,
       }
     } catch {
       return null
@@ -875,6 +877,8 @@ function ThreadDetail() {
         onClose={() => setIsScanDialogOpen(false)}
         shareId={currentShareData?.shareId}
         chatData={currentShareData?.chatData}
+        receipt={currentShareData?.receipt}
+        verificationResult={currentShareData?.verificationResult}
       />
     </div>
   )

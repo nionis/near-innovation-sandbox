@@ -14,7 +14,11 @@ import {
   decryptMessages,
   extractTextRange,
 } from '@/lib/conversation-serializer'
-import type { AttestationChatData } from '@/stores/attestation-store'
+import type {
+  AttestationChatData,
+  AttestationReceipt,
+} from '@/stores/attestation-store'
+import type { VerifyOutput } from '@repo/packages-attestations'
 
 interface ScannedReference {
   shareId: string
@@ -35,6 +39,8 @@ interface ScanReferenceDialogProps {
   onClose: () => void
   shareId?: string // The current conversation's share ID
   chatData?: AttestationChatData // The current conversation's chat data
+  receipt?: AttestationReceipt // The current conversation's receipt
+  verificationResult?: VerifyOutput // The current conversation's verification result
 }
 
 export function ScanReferenceDialog({
@@ -42,6 +48,8 @@ export function ScanReferenceDialog({
   onClose,
   shareId,
   chatData,
+  receipt,
+  verificationResult,
 }: ScanReferenceDialogProps) {
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -161,7 +169,7 @@ export function ScanReferenceDialog({
 
     try {
       // Check if we have the necessary data
-      if (!shareId || !chatData) {
+      if (!shareId || !chatData || !receipt || !verificationResult) {
         throw new Error(
           'No conversation data available. Please verify the conversation first.'
         )
@@ -236,7 +244,9 @@ export function ScanReferenceDialog({
   }
 
   // Check if conversation data is available
-  const hasConversationData = Boolean(shareId && chatData)
+  const hasConversationData = Boolean(
+    shareId && chatData && receipt && verificationResult
+  )
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
