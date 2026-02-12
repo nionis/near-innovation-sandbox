@@ -11,7 +11,7 @@ import { useTranslation } from '@/i18n/react-i18next-compat'
 
 import { Link, useNavigate } from '@tanstack/react-router'
 import { PlatformMetaKey } from '@/containers/PlatformMetaKey'
-import React, { useRef, useState } from 'react'
+import React, { useRef } from 'react'
 import {
   SearchIcon,
   type SearchIconHandle,
@@ -28,10 +28,8 @@ import {
   SettingsIcon,
   type SettingsIconHandle,
 } from '@/components/animated-icon/settings'
-import { BlocksIcon, type BlocksIconHandle } from '../animated-icon/blocks'
 import AddProjectDialog from '@/containers/dialogs/AddProjectDialog'
 import { SearchDialog } from '@/containers/dialogs/SearchDialog'
-import { LoadFromUrlDialog } from '@/components/LoadFromUrlDialog'
 import { useThreadManagement } from '@/hooks/useThreadManagement'
 import { useSearchDialog } from '@/hooks/useSearchDialog'
 import { useProjectDialog } from '@/hooks/useProjectDialog'
@@ -41,7 +39,6 @@ type AnimatedIconHandle =
   | FolderPlusIconHandle
   | MessageCircleIconHandle
   | SettingsIconHandle
-  | BlocksIconHandle
 
 type NavMainItem = {
   title: string
@@ -60,8 +57,7 @@ type NavMainItem = {
 
 const getNavMainItems = (
   onNewProject: () => void,
-  onSearch: () => void,
-  onLoadFromUrl: () => void
+  onSearch: () => void
 ): NavMainItem[] => [
   {
     title: 'common:newChat',
@@ -76,6 +72,7 @@ const getNavMainItems = (
       </KbdGroup>
     ),
   },
+
   {
     title: 'common:projects.new',
     animatedIcon: FolderPlusIcon,
@@ -90,6 +87,11 @@ const getNavMainItems = (
     ),
   },
   {
+    title: 'Import Chat',
+    icon: Link2,
+    url: route.import,
+  },
+  {
     title: 'common:search',
     animatedIcon: SearchIcon,
     onClick: onSearch,
@@ -102,11 +104,7 @@ const getNavMainItems = (
       </KbdGroup>
     ),
   },
-  {
-    title: 'Scan QR',
-    icon: Link2,
-    onClick: onLoadFromUrl,
-  },
+
   {
     title: 'common:settings',
     url: route.settings.general,
@@ -154,12 +152,10 @@ export function NavMain() {
   const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog()
   const { open: projectDialogOpen, setOpen: setProjectDialogOpen } =
     useProjectDialog()
-  const [loadFromUrlOpen, setLoadFromUrlOpen] = useState(false)
 
   const navMainItems = getNavMainItems(
     () => setProjectDialogOpen(true),
-    () => setSearchOpen(true),
-    () => setLoadFromUrlOpen(true)
+    () => setSearchOpen(true)
   )
 
   const handleCreateProject = async (name: string) => {
@@ -224,11 +220,6 @@ export function NavMain() {
       />
 
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
-
-      <LoadFromUrlDialog
-        open={loadFromUrlOpen}
-        onOpenChange={setLoadFromUrlOpen}
-      />
     </>
   )
 }
