@@ -65,9 +65,9 @@ export const ACCENT_COLORS = [
   {
     name: 'Purple',
     value: 'purple',
-    thumb: '#865EEA',
-    primary: '#865EEA',
-    sidebar: { light: '#D2C4F3', dark: '#220C5A' },
+    thumb: '#9B6FE8',
+    primary: '#9B6FE8',
+    sidebar: { light: '#E0D5F5', dark: '#2A1F3D' },
   },
   {
     name: 'Pink',
@@ -86,7 +86,7 @@ export const ACCENT_COLORS = [
 ] as const
 
 export type AccentColorValue = (typeof ACCENT_COLORS)[number]['value']
-const DEFAULT_ACCENT_COLOR: AccentColorValue = 'gray'
+const DEFAULT_ACCENT_COLOR: AccentColorValue = 'purple'
 
 const applyAccentColorToDOM = (colorValue: string, isDark: boolean) => {
   const color = ACCENT_COLORS.find((c) => c.value === colorValue)

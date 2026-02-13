@@ -16,14 +16,14 @@
 /* Light mode (default) */
 @media (prefers-color-scheme: light) {
   #initial-loader {
-    background: rgb(255, 255, 255);
+    background: rgb(252, 251, 253);
   }
 }
 
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
   #initial-loader {
-    background: rgb(25, 25, 25);
+    background: rgb(30, 25, 38);
   }
 }
 
