@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
-import { IconMessageCircle, IconShieldCheck } from '@tabler/icons-react'
+import { IconMessageCircle, IconShieldCheck, IconHelp } from '@tabler/icons-react'
 
-export type ChatMode = 'chat' | 'verify'
+export type ChatMode = 'chat' | 'verify' | 'how'
 
 interface ChatModeToggleProps {
   mode: ChatMode
@@ -44,6 +44,20 @@ export function ChatModeToggle({
         >
           <IconShieldCheck size={14} />
           Verify & Share
+        </button>
+        <button
+          onClick={() => onModeChange('how')}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 outline-none',
+            mode === 'how'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+        >
+          <IconHelp size={14} />
+          How
         </button>
       </div>
     </div>

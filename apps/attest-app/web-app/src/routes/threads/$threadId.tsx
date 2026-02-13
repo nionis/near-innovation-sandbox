@@ -54,6 +54,7 @@ import DropdownModelProvider from '@/containers/DropdownModelProvider'
 import { VerificationResultDialog } from '@/components/VerificationResultDialog'
 import { ChatModeToggle, type ChatMode } from '@/containers/ChatModeToggle'
 import { VerifyPanel } from '@/containers/VerifyPanel'
+import { HowPanel } from '@/containers/HowPanel'
 
 const CHAT_STATUS = {
   STREAMING: 'streaming',
@@ -803,7 +804,7 @@ function ThreadDetail() {
               />
             </div>
           </>
-        ) : (
+        ) : chatMode === 'verify' ? (
           <div className="flex flex-1 flex-col overflow-hidden py-2 mx-auto w-full md:w-4/5 xl:w-4/6">
             <ChatModeToggle
               mode={chatMode}
@@ -814,6 +815,15 @@ function ThreadDetail() {
               threadId={threadId}
               chatMessages={chatMessages}
             />
+          </div>
+        ) : (
+          <div className="flex flex-1 flex-col overflow-hidden py-2 mx-auto w-full md:w-4/5 xl:w-4/6">
+            <ChatModeToggle
+              mode={chatMode}
+              onModeChange={setChatMode}
+              disabled={status === 'streaming' || status === 'submitted'}
+            />
+            <HowPanel />
           </div>
         )}
       </div>
