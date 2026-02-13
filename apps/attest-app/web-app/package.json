@@ -79,6 +79,7 @@
     "lucide-react": "^0.563.0",
     "motion": "^12.29.2",
     "next-themes": "0.4.6",
+    "overlayscrollbars": "^2.14.0",
     "posthog-js": "1.255.1",
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",

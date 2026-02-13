@@ -3867,6 +3867,7 @@ __metadata:
     lucide-react: "npm:^0.563.0"
     motion: "npm:^12.29.2"
     next-themes: "npm:0.4.6"
+    overlayscrollbars: "npm:^2.14.0"
     posthog-js: "npm:1.255.1"
     qrcode: "npm:^1.5.4"
     qrcode.react: "npm:^4.2.0"
@@ -17738,6 +17739,13 @@ __metadata:
   version: 0.3.0
   resolution: "os-browserify@npm:0.3.0"
   checksum: 10c0/6ff32cb1efe2bc6930ad0fd4c50e30c38010aee909eba8d65be60af55efd6cbb48f0287e3649b4e3f3a63dce5a667b23c187c4293a75e557f0d5489d735bcf52
+  languageName: node
+  linkType: hard
+
+"overlayscrollbars@npm:^2.14.0":
+  version: 2.14.0
+  resolution: "overlayscrollbars@npm:2.14.0"
+  checksum: 10c0/e08d188733032aadb258b6ddf56249c6747b7e5ac745dd34ae402320a5f8d4cd832a3a73baff29f8a64a6faf334be719617725972fab8c29fb708a9fd96bc3e8
   languageName: node
   linkType: hard
 
