@@ -658,7 +658,9 @@ export function ImportChatPage() {
     <div className="flex flex-col h-[calc(100dvh-(env(safe-area-inset-bottom)+env(safe-area-inset-top)))]">
       <HeaderPage>
         <div className="flex items-center gap-2 w-full">
-          <span className="font-medium text-base font-studio">Import Chat</span>
+          <span className="font-medium text-base font-studio">
+            Import Document
+          </span>
         </div>
       </HeaderPage>
 
@@ -725,11 +727,11 @@ export function ImportChatPage() {
               </CardContent>
             </Card>
           ) : (
-            <Tabs defaultValue="url" className="w-full">
+            <Tabs defaultValue="qr" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="url">From URL</TabsTrigger>
                 <TabsTrigger value="qr">Scan QR</TabsTrigger>
                 <TabsTrigger value="file">From File</TabsTrigger>
+                <TabsTrigger value="url">From URL</TabsTrigger>
               </TabsList>
 
               <TabsContent value="url" className="space-y-4">

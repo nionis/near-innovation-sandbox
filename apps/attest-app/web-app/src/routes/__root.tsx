@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 // import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import DialogAppUpdater from '@/containers/dialogs/AppUpdater'
@@ -21,12 +21,15 @@ import ToolApproval from '@/containers/dialogs/ToolApproval'
 import { TranslationProvider } from '@/i18n/TranslationContext'
 import OutOfContextPromiseModal from '@/containers/dialogs/OutOfContextDialog'
 import AttachmentIngestionDialog from '@/containers/dialogs/AttachmentIngestionDialog'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import GlobalError from '@/containers/GlobalError'
 import { GlobalEventHandler } from '@/providers/GlobalEventHandler'
 import { ServiceHubProvider } from '@/providers/ServiceHubProvider'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { LeftSidebar } from '@/components/left-sidebar'
+import { localStorageKey } from '@/constants/localStorage'
+import { useModelProvider } from '@/hooks/useModelProvider'
+import { predefinedProviders } from '@/constants/providers'
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -43,10 +46,35 @@ const AppLayout = () => {
     setLeftPanelWidth,
   } = useLeftPanel()
 
+  const { providers } = useModelProvider()
+  const location = useLocation()
+
+  // Check if setup is completed
+  const hasValidProviders = providers.some((provider) => {
+    const isPredefinedProvider = predefinedProviders.some(
+      (p) => p.provider === provider.provider
+    )
+
+    // Custom providers don't need API key validation but must have models
+    if (!isPredefinedProvider) {
+      return provider.models.length > 0
+    }
+
+    // Predefined providers need either API key or models (for llamacpp/jan)
+    return (
+      provider.api_key?.length ||
+      (provider.provider === 'llamacpp' && provider.models.length) ||
+      (provider.provider === 'jan' && provider.models.length)
+    )
+  })
+
+  // Hide sidebar on home route when setup is not completed
+  const shouldShowSidebar = !(location.pathname === '/' && !hasValidProviders)
+
   return (
     <div className="bg-neutral-50 dark:bg-background size-full">
       <SidebarProvider
-        open={isLeftPanelOpen}
+        open={isLeftPanelOpen && shouldShowSidebar}
         onOpenChange={setLeftPanel}
         defaultWidth={sidebarWidth}
         onWidthChange={setLeftPanelWidth}
@@ -59,7 +87,7 @@ const AppLayout = () => {
         )}
         <DialogAppUpdater />
         <BackendUpdater />
-        <LeftSidebar />
+        {shouldShowSidebar && <LeftSidebar />}
         <SidebarInset>
           <div className="bg-neutral-50 dark:bg-background size-full">
             <Outlet />

@@ -87,7 +87,7 @@ const getNavMainItems = (
     ),
   },
   {
-    title: 'Import Chat',
+    title: 'Import Document',
     icon: Link2,
     url: route.import,
   },
