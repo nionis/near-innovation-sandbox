@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { VerifyOutput } from '@repo/packages-attestations'
+import { SHARE_API_URL } from '@repo/packages-utils/share'
 
 /**
  * Chat data required for attestation
@@ -127,7 +128,7 @@ interface AttestationState {
 // Default attestation API URL (can be overridden in settings)
 const DEFAULT_ATTESTATION_API_URL = IS_DEV
   ? 'http://localhost:3000'
-  : 'https://near-innovation-sandbox-attest-web.vercel.app'
+  : SHARE_API_URL
 
 export const useAttestationStore = create<AttestationState>()(
   persist(

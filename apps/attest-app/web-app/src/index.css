@@ -44,8 +44,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --animate-hue-rotate: hue-rotate 4s infinite;
-  --font-studio: "StudioFeixenSans";
-  --font-sans: "Inter", sans-serif;
+  --font-studio: 'StudioFeixenSans';
+  --font-sans: 'Inter', sans-serif;
 
   /* Font scale based on --font-size-base */
   --text-xs: calc(var(--font-size-base) * 0.75); /* ~12px */
@@ -61,7 +61,6 @@
   --text-7xl: calc(var(--font-size-base) * 4.5); /* ~72px */
   --text-8xl: calc(var(--font-size-base) * 6); /* ~96px */
   --text-9xl: calc(var(--font-size-base) * 8); /* ~128px */
-
 }
 
 :root {
@@ -72,39 +71,39 @@
   --card-foreground: oklch(0.15 0.02 300);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0.02 300);
-  --primary: oklch(0.55 0.20 300);
+  --primary: oklch(0.55 0.2 300);
   --primary-foreground: oklch(0.99 0.005 300);
   --secondary: oklch(0.96 0.01 300);
   --secondary-foreground: oklch(0.25 0.02 300);
   --muted: oklch(0.96 0.01 300);
-  --muted-foreground: oklch(0.50 0.02 300);
-  --accent: oklch(0.70 0.15 195);
+  --muted-foreground: oklch(0.5 0.02 300);
+  --accent: oklch(80.914% 0.10467 303.841);
   --accent-foreground: oklch(0.15 0.02 195);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.90 0.01 300);
-  --input: oklch(0.90 0.01 300);
-  --ring: oklch(0.55 0.20 300);
-  --chart-1: oklch(0.55 0.20 300);
-  --chart-2: oklch(0.70 0.15 195);
-  --chart-3: oklch(0.60 0.18 260);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(0.9 0.01 300);
+  --input: oklch(0.9 0.01 300);
+  --ring: oklch(0.55 0.2 300);
+  --chart-1: oklch(0.55 0.2 300);
+  --chart-2: oklch(0.7 0.15 195);
+  --chart-3: oklch(0.6 0.18 260);
   --chart-4: oklch(0.65 0.22 320);
   --chart-5: oklch(0.75 0.12 180);
   --sidebar: oklch(0.25 0.08 285);
-  --sidebar-foreground: oklch(0.20 0.02 285);
-  --sidebar-primary: oklch(0.55 0.20 300);
+  --sidebar-foreground: oklch(0.2 0.02 285);
+  --sidebar-primary: oklch(0.55 0.2 300);
   --sidebar-primary-foreground: oklch(0.99 0.005 300);
   --sidebar-accent: oklch(0.92 0.02 285);
-  --sidebar-accent-foreground: oklch(0.20 0.02 285);
+  --sidebar-accent-foreground: oklch(0.2 0.02 285);
   --sidebar-border: oklch(0.85 0.02 285);
-  --sidebar-ring: oklch(0.55 0.20 300);
+  --sidebar-ring: oklch(0.55 0.2 300);
 }
 
 .dark {
   --background: oklch(0.15 0.03 285);
   --foreground: oklch(0.95 0.02 300);
-  --card: oklch(0.20 0.04 285);
+  --card: oklch(0.2 0.04 285);
   --card-foreground: oklch(0.95 0.02 300);
-  --popover: oklch(0.20 0.04 285);
+  --popover: oklch(0.2 0.04 285);
   --popover-foreground: oklch(0.95 0.02 300);
   --primary: oklch(0.65 0.22 300);
   --primary-foreground: oklch(0.15 0.03 285);
@@ -112,17 +111,17 @@
   --secondary-foreground: oklch(0.95 0.02 300);
   --muted: oklch(0.28 0.05 285);
   --muted-foreground: oklch(0.65 0.03 300);
-  --accent: oklch(0.75 0.18 195);
+  --accent: oklch(80.914% 0.10467 303.841);
   --accent-foreground: oklch(0.15 0.03 285);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(0.35 0.05 285);
-  --input: oklch(0.30 0.05 285);
+  --input: oklch(0.3 0.05 285);
   --ring: oklch(0.65 0.22 300);
   --chart-1: oklch(0.65 0.22 300);
   --chart-2: oklch(0.75 0.18 195);
-  --chart-3: oklch(0.70 0.20 260);
+  --chart-3: oklch(0.7 0.2 260);
   --chart-4: oklch(0.75 0.24 320);
-  --chart-5: oklch(0.80 0.15 180);
+  --chart-5: oklch(0.8 0.15 180);
   --sidebar: oklch(0.18 0.05 285);
   --sidebar-foreground: oklch(0.95 0.02 300);
   --sidebar-primary: oklch(0.65 0.22 300);
@@ -154,8 +153,8 @@
   }
 
   /* WebKit number input spin buttons */
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button {
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
     appearance: none;
     background: var(--foreground);
@@ -163,8 +162,8 @@
     cursor: pointer;
   }
 
-  input[type="number"]::-webkit-inner-spin-button:hover,
-  input[type="number"]::-webkit-outer-spin-button:hover {
+  input[type='number']::-webkit-inner-spin-button:hover,
+  input[type='number']::-webkit-outer-spin-button:hover {
     opacity: 0.8;
   }
 
@@ -220,7 +219,6 @@
   .dark * {
     scrollbar-color: oklch(0.985 0 0 / 20%) transparent;
   }
-
 }
 
 @layer base {
@@ -231,7 +229,7 @@
     @apply bg-background text-foreground;
   }
 
-  [data-streamdown="code-block-header"] {
+  [data-streamdown='code-block-header'] {
     padding: 6px 16px !important;
   }
 }
