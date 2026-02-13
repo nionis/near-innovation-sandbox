@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 import {
   decryptMessages,
   extractTextRange,
+  getPreviewText,
 } from '@/lib/conversation-serializer'
 import type {
   AttestationChatData,
@@ -41,6 +42,13 @@ interface ScanReferenceDialogProps {
   chatData?: AttestationChatData // The current conversation's chat data
   receipt?: AttestationReceipt // The current conversation's receipt
   verificationResult?: VerifyOutput // The current conversation's verification result
+  onReferenceImported?: (reference: {
+    shareId: string
+    messageIndex: number
+    startChar: number
+    endChar: number
+    previewText: string
+  }) => void
 }
 
 export function ScanReferenceDialog({
@@ -50,6 +58,7 @@ export function ScanReferenceDialog({
   chatData,
   receipt,
   verificationResult,
+  onReferenceImported,
 }: ScanReferenceDialogProps) {
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -169,7 +178,7 @@ export function ScanReferenceDialog({
 
     try {
       // Check if we have the necessary data
-      if (!shareId || !chatData || !receipt || !verificationResult) {
+      if (!shareId || !chatData || !receipt) {
         throw new Error(
           'No conversation data available. Please verify the conversation first.'
         )
@@ -226,6 +235,17 @@ export function ScanReferenceDialog({
         messageRole: message.role,
         range: `${reference.startChar}-${reference.endChar}`,
       })
+
+      // Call the callback to add the reference if provided
+      if (onReferenceImported) {
+        onReferenceImported({
+          shareId: reference.shareId,
+          messageIndex: reference.messageIndex,
+          startChar: reference.startChar,
+          endChar: reference.endChar,
+          previewText: getPreviewText(referencedText),
+        })
+      }
     } catch (err) {
       console.error('Error processing reference QR code:', err)
       setError(
@@ -244,9 +264,7 @@ export function ScanReferenceDialog({
   }
 
   // Check if conversation data is available
-  const hasConversationData = Boolean(
-    shareId && chatData && receipt && verificationResult
-  )
+  const hasConversationData = Boolean(shareId && chatData && receipt)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

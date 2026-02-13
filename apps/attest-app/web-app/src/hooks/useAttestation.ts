@@ -81,7 +81,10 @@ export function useAttestation() {
    * @returns The verification output or null if failed
    */
   const verifyProof = useCallback(
-    async (messageId: string): Promise<VerifyOutput | null> => {
+    async (
+      messageId: string,
+      options?: { silent?: boolean; skipCache?: boolean }
+    ): Promise<VerifyOutput | null> => {
       // Get the message state
       const messageState = getMessageState(messageId)
       if (!messageState?.chatData || !messageState?.receipt) {
@@ -124,15 +127,18 @@ export function useAttestation() {
         const cacheKey = computeVerificationCacheKey(verifyInput)
 
         // Check if we have a cached result with matching cache key
-        // Only use cache if the previous verification was successful
+        // Only use cache if the previous verification was successful and skipCache is not set
         if (
+          !options?.skipCache &&
           messageState.verificationResult &&
           messageState.verificationCacheKey === cacheKey &&
           messageState.verificationResult.result.valid
         ) {
           // Use cached result
-          toast.info('Using cached verification result')
-          openVerificationDialog(messageId, messageState.verificationResult)
+          if (!options?.silent) {
+            toast.info('Using cached verification result')
+            openVerificationDialog(messageId, messageState.verificationResult)
+          }
           return messageState.verificationResult
         }
 
@@ -148,8 +154,10 @@ export function useAttestation() {
         // Store the verification result with cache key
         setVerificationResult(messageId, verificationResult, cacheKey)
 
-        // Open the verification dialog instead of showing a toast
-        openVerificationDialog(messageId, verificationResult)
+        // Open the verification dialog (unless silent mode)
+        if (!options?.silent) {
+          openVerificationDialog(messageId, verificationResult)
+        }
 
         return verificationResult
       } catch (error) {

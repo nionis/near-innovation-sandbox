@@ -16,7 +16,6 @@ import { useAppState } from '@/hooks/useAppState'
 import { SESSION_STORAGE_PREFIX } from '@/constants/chat'
 import { useChat } from '@/hooks/use-chat'
 import { useModelProvider } from '@/hooks/useModelProvider'
-import { useAttestation } from '@/hooks/useAttestation'
 import { useAttestationStore } from '@/stores/attestation-store'
 import { renderInstructions } from '@/lib/instructionTemplate'
 import {
@@ -53,8 +52,8 @@ import { IconAlertCircle } from '@tabler/icons-react'
 import { useToolApproval } from '@/hooks/useToolApproval'
 import DropdownModelProvider from '@/containers/DropdownModelProvider'
 import { VerificationResultDialog } from '@/components/VerificationResultDialog'
-import { ScanReferenceDialog } from '@/components/ScanReferenceDialog'
-import { QrCode } from 'lucide-react'
+import { ChatModeToggle, type ChatMode } from '@/containers/ChatModeToggle'
+import { VerifyPanel } from '@/containers/VerifyPanel'
 
 const CHAT_STATUS = {
   STREAMING: 'streaming',
@@ -78,55 +77,11 @@ function ThreadDetail() {
   const updateMessage = useMessages((state) => state.updateMessage)
   const deleteMessage = useMessages((state) => state.deleteMessage)
   const currentThread = useRef<string | undefined>(undefined)
-  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false)
+  const [chatMode, setChatMode] = useState<ChatMode>('chat')
 
   useTools()
 
-  // Attestation hook for generating and verifying proofs
-  const { generateProof, verifyProof } = useAttestation()
   const getMessageState = useAttestationStore((state) => state.getMessageState)
-  const getShareUrl = useAttestationStore((state) => state.getShareUrl)
-  const messageStates = useAttestationStore((state) => state.messageStates)
-
-  // Get share data for the most recent assistant message with attestation
-  const currentShareData = useMemo(() => {
-    const messages = useMessages.getState().getMessages(threadId)
-    // Find the most recent assistant message that has a share URL
-    const assistantMessage = messages
-      ?.filter((m) => m.role === 'assistant')
-      .reverse()
-      .find((m) => {
-        const state = getMessageState(m.id)
-        return state?.chatData && getShareUrl(m.id)
-      })
-
-    if (!assistantMessage) {
-      return null
-    }
-
-    const messageState = getMessageState(assistantMessage.id)
-    const shareUrlData = getShareUrl(assistantMessage.id)
-
-    if (!messageState?.chatData || !shareUrlData?.url) {
-      return null
-    }
-
-    // Extract share ID from URL
-    try {
-      const url = new URL(shareUrlData.url)
-      const shareId = url.searchParams.get('id')
-      if (!shareId) return null
-
-      return {
-        shareId,
-        chatData: messageState.chatData,
-        receipt: messageState.receipt,
-        verificationResult: messageState.verificationResult,
-      }
-    } catch {
-      return null
-    }
-  }, [threadId, getMessageState, getShareUrl, messageStates])
 
   // Get attachments for this thread
   const attachmentsKey = threadId ?? NEW_THREAD_ATTACHMENT_KEY
@@ -706,22 +661,6 @@ function ThreadDetail() {
     [threadId, deleteMessage, chatMessages, setChatMessages]
   )
 
-  // Handle generate proof for NEAR AI attestation
-  // If a receipt already exists, verify instead
-  const handleGenerateProof = useCallback(
-    (messageId: string) => {
-      const messageState = getMessageState(messageId)
-      if (messageState?.receipt) {
-        // If receipt exists, verify the proof
-        verifyProof(messageId)
-      } else {
-        // Otherwise, generate the proof
-        generateProof(messageId)
-      }
-    },
-    [generateProof, verifyProof, getMessageState]
-  )
-
   // Handler for increasing context size
   const handleContextSizeIncrease = useCallback(async () => {
     if (!selectedModel) return
@@ -785,101 +724,102 @@ function ThreadDetail() {
       <HeaderPage>
         <div className="flex items-center w-full pr-2">
           <DropdownModelProvider model={threadModel} />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsScanDialogOpen(true)}
-            className="ml-2"
-          >
-            Verify References
-            <QrCode className="size-4" />
-          </Button>
         </div>
       </HeaderPage>
       <div className="flex flex-1 flex-col h-full overflow-hidden">
-        {/* Messages Area */}
-        <div className="flex-1 relative">
-          <Conversation className="absolute inset-0 text-start">
-            <ConversationContent
-              className={cn('mx-auto w-full md:w-4/5 xl:w-4/6')}
-            >
-              {chatMessages.map((message, index) => {
-                const isLastMessage = index === chatMessages.length - 1
-                const isFirstMessage = index === 0
-                return (
-                  <MessageItem
-                    key={message.id}
-                    message={message}
-                    isFirstMessage={isFirstMessage}
-                    isLastMessage={isLastMessage}
-                    status={status}
-                    reasoningContainerRef={reasoningContainerRef}
+        {chatMode === 'chat' ? (
+          <>
+            {/* Messages Area */}
+            <div className="flex-1 relative">
+              <Conversation className="absolute inset-0 text-start">
+                <ConversationContent
+                  className={cn('mx-auto w-full md:w-4/5 xl:w-4/6')}
+                >
+                  {chatMessages.map((message, index) => {
+                    const isLastMessage = index === chatMessages.length - 1
+                    const isFirstMessage = index === 0
+                    return (
+                      <MessageItem
+                        key={message.id}
+                        message={message}
+                        isFirstMessage={isFirstMessage}
+                        isLastMessage={isLastMessage}
+                        status={status}
+                        reasoningContainerRef={reasoningContainerRef}
                     onRegenerate={handleRegenerate}
                     onEdit={handleEditMessage}
                     onDelete={handleDeleteMessage}
-                    onGenerateProof={handleGenerateProof}
-                  />
-                )
-              })}
-              {status === CHAT_STATUS.SUBMITTED && <PromptProgress />}
-              {error && (
-                <div className="px-4 py-3 mx-4 my-2 rounded-lg border border-destructive/10 bg-destructive/10">
-                  <div className="flex items-start gap-3">
-                    <IconAlertCircle className="size-5 text-destructive shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-destructive mb-1">
-                        Error generating response
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {error.message}
-                      </p>
-                      {(error.message.toLowerCase().includes('context') &&
-                        (error.message.toLowerCase().includes('size') ||
-                          error.message.toLowerCase().includes('length') ||
-                          error.message.toLowerCase().includes('limit'))) ||
-                      error.message === OUT_OF_CONTEXT_SIZE ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-3"
-                          onClick={handleContextSizeIncrease}
-                        >
-                          <IconAlertCircle className="size-4 mr-2" />
-                          Increase Context Size
-                        </Button>
-                      ) : null}
+                      />
+                    )
+                  })}
+                  {status === CHAT_STATUS.SUBMITTED && <PromptProgress />}
+                  {error && (
+                    <div className="px-4 py-3 mx-4 my-2 rounded-lg border border-destructive/10 bg-destructive/10">
+                      <div className="flex items-start gap-3">
+                        <IconAlertCircle className="size-5 text-destructive shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-destructive mb-1">
+                            Error generating response
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {error.message}
+                          </p>
+                          {(error.message.toLowerCase().includes('context') &&
+                            (error.message.toLowerCase().includes('size') ||
+                              error.message.toLowerCase().includes('length') ||
+                              error.message.toLowerCase().includes('limit'))) ||
+                          error.message === OUT_OF_CONTEXT_SIZE ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-3"
+                              onClick={handleContextSizeIncrease}
+                            >
+                              <IconAlertCircle className="size-4 mr-2" />
+                              Increase Context Size
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
-        </div>
+                  )}
+                </ConversationContent>
+                <ConversationScrollButton />
+              </Conversation>
+            </div>
 
-        {/* Chat Input - Fixed at bottom */}
-        <div className="py-4 mx-auto w-full md:w-4/5 xl:w-4/6">
-          <ChatInput
-            model={threadModel}
-            onSubmit={handleSubmit}
-            onStop={stop}
-            chatStatus={status}
-          />
-        </div>
+            {/* Mode Toggle + Input Area - Fixed at bottom */}
+            <div className="py-4 mx-auto w-full md:w-4/5 xl:w-4/6">
+              <ChatModeToggle
+                mode={chatMode}
+                onModeChange={setChatMode}
+                disabled={status === 'streaming' || status === 'submitted'}
+              />
+              <ChatInput
+                model={threadModel}
+                onSubmit={handleSubmit}
+                onStop={stop}
+                chatStatus={status}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-1 flex-col overflow-hidden py-2 mx-auto w-full md:w-4/5 xl:w-4/6">
+            <ChatModeToggle
+              mode={chatMode}
+              onModeChange={setChatMode}
+              disabled={status === 'streaming' || status === 'submitted'}
+            />
+            <VerifyPanel
+              threadId={threadId}
+              chatMessages={chatMessages}
+            />
+          </div>
+        )}
       </div>
 
       {/* Verification Result Dialog */}
       <VerificationResultDialog />
-
-      {/* Scan Reference Dialog */}
-      <ScanReferenceDialog
-        isOpen={isScanDialogOpen}
-        onClose={() => setIsScanDialogOpen(false)}
-        shareId={currentShareData?.shareId}
-        chatData={currentShareData?.chatData}
-        receipt={currentShareData?.receipt}
-        verificationResult={currentShareData?.verificationResult}
-      />
     </div>
   )
 }

@@ -110,6 +110,12 @@ interface AttestationState {
   removeReference: (referenceId: string) => void
   clearReferences: () => void
   getReferences: () => ReferenceMetadata[]
+  addReferenceToMessage: (
+    messageId: string,
+    reference: ReferenceMetadata
+  ) => void
+  removeReferenceFromMessage: (messageId: string, referenceId: string) => void
+  updateReferencesShareId: (messageId: string, shareId: string) => void
   setShareUrl: (
     messageId: string,
     shareUrl: string,
@@ -378,6 +384,52 @@ export const useAttestationStore = create<AttestationState>()(
 
       getReferences: () => {
         return get().verificationDialog.references
+      },
+
+      addReferenceToMessage: (
+        messageId: string,
+        reference: ReferenceMetadata
+      ) => {
+        set((state) => ({
+          messageStates: {
+            ...state.messageStates,
+            [messageId]: {
+              ...state.messageStates[messageId],
+              references: [
+                ...(state.messageStates[messageId]?.references || []),
+                reference,
+              ],
+            },
+          },
+        }))
+      },
+
+      removeReferenceFromMessage: (messageId: string, referenceId: string) => {
+        set((state) => ({
+          messageStates: {
+            ...state.messageStates,
+            [messageId]: {
+              ...state.messageStates[messageId],
+              references: (
+                state.messageStates[messageId]?.references || []
+              ).filter((ref) => ref.id !== referenceId),
+            },
+          },
+        }))
+      },
+
+      updateReferencesShareId: (messageId: string, shareId: string) => {
+        set((state) => ({
+          messageStates: {
+            ...state.messageStates,
+            [messageId]: {
+              ...state.messageStates[messageId],
+              references: (
+                state.messageStates[messageId]?.references || []
+              ).map((ref) => (ref.shareId ? ref : { ...ref, shareId })),
+            },
+          },
+        }))
       },
 
       setShareUrl: (

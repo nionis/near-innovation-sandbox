@@ -18,19 +18,13 @@ import {
 } from '@/components/ai-elements/tool'
 import { CopyButton } from './CopyButton'
 import { useModelProvider } from '@/hooks/useModelProvider'
-import {
-  IconRefresh,
-  IconPaperclip,
-  IconShieldCheck,
-  IconLoader2,
-} from '@tabler/icons-react'
+import { IconRefresh, IconPaperclip } from '@tabler/icons-react'
 import { EditMessageDialog } from '@/containers/dialogs/EditMessageDialog'
 import { DeleteMessageDialog } from '@/containers/dialogs/DeleteMessageDialog'
 import TokenSpeedIndicator from '@/containers/TokenSpeedIndicator'
 import { extractFilesFromPrompt, FileMetadata } from '@/lib/fileMetadata'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { useAttestationStore } from '@/stores/attestation-store'
 
 const CHAT_STATUS = {
   STREAMING: 'streaming',
@@ -52,7 +46,6 @@ export type MessageItemProps = {
   onRegenerate?: (messageId: string) => void
   onEdit?: (messageId: string, newText: string) => void
   onDelete?: (messageId: string) => void
-  onGenerateProof?: (messageId: string) => void
   assistant?: { avatar?: React.ReactNode; name?: string }
   showAssistant?: boolean
 }
@@ -66,40 +59,12 @@ export const MessageItem = memo(
     onRegenerate,
     onEdit,
     onDelete,
-    onGenerateProof,
   }: MessageItemProps) => {
     const selectedModel = useModelProvider((state) => state.selectedModel)
-    const selectedProvider = useModelProvider((state) => state.selectedProvider)
     const [previewImage, setPreviewImage] = useState<{
       url: string
       filename?: string
     } | null>(null)
-
-    // Attestation state for this message
-    // Use direct state access for proper reactivity (not function calls)
-    const attestationState = useAttestationStore(
-      (state) => state.messageStates[message.id]
-    )
-    const hasAttestationData = !!attestationState?.chatData
-
-    // Only show proof button for NEAR AI provider
-    const isNearAiProvider = selectedProvider === 'near-ai'
-    const canGenerateProof =
-      isNearAiProvider && hasAttestationData && !attestationState?.receipt
-    const isAttesting = attestationState?.isAttesting ?? false
-    const isVerifying = attestationState?.isVerifying ?? false
-    const hasReceipt = !!attestationState?.receipt
-    const verificationResult = attestationState?.verificationResult
-    const hasVerificationResult = !!verificationResult
-    const isVerified = verificationResult?.result.valid ?? false
-
-    // console.debug('[MessageItem] Attestation state:', {
-    //   isNearAiProvider,
-    //   hasAttestationData,
-    //   canGenerateProof,
-    //   isAttesting,
-    //   hasReceipt,
-    // })
 
     const handleRegenerate = useCallback(() => {
       onRegenerate?.(message.id)
@@ -115,10 +80,6 @@ export const MessageItem = memo(
     const handleDelete = useCallback(() => {
       onDelete?.(message.id)
     }, [onDelete, message.id])
-
-    const handleGenerateProof = useCallback(() => {
-      onGenerateProof?.(message.id)
-    }, [onGenerateProof, message.id])
 
     // Get image URLs from file parts for the edit dialog
     const imageUrls = useMemo(() => {
@@ -442,50 +403,6 @@ export const MessageItem = memo(
                       <IconRefresh size={16} />
                     </Button>
                   )}
-
-                {/* Generate Proof button - only for NEAR AI provider */}
-                {isNearAiProvider && onGenerateProof && !isStreaming && (
-                  <Button
-                    variant={hasReceipt ? 'ghost' : 'ghost'}
-                    size="icon-xs"
-                    onClick={handleGenerateProof}
-                    disabled={
-                      isAttesting ||
-                      isVerifying ||
-                      (!canGenerateProof && !hasReceipt)
-                    }
-                    title={
-                      isVerifying
-                        ? 'Verifying proof...'
-                        : isAttesting
-                          ? 'Generating proof...'
-                          : hasVerificationResult
-                            ? isVerified
-                              ? 'Proof verified - click to verify again'
-                              : 'Verification failed - click to verify again'
-                            : hasReceipt
-                              ? 'Proof generated - click to verify'
-                              : canGenerateProof
-                                ? 'Generate verifiable proof'
-                                : 'Proof not available'
-                    }
-                    className={cn(
-                      hasVerificationResult &&
-                        (isVerified
-                          ? 'text-green-500 hover:text-green-600'
-                          : 'text-yellow-500 hover:text-yellow-600'),
-                      hasReceipt &&
-                        !hasVerificationResult &&
-                        'text-blue-500 hover:text-blue-600'
-                    )}
-                  >
-                    {isAttesting || isVerifying ? (
-                      <IconLoader2 size={16} className="animate-spin" />
-                    ) : (
-                      <IconShieldCheck size={16} />
-                    )}
-                  </Button>
-                )}
               </div>
 
               <TokenSpeedIndicator
