@@ -789,17 +789,19 @@ export function VerifyPanel({
         )}
 
         {/* Scan Reference */}
-        {activeMessageState?.chatData && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowScanDialog(true)}
-            disabled={isBusy}
-          >
-            <Scan size={14} className="mr-1.5" />
-            Scan Reference
-          </Button>
-        )}
+        {activeMessageState &&
+          activeMessageState.receipt &&
+          activeMessageState?.shareUrl && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowScanDialog(true)}
+              disabled={isBusy}
+            >
+              <Scan size={14} className="mr-1.5" />
+              Scan Reference
+            </Button>
+          )}
       </div>
 
       {/* Verification checks (collapsible) */}
@@ -927,7 +929,7 @@ export function VerifyPanel({
           >
             <span className="text-xs font-medium text-muted-foreground">
               References{references.length > 0 ? ` (${references.length})` : ''}{' '}
-              — Select text to create
+              — Select text to create references
             </span>
             {showConversation ? (
               <IconChevronUp size={14} className="text-muted-foreground" />
