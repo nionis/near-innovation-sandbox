@@ -191,7 +191,7 @@ function SetupScreen() {
                   <IconShieldCheck className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle>Verify</CardTitle>
-                <CardDescription>Scan and verify a document</CardDescription>
+                <CardDescription>a document sent to you</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button className="w-full" onClick={handleVerify}>
@@ -209,13 +209,11 @@ function SetupScreen() {
                   <IconMessage className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle>Chat</CardTitle>
-                <CardDescription>
-                  Set up your API key and start creating
-                </CardDescription>
+                <CardDescription>with a private LLM</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button className="w-full" onClick={handleChatSetup}>
-                  Setup Chat
+                  Start Chat
                 </Button>
               </CardContent>
             </Card>

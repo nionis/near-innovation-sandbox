@@ -738,16 +738,16 @@ export function ImportChatPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <LinkIcon className="size-5" />
+                      <LinkIcon className="size-8" />
                       Import from URL
                     </CardTitle>
                     <CardDescription>
-                      Enter a shared conversation URL to import it
+                      from an Attest AI link sent to you
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="url">Conversation URL</Label>
+                      <Label htmlFor="url">Shared Link</Label>
                       <Input
                         id="url"
                         placeholder="http://example.com/id=xxx&passphrase=yyy-zzz"
@@ -764,7 +764,7 @@ export function ImportChatPage() {
                       {isLoading && (
                         <Loader2 className="size-4 mr-2 animate-spin" />
                       )}
-                      Import from URL
+                      <LinkIcon className="size-4" /> Import from Link
                     </Button>
                   </CardContent>
                 </Card>
@@ -774,17 +774,16 @@ export function ImportChatPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Camera className="size-5" />
+                      <Camera className="size-8" />
                       Scan QR Code
                     </CardTitle>
                     <CardDescription>
-                      Use your camera to scan a QR code containing a
-                      conversation URL
+                      from a document sent to you
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="qr-url">Scanned URL</Label>
+                      <Label htmlFor="qr-url">Detected URL</Label>
                       <Input
                         id="qr-url"
                         placeholder="URL will appear here after scanning..."
@@ -817,7 +816,6 @@ export function ImportChatPage() {
                     ) : (
                       <Button
                         type="button"
-                        variant="outline"
                         onClick={startScanner}
                         disabled={isLoading}
                         className="w-full gap-2"
@@ -847,16 +845,16 @@ export function ImportChatPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <FileText className="size-5" />
-                      Import from File
+                      <FileText className="size-8" />
+                      Import a File
                     </CardTitle>
                     <CardDescription>
-                      Select a conversation file to import
+                      from a PDF, DOCX, or an image sent to you
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="file">Conversation File</Label>
+                      <Label htmlFor="file">File</Label>
                       <Input
                         ref={fileInputRef}
                         id="file"

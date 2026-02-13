@@ -30,31 +30,18 @@
 #initial-loader img {
   width: 5rem;
   height: 5rem;
-  animation: wave 2s ease-in-out infinite;
-  transform-origin: 70% 70%;
+  animation: pulse 3s ease-in-out infinite;
 }
 
-@keyframes wave {
+@keyframes pulse {
   0%,
   100% {
-    transform: rotate(0deg);
-  }
-  10%,
-  30% {
-    transform: rotate(14deg);
-  }
-  20% {
-    transform: rotate(-8deg);
-  }
-  40%,
-  60% {
-    transform: rotate(14deg);
+    transform: scale(1);
+    opacity: 1;
   }
   50% {
-    transform: rotate(-8deg);
-  }
-  70% {
-    transform: rotate(0deg);
+    transform: scale(1.1);
+    opacity: 0.8;
   }
 }
 
