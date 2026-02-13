@@ -728,9 +728,9 @@ export function ImportChatPage() {
             </Card>
           ) : (
             <Tabs defaultValue="qr" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="qr">Scan QR</TabsTrigger>
-                <TabsTrigger value="file">From File</TabsTrigger>
+                {/* <TabsTrigger value="file">From File</TabsTrigger> grid-cols-2 */}
                 <TabsTrigger value="url">From URL</TabsTrigger>
               </TabsList>
 
