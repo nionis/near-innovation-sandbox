@@ -298,7 +298,7 @@ export function VerificationResultDialog() {
                 // Open save dialog
                 const savePath = await invoke<string | null>('save_dialog', {
                   options: {
-                    defaultPath: `verification-qr-${Date.now()}.png`,
+                    defaultFileName: `verification-qr-${Date.now()}.png`,
                     filters: [
                       {
                         name: 'PNG Image',
@@ -400,7 +400,7 @@ export function VerificationResultDialog() {
       // Open save dialog
       const savePath = await invoke<string | null>('save_dialog', {
         options: {
-          defaultPath: `reference-${reference.id.slice(0, 8)}-${Date.now()}.png`,
+          defaultFileName: `reference-${reference.id.slice(0, 8)}-${Date.now()}.png`,
           filters: [
             {
               name: 'PNG Image',
@@ -468,7 +468,7 @@ export function VerificationResultDialog() {
       // Open save dialog
       const savePath = await invoke<string | null>('save_dialog', {
         options: {
-          defaultPath: `references-${Date.now()}.zip`,
+          defaultFileName: `references-${Date.now()}.zip`,
           filters: [
             {
               name: 'ZIP Archive',

@@ -1,6 +1,11 @@
 # TODO
 
-- import file
+- multiple QR scan
+- remove 'add images'
+- websearch doesn't work
+- importing file into conversation doesn't work
+- using tools doesn't work
 - open app with URL
-- ensure docs, and other tools work E2EE
 - show balance
+- make README
+- make video

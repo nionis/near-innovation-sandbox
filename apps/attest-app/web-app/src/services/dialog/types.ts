@@ -7,6 +7,7 @@ export interface DialogOpenOptions {
   multiple?: boolean
   directory?: boolean
   defaultPath?: string
+  defaultFileName?: string
   filters?: Array<{
     name: string
     extensions: string[]

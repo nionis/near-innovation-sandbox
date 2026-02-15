@@ -85,6 +85,7 @@ export function VerifyPanel({
   const [isGeneratingAll, setIsGeneratingAll] = useState(false)
   const [isVerifyingAll, setIsVerifyingAll] = useState(false)
   const [showScanDialog, setShowScanDialog] = useState(false)
+  const [includePassphrase, setIncludePassphrase] = useState(true)
 
   // Calculate attestation status for all assistant messages
   const attestationStatus = useMemo(() => {
@@ -154,6 +155,20 @@ export function VerifyPanel({
       return undefined
     }
   }, [shareUrl])
+
+  // Compute display URL based on includePassphrase toggle
+  const displayUrl = useMemo(() => {
+    if (!shareUrl) return null
+    if (includePassphrase) return shareUrl
+
+    try {
+      const url = new URL(shareUrl)
+      url.searchParams.delete('passphrase')
+      return url.toString()
+    } catch {
+      return shareUrl
+    }
+  }, [shareUrl, includePassphrase])
 
   // Check if any messages have chat data (NEAR AI)
   const hasAnyChatData = useMemo(() => {
@@ -371,15 +386,15 @@ export function VerifyPanel({
   ])
 
   const handleCopyUrl = useCallback(async () => {
-    if (shareUrl) {
-      await navigator.clipboard.writeText(shareUrl)
+    if (displayUrl) {
+      await navigator.clipboard.writeText(displayUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
-  }, [shareUrl])
+  }, [displayUrl])
 
   const handleDownloadQR = useCallback(async () => {
-    if (!qrCodeRef.current || !shareUrl) return
+    if (!qrCodeRef.current || !displayUrl) return
 
     try {
       const svgElement = qrCodeRef.current.querySelector('svg')
@@ -437,7 +452,7 @@ export function VerifyPanel({
 
                 const savePath = await invoke<string | null>('save_dialog', {
                   options: {
-                    defaultPath: `verification-qr-${Date.now()}.png`,
+                    defaultFileName: `verification-qr-${Date.now()}.png`,
                     filters: [
                       {
                         name: 'PNG Image',
@@ -479,7 +494,7 @@ export function VerifyPanel({
       console.error('Error downloading QR code:', error)
       toast.error('Failed to download QR code. Please try again.')
     }
-  }, [shareUrl])
+  }, [displayUrl])
 
   // Reference creation - works with or without a share URL
   const handleTextSelected = useCallback(
@@ -592,7 +607,7 @@ export function VerifyPanel({
 
         const savePath = await invoke<string | null>('save_dialog', {
           options: {
-            defaultPath: `reference-${reference.id.slice(0, 8)}-${Date.now()}.png`,
+            defaultFileName: `reference-${reference.id.slice(0, 8)}-${Date.now()}.png`,
             filters: [
               {
                 name: 'PNG Image',
@@ -728,6 +743,7 @@ export function VerifyPanel({
             variant="outline"
             onClick={handleGenerateAllProofs}
             disabled={isBusy}
+            className="min-w-32"
           >
             {isGeneratingAll ? (
               <IconLoader2 size={14} className="mr-1.5 animate-spin" />
@@ -874,7 +890,7 @@ export function VerifyPanel({
                 className="bg-white p-2 rounded-lg shadow-sm"
               >
                 <QRCodeSVG
-                  value={shareUrl}
+                  value={displayUrl || ''}
                   size={100}
                   level="M"
                   includeMargin={false}
@@ -892,16 +908,29 @@ export function VerifyPanel({
             </div>
             {/* URL + copy */}
             <div className="min-w-0 flex-1 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">
-                Share URL
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Share URL
+                </p>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includePassphrase}
+                    onChange={(e) => setIncludePassphrase(e.target.checked)}
+                    className="size-3 rounded border-muted-foreground/30 text-primary focus:ring-1 focus:ring-primary cursor-pointer"
+                  />
+                  <span className="text-[11px] text-muted-foreground select-none">
+                    Include passphrase
+                  </span>
+                </label>
+              </div>
               <div
                 className="flex items-center gap-2 px-2.5 py-1.5 bg-muted/50 rounded-md cursor-pointer hover:bg-muted transition-colors"
                 onClick={handleCopyUrl}
                 title="Click to copy"
               >
                 <p className="text-xs font-mono truncate w-0 flex-1 text-muted-foreground">
-                  {shareUrl}
+                  {displayUrl}
                 </p>
                 {copied ? (
                   <IconCheck size={12} className="text-green-500 shrink-0" />
@@ -913,7 +942,9 @@ export function VerifyPanel({
                 )}
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Scan or share this URL to let others verify this conversation.
+                {includePassphrase
+                  ? 'Anyone with this URL can verify this conversation.'
+                  : 'You will need to provide them the passphrase separately.'}
               </p>
             </div>
           </div>

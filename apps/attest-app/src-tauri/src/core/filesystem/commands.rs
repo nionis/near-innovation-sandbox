@@ -331,6 +331,11 @@ pub async fn save_dialog(options: Option<DialogOpenOptions>) -> Result<Option<St
             dialog = dialog.set_directory(&path);
         }
 
+        // Set default file name
+        if let Some(file_name) = opts.default_file_name {
+            dialog = dialog.set_file_name(&file_name);
+        }
+
         // Set filters
         if let Some(filters) = opts.filters {
             for filter in filters {

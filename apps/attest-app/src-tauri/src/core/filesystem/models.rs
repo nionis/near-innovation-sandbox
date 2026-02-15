@@ -17,5 +17,6 @@ pub struct DialogOpenOptions {
     pub multiple: Option<bool>,
     pub directory: Option<bool>,
     pub default_path: Option<String>,
+    pub default_file_name: Option<String>,
     pub filters: Option<Vec<DialogFilter>>,
 }
