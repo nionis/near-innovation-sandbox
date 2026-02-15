@@ -8,12 +8,10 @@ import {
 /** fetch available models from near.ai API */
 export async function fetchAvailableModels(
   apiKey: string,
-  options?: {
-    nearAiBaseUrl?: string;
-  }
+  options?: { fetch: typeof fetch }
 ): Promise<string[]> {
-  const response = await fetch(
-    `${options?.nearAiBaseUrl ?? NEAR_AI_BASE_URL}/models`,
+  const response = await (options?.fetch ?? fetch)(
+    `${NEAR_AI_BASE_URL}/models`,
     {
       headers: {
         Authorization: `Bearer ${apiKey}`,

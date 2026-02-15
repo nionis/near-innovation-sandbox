@@ -35,6 +35,7 @@ import {
   capturedResponsePromise,
 } from '@repo/packages-near-ai-provider'
 import type { NearAIChatModelId } from '@repo/packages-utils/near'
+import { fetch as fetchTauri } from '@tauri-apps/plugin-http'
 
 // Re-export E2EE capture utilities for attestation
 export { capturedResponsePromise }
@@ -281,6 +282,7 @@ export class ModelFactory {
       baseURL: provider.base_url,
       headers: Object.keys(headers).length > 0 ? headers : undefined,
       e2ee: { enabled: true },
+      fetch: fetchTauri,
     })
 
     // Cast to LanguageModel for compatibility - generateText accepts both v2 and v3

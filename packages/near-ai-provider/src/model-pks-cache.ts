@@ -5,9 +5,12 @@ import { randomNonce } from '@repo/packages-utils/crypto';
 export class ModelPublicKeysCache {
   private cacheTTL: number = 5 * 60 * 1000; // 5 minutes
   private cache: Map<string, ModelPublicKeyRecord> = new Map();
+  private nearAiBaseURL: string;
+  private options?: { fetch?: typeof fetch };
 
-  constructor(private nearAiBaseURL: string) {
+  constructor(nearAiBaseURL: string, options?: { fetch?: typeof fetch }) {
     this.nearAiBaseURL = nearAiBaseURL;
+    this.options = options;
   }
 
   private async fetchPublicKey(
@@ -19,7 +22,7 @@ export class ModelPublicKeysCache {
     url.searchParams.set('signing_algo', 'ecdsa');
     url.searchParams.set('nonce', nonce);
 
-    const response = await fetch(url.toString(), {
+    const response = await (this.options?.fetch ?? fetch)(url.toString(), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

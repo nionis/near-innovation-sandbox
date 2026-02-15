@@ -1508,7 +1508,7 @@ const ChatInput = ({
                     {/* RAG document attachments - desktop-only via dialog; shown when feature enabled */}
                     <DropdownMenuItem
                       onClick={handleAttachDocsIngest}
-                      disabled={!selectedModel?.capabilities?.includes('tools')}
+                      // disabled={!selectedModel?.capabilities?.includes('tools')}
                     >
                       {ingestingDocs ? (
                         <IconLoader2

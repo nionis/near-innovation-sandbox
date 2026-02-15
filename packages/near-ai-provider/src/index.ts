@@ -17,7 +17,7 @@ export function createNearAI(options: NearAIProviderSettings): NearAIProvider {
   const baseURL = options.baseURL ?? NEAR_AI_BASE_URL;
   const apiKey = options.apiKey;
   const nearAiBaseURL = options.e2ee?.nearAiBaseURL ?? NEAR_AI_BASE_URL;
-  const e2ee = new E2EE(nearAiBaseURL);
+  const e2ee = new E2EE(nearAiBaseURL, { fetch: options?.fetch });
 
   return createOpenAICompatible<
     NearAIChatModelId,
@@ -30,7 +30,8 @@ export function createNearAI(options: NearAIProviderSettings): NearAIProvider {
     apiKey,
     headers: options.headers,
     fetch: createCapturingFetch(
-      options.e2ee?.enabled ? (model) => e2ee.createContext(model) : undefined
+      options.e2ee?.enabled ? (model) => e2ee.createContext(model) : undefined,
+      options.fetch
     ),
   });
 }

@@ -1,5 +1,6 @@
 ## todo
 
+- fix dark mode button text color
 - make README
 - make video
 

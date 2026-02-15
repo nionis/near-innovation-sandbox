@@ -150,15 +150,6 @@ export class TauriProvidersService extends DefaultProvidersService {
         'Content-Type': 'application/json',
       }
 
-      // Add Origin header for local providers to avoid CORS issues
-      // Some local providers (like Ollama) require an Origin header
-      if (
-        provider.base_url.includes('localhost:') ||
-        provider.base_url.includes('127.0.0.1:')
-      ) {
-        headers['Origin'] = 'tauri://localhost'
-      }
-
       // Only add authentication headers if API key is provided
       if (provider.api_key) {
         headers['x-api-key'] = provider.api_key
@@ -171,9 +162,10 @@ export class TauriProvidersService extends DefaultProvidersService {
         })
       }
 
-      console.log('provider.provider', provider.provider)
       if (provider.provider === 'near-ai') {
-        return await fetchAvailableModels(provider.api_key!)
+        return await fetchAvailableModels(provider.api_key!, {
+          fetch: fetchTauri,
+        })
       }
 
       // Always use Tauri's fetch to avoid CORS issues

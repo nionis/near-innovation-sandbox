@@ -16,6 +16,7 @@ export interface NearAIProviderSettings {
   apiKey?: string;
   headers?: Record<string, string>;
   e2ee?: E2EESettings;
+  fetch?: typeof fetch;
 }
 
 /** response from near.ai API for listing models */

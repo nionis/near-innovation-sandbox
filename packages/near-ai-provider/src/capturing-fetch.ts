@@ -21,7 +21,8 @@ export let capturedResponsePromise = Promise.resolve<CapturedResponse | null>(
  * will decrypt the response body if E2EE is enabled
  */
 export function createCapturingFetch(
-  createE2EEContext?: (model: NearAIChatModelId) => Promise<E2EEContext>
+  createE2EEContext?: (model: NearAIChatModelId) => Promise<E2EEContext>,
+  customFetch?: typeof fetch
 ): typeof fetch {
   const capturingFetch: typeof fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input.toString();
@@ -69,7 +70,7 @@ export function createCapturingFetch(
     }
 
     // make the request
-    const response = await fetch(input, {
+    const response = await (customFetch ?? fetch)(input, {
       ...init,
       headers,
       body: requestBody,

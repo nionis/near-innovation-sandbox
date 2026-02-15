@@ -2,10 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
 import { useTranslation } from '@/i18n/react-i18next-compat'
 import { useState, useEffect } from 'react'
-import {
-  IconChevronDown,
-  IconChevronRight,
-} from '@tabler/icons-react'
+import { IconChevronDown, IconChevronRight } from '@tabler/icons-react'
 import { useMatches, useNavigate } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 
@@ -112,7 +109,7 @@ const SettingsMenu = () => {
       title: 'common:mcp-servers',
       route: route.settings.mcp_servers,
       hasSubMenu: false,
-      isEnabled: true,
+      isEnabled: false,
     },
     {
       title: 'common:local_api_server',
@@ -141,9 +138,7 @@ const SettingsMenu = () => {
 
   return (
     <>
-      <div
-        className='h-full w-54 shrink-0 px-1.5 flex'
-      >
+      <div className="h-full w-54 shrink-0 px-1.5 flex">
         <div className="flex flex-col gap-1 w-full font-medium">
           {menuSettings.map((menu) => {
             if (!menu.isEnabled) {
@@ -156,9 +151,7 @@ const SettingsMenu = () => {
                   className="block px-2 gap-1.5 cursor-pointer hover:dark:bg-secondary/60 hover:bg-secondary py-1 w-full rounded-sm [&.active]:dark:bg-secondary/80 [&.active]:bg-secondary"
                 >
                   <div className="flex items-center justify-between">
-                    <span>
-                      {t(menu.title)}
-                    </span>
+                    <span>{t(menu.title)}</span>
                     {menu.hasSubMenu && (
                       <button
                         onClick={(e) => {

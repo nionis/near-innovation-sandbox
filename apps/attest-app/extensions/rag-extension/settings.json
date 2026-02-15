@@ -12,7 +12,7 @@
     "descriptionKey": "settings:attachments.parseModeDesc",
     "controllerType": "dropdown",
     "controllerProps": {
-      "value": "auto",
+      "value": "inline",
       "options": [
         { "name": "Auto", "value": "auto" },
         { "name": "Include in chat", "value": "inline" },

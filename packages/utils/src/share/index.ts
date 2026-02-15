@@ -4,7 +4,7 @@ import { gcm } from '@noble/ciphers/aes.js';
 import { asciiToBytes, randomBytes } from '@noble/curves/utils.js';
 
 export const SHARE_API_URL =
-  'https://near-innovation-sandbox-attest-web.vercel.app/';
+  'https://near-innovation-sandbox-attest-web.vercel.app';
 
 const HKDF_INFO_PASSPHRASE_ENCRYPTION = asciiToBytes('passphrase_encryption');
 

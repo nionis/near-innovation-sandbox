@@ -11,8 +11,8 @@ import { ModelPublicKeysCache } from './model-pks-cache.js';
 export class E2EE {
   private cache: ModelPublicKeysCache;
 
-  constructor(baseURL: string) {
-    this.cache = new ModelPublicKeysCache(baseURL);
+  constructor(baseURL: string, options?: { fetch?: typeof fetch }) {
+    this.cache = new ModelPublicKeysCache(baseURL, options);
   }
 
   public async createContext(model: NearAIChatModelId): Promise<E2EEContext> {

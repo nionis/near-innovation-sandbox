@@ -57,7 +57,7 @@ type MCPServerStoreState = {
 }
 
 export const useMCPServers = create<MCPServerStoreState>()((set, get) => ({
-  open: true,
+  open: false,
   mcpServers: {}, // Start with empty object
   settings: { ...DEFAULT_MCP_SETTINGS },
   loading: false,
