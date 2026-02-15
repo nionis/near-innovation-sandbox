@@ -391,18 +391,22 @@ export const useAttestationStore = create<AttestationState>()(
         messageId: string,
         reference: ReferenceMetadata
       ) => {
-        set((state) => ({
-          messageStates: {
-            ...state.messageStates,
-            [messageId]: {
-              ...state.messageStates[messageId],
-              references: [
-                ...(state.messageStates[messageId]?.references || []),
-                reference,
-              ],
+        set((state) => {
+          const references = state.messageStates[messageId]?.references || []
+          const alreadyExists = references.some(
+            (ref) => ref.id === reference.id
+          )
+          if (alreadyExists) return state
+          return {
+            messageStates: {
+              ...state.messageStates,
+              [messageId]: {
+                ...state.messageStates[messageId],
+                references: [...references, reference],
+              },
             },
-          },
-        }))
+          }
+        })
       },
 
       removeReferenceFromMessage: (messageId: string, referenceId: string) => {

@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Html5Qrcode } from 'html5-qrcode'
-import { Scan, AlertCircle, Loader2 } from 'lucide-react'
+import { Scan, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   decryptMessages,
@@ -28,11 +28,12 @@ interface ScannedReference {
   endChar: number
 }
 
-interface ReferenceContent {
-  text: string
+interface ImportedReference {
+  id: string
+  previewText: string
   messageIndex: number
   messageRole: string
-  range: string
+  timestamp: number
 }
 
 interface ScanReferenceDialogProps {
@@ -63,17 +64,21 @@ export function ScanReferenceDialog({
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [referenceContent, setReferenceContent] =
-    useState<ReferenceContent | null>(null)
+  const [importedReferences, setImportedReferences] = useState<
+    ImportedReference[]
+  >([])
+  const [lastScannedQR, setLastScannedQR] = useState<string | null>(null)
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
+  const processingRef = useRef(false)
 
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (!isOpen) {
       stopScanning()
-      setReferenceContent(null)
+      setImportedReferences([])
       setError(null)
+      setLastScannedQR(null)
       return
     }
   }, [isOpen])
@@ -171,8 +176,13 @@ export function ScanReferenceDialog({
   }
 
   const handleReferenceQRScanned = async (qrText: string) => {
-    // Stop scanning immediately after successful scan
-    await stopScanning()
+    // Prevent processing the same QR code multiple times rapidly
+    if (processingRef.current || lastScannedQR === qrText) {
+      return
+    }
+
+    processingRef.current = true
+    setLastScannedQR(qrText)
     setIsLoading(true)
     setError(null)
 
@@ -229,11 +239,23 @@ export function ScanReferenceDialog({
       console.log('Referenced text:', referencedText)
       console.log('Referenced text length:', referencedText.length)
 
-      setReferenceContent({
-        text: referencedText,
+      const previewText = getPreviewText(referencedText)
+      const referenceId = `${reference.shareId}:${reference.messageIndex}:${reference.startChar}-${reference.endChar}`
+
+      const scanned = {
+        id: referenceId,
+        previewText,
         messageIndex: reference.messageIndex,
         messageRole: message.role,
-        range: `${reference.startChar}-${reference.endChar}`,
+        timestamp: Date.now(),
+      }
+
+      setImportedReferences((prev) => {
+        const alreadyExists = prev.some((ref) => ref.id === referenceId)
+        if (alreadyExists) {
+          return prev
+        }
+        return [scanned, ...prev]
       })
 
       // Call the callback to add the reference if provided
@@ -243,9 +265,14 @@ export function ScanReferenceDialog({
           messageIndex: reference.messageIndex,
           startChar: reference.startChar,
           endChar: reference.endChar,
-          previewText: getPreviewText(referencedText),
+          previewText,
         })
       }
+
+      // Clear the last scanned QR after a delay to allow scanning the same code again
+      setTimeout(() => {
+        setLastScannedQR(null)
+      }, 2000)
     } catch (err) {
       console.error('Error processing reference QR code:', err)
       setError(
@@ -255,6 +282,7 @@ export function ScanReferenceDialog({
       )
     } finally {
       setIsLoading(false)
+      processingRef.current = false
     }
   }
 
@@ -293,7 +321,7 @@ export function ScanReferenceDialog({
             </div>
           )}
 
-          {hasConversationData && !referenceContent && (
+          {hasConversationData && (
             <div className="space-y-4">
               <div
                 id="qr-reader"
@@ -308,7 +336,7 @@ export function ScanReferenceDialog({
                 <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg">
                   <Scan className="size-12 text-muted-foreground mb-4" />
                   <p className="text-sm text-muted-foreground text-center">
-                    Click the button below to start scanning
+                    Click the button below to start continuous scanning
                   </p>
                 </div>
               )}
@@ -323,11 +351,50 @@ export function ScanReferenceDialog({
               )}
 
               {isLoading && (
-                <div className="flex items-center justify-center gap-2 p-4">
-                  <Loader2 className="size-5 animate-spin" />
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <Loader2 className="size-5 animate-spin text-blue-600" />
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
                     Processing QR code...
                   </p>
+                </div>
+              )}
+
+              {/* Imported References List */}
+              {importedReferences.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <CheckCircle2 className="size-4 text-green-600" />
+                    <span>
+                      Imported {importedReferences.length} reference
+                      {importedReferences.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="max-h-[200px] overflow-y-auto space-y-2 p-3 rounded-lg border bg-muted/30">
+                    {importedReferences.map((ref) => (
+                      <div
+                        key={ref.id}
+                        className="p-2 rounded bg-background border text-sm"
+                      >
+                        <div className="flex items-center gap-2 mb-1 text-xs text-muted-foreground">
+                          <span className="font-semibold">
+                            {ref.messageRole === 'user' && '👤 User'}
+                            {ref.messageRole === 'assistant' && '🤖 Assistant'}
+                            {ref.messageRole === 'system' && '⚙️ System'}
+                          </span>
+                          <span>•</span>
+                          <span>Message #{ref.messageIndex}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground line-clamp-2">
+                          {ref.previewText}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {isScanning && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Keep scanning to import more references
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -350,44 +417,6 @@ export function ScanReferenceDialog({
                     Stop Scanning
                   </Button>
                 )}
-                <Button onClick={handleClose} variant="outline">
-                  Close
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Referenced Content Display */}
-          {referenceContent && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg border bg-muted/30">
-                <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
-                  <span className="font-semibold uppercase">
-                    {referenceContent.messageRole === 'user' && '👤 User'}
-                    {referenceContent.messageRole === 'assistant' &&
-                      '🤖 Assistant'}
-                    {referenceContent.messageRole === 'system' && '⚙️ System'}
-                  </span>
-                  <span>•</span>
-                  <span>Message #{referenceContent.messageIndex}</span>
-                  <span>•</span>
-                  <span>Chars {referenceContent.range}</span>
-                </div>
-                <div className="text-sm whitespace-pre-wrap wrap-break-word p-3 bg-background rounded border">
-                  {referenceContent.text}
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    setReferenceContent(null)
-                    setError(null)
-                  }}
-                  className="flex-1"
-                >
-                  Scan Another
-                </Button>
                 <Button onClick={handleClose} variant="outline">
                   Close
                 </Button>

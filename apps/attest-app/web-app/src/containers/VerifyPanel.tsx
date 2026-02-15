@@ -518,7 +518,7 @@ export function VerifyPanel({
       }
 
       const reference: ReferenceMetadata = {
-        id: crypto.randomUUID(),
+        id: `${shareId}:${messageIndex}:${startChar}-${endChar}`,
         shareId,
         messageIndex,
         startChar,
@@ -565,7 +565,7 @@ export function VerifyPanel({
 
       // Create and add the new reference
       const reference: ReferenceMetadata = {
-        id: crypto.randomUUID(),
+        id: `${importedRef.shareId}:${importedRef.messageIndex}:${importedRef.startChar}-${importedRef.endChar}`,
         shareId: importedRef.shareId,
         messageIndex: importedRef.messageIndex,
         startChar: importedRef.startChar,
@@ -764,6 +764,7 @@ export function VerifyPanel({
               variant="outline"
               onClick={handleVerifyAll}
               disabled={isBusy}
+              className="min-w-32"
             >
               {isVerifyingAll ? (
                 <IconLoader2 size={14} className="mr-1.5 animate-spin" />
@@ -782,6 +783,7 @@ export function VerifyPanel({
             size="sm"
             onClick={handleShare}
             disabled={isBusy || isSharing}
+            className="min-w-32"
           >
             {isSharing ? (
               <IconLoader2 size={14} className="mr-1.5 animate-spin" />
