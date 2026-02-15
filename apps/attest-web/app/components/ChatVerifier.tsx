@@ -10,7 +10,7 @@ import type { NearBlockchainNetwork } from '@repo/packages-utils/near';
 import { verify } from '@repo/packages-attestations';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
-import { proxyFetch } from '../lib/utils';
+import { fetchViaHost } from '../lib/utils';
 
 const NETWORK_ID: NearBlockchainNetwork = 'testnet';
 const CONTRACT_ID = SMART_CONTRACTS[NETWORK_ID].contractId;
@@ -37,7 +37,7 @@ export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
       contractId: CONTRACT_ID,
     });
 
-    return verify(chatExport, blockchain, { fetch: proxyFetch });
+    return verify(chatExport, blockchain, { fetch: fetchViaHost });
   }, []);
 
   const handleVerify = async () => {

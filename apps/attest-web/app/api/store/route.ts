@@ -5,7 +5,6 @@ import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 
 const NETWORK_ID: NearBlockchainNetwork = 'testnet';
 const CONTRACT_ID = SMART_CONTRACTS[NETWORK_ID].contractId;
-
 const ACCOUNT_ID = process.env.NEAR_ACCOUNT_ID!;
 const PRIV_KEY = process.env.NEAR_PRIVATE_KEY!;
 

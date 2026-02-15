@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { type PutBlobResult, put } from '@vercel/blob';
+import { put } from '@vercel/blob';
 import { computeProofHash } from '@repo/packages-attestations/crypto';
 
 const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN!;
@@ -61,9 +61,8 @@ export async function POST(
 
     // Store the binary data in Vercel Blob
     // Use the SHA hash as the blob name (with .bin extension)
-    let blob: PutBlobResult | undefined;
     try {
-      blob = await put(`share/${id}.bin`, binaryData, {
+      await put(`share/${id}.bin`, binaryData, {
         access: 'public',
         token: BLOB_READ_WRITE_TOKEN,
         contentType: 'application/octet-stream',
