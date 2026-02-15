@@ -1100,7 +1100,9 @@ const ChatInput = ({
       return
     }
     // Vision model prompt disabled - just show a toast instead
-    toast.error('Vision model not available. Please download a vision model from the Hub.')
+    toast.error(
+      'Vision model not available. Please download a vision model from the Hub.'
+    )
   }
 
   const handleVisionModelDownloadComplete = useCallback(
@@ -1383,7 +1385,6 @@ const ChatInput = ({
                                     )}
                                   </div>
                                 )}
-
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -1483,13 +1484,17 @@ const ChatInput = ({
                 {/* Dropdown for attachments */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="secondary" size="icon-sm" className='rounded-full mr-2 mb-1'>
+                    <Button
+                      variant="secondary"
+                      size="icon-sm"
+                      className="rounded-full mr-2 mb-1"
+                    >
                       <PlusIcon size={18} className="text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    {/* Vision image attachment - always enabled, prompts to download vision model if needed */}
-                    <DropdownMenuItem onClick={handleImagePickerClick}>
+                    {/* PRIVACY: Vision image attachment hidden - can leak private information */}
+                    {/* <DropdownMenuItem onClick={handleImagePickerClick}>
                       <IconPhoto size={18} className="text-muted-foreground" />
                       <span>Add Images</span>
                       <input
@@ -1499,7 +1504,7 @@ const ChatInput = ({
                         multiple
                         onChange={handleFileChange}
                       />
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
                     {/* RAG document attachments - desktop-only via dialog; shown when feature enabled */}
                     <DropdownMenuItem
                       onClick={handleAttachDocsIngest}
@@ -1539,11 +1544,9 @@ const ChatInput = ({
                         variant="ghost"
                         size="icon-xs"
                         disabled={isJanBrowserMCPLoading}
-                        className={cn(janBrowserMCPActive && "text-primary")}
+                        className={cn(janBrowserMCPActive && 'text-primary')}
                         onClick={
-                          isJanBrowserMCPLoading
-                            ? undefined
-                            : handleBrowseClick
+                          isJanBrowserMCPLoading ? undefined : handleBrowseClick
                         }
                       >
                         {isJanBrowserMCPLoading ? (
@@ -1577,10 +1580,7 @@ const ChatInput = ({
                 {selectedModel?.capabilities?.includes('embeddings') && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                          variant="ghost"
-                          size="icon-xs"
-                        >
+                      <Button variant="ghost" size="icon-xs">
                         <IconCodeCircle2
                           size={18}
                           className="text-muted-foreground"
@@ -1593,7 +1593,9 @@ const ChatInput = ({
                   </Tooltip>
                 )}
 
-                {selectedModel?.capabilities?.includes('tools') &&
+                {/* PRIVACY: Tools hidden - they can leak private information */}
+                {false &&
+                  selectedModel?.capabilities?.includes('tools') &&
                   hasActiveMCPServers &&
                   (MCPToolComponent ? (
                     // Use custom MCP component
@@ -1612,10 +1614,7 @@ const ChatInput = ({
                       open={tooltipToolsAvailable}
                       onOpenChange={setTooltipToolsAvailable}
                     >
-                      <TooltipTrigger
-                        asChild
-                        disabled={dropdownToolsAvailable}
-                      >
+                      <TooltipTrigger asChild disabled={dropdownToolsAvailable}>
                         <Button
                           variant="ghost"
                           size="icon-xs"
@@ -1637,14 +1636,12 @@ const ChatInput = ({
                               return (
                                 <div
                                   className={cn(
-                                    'p-1 flex items-center justify-center rounded-sm transition-all duration-200 ease-in-out gap-1 cursor-pointer',
+                                    'p-1 flex items-center justify-center rounded-sm transition-all duration-200 ease-in-out gap-1 cursor-pointer'
                                   )}
                                 >
                                   <IconTool
                                     size={18}
-                                    className={cn(
-                                      'text-muted-foreground',
-                                    )}
+                                    className={cn('text-muted-foreground')}
                                   />
                                 </div>
                               )
@@ -1678,10 +1675,7 @@ const ChatInput = ({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="ghost" size="icon-xs">
-                        <IconAtom
-                          size={18}
-                          className="text-muted-foreground"
-                        />
+                        <IconAtom size={18} className="text-muted-foreground" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>

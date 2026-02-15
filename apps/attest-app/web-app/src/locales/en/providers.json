@@ -53,7 +53,7 @@
     "notAvailable": "Not available yet",
     "warning": {
       "title": "Proceed with Caution",
-      "description": "Modifying model capabilities may affect performance and functionality. Incorrect settings could cause unexpected behavior or errors."
+      "description": "Tools have been disabled for privacy reasons. Modifying model capabilities may affect performance and functionality. Incorrect settings could cause unexpected behavior or errors."
     }
   },
   "addProvider": "Add Provider",

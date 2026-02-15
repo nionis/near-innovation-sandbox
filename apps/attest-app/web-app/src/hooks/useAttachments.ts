@@ -51,7 +51,7 @@ export const useAttachments = create<AttachmentsStore>()((set) => ({
   chunkSizeChars: 512,
   overlapChars: 64,
   searchMode: 'auto',
-  parseMode: 'auto',
+  parseMode: 'inline', // PRIVACY: Changed from 'auto' to 'inline' by default for better privacy
   autoInlineContextRatio: 0.75,
   settingsDefs: [],
   loadSettingsDefs: async () => {
