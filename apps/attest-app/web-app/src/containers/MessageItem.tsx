@@ -345,6 +345,7 @@ export const MessageItem = memo(
               )
             default:
               return renderToolPart(part, i)
+            // return <div>Tool Part</div>
           }
         })}
 

@@ -1,5 +1,5 @@
 import type { KeyPair, ParsedRequestBody } from './types.js';
-import { type ModelMessage, modelMessageSchema } from 'ai';
+import { type ModelMessage } from 'ai';
 import { encryptForModel, decryptFromModel } from './index.js';
 import { bytesToHex, hexToBytes } from '@noble/curves/utils.js';
 
@@ -8,9 +8,6 @@ export function parseRequestBody(requestBody: string): ParsedRequestBody {
   const parsedBody: ParsedRequestBody = JSON.parse(
     requestBody
   ) as ParsedRequestBody;
-  parsedBody.messages = parsedBody.messages.map((message) =>
-    modelMessageSchema.parse(message)
-  );
   return parsedBody;
 }
 
@@ -139,34 +136,10 @@ export function decryptSSEStream(
         // Decrypt all encrypted fields in delta if present
         const choices = parsed.choices;
         if (choices && choices.length > 0) {
-          const delta = choices[0].delta;
-          if (delta) {
-            // Decrypt delta.content if present
-            if (delta.content && typeof delta.content === 'string') {
-              const decryptedContent = decryptCiphertext(
-                ourKeyPair,
-                delta.content
-              );
-              parsed.choices[0].delta.content = decryptedContent;
-              content += decryptedContent;
-            }
-            
-            // Decrypt delta.reasoning if present (for reasoning models)
-            if (delta.reasoning && typeof delta.reasoning === 'string') {
-              const decryptedReasoning = decryptCiphertext(
-                ourKeyPair,
-                delta.reasoning
-              );
-              parsed.choices[0].delta.reasoning = decryptedReasoning;
-            }
-            
-            // Decrypt delta.reasoning_content if present (for reasoning models)
-            if (delta.reasoning_content && typeof delta.reasoning_content === 'string') {
-              const decryptedReasoningContent = decryptCiphertext(
-                ourKeyPair,
-                delta.reasoning_content
-              );
-              parsed.choices[0].delta.reasoning_content = decryptedReasoningContent;
+          for (const choice of choices) {
+            const delta = choice.delta;
+            if (delta) {
+              decryptDeltaFields(delta, ourKeyPair);
             }
           }
         }
@@ -186,4 +159,20 @@ export function decryptSSEStream(
   chunk =
     transformedLines.join('\n') + (transformedLines.length > 0 ? '\n' : '');
   return { buffer, chunk, content };
+}
+
+function decryptDeltaFields(delta: any, ourKeyPair: KeyPair): void {
+  for (const [key, value] of Object.entries(delta)) {
+    if (typeof value === 'string' && value.length > 0) {
+      try {
+        // Attempt to decrypt - if it's encrypted hex, this will work
+        delta[key] = decryptCiphertext(ourKeyPair, value);
+      } catch {
+        // Not encrypted or invalid format - leave as is
+      }
+    } else if (typeof value === 'object' && value !== null) {
+      // Recursively handle nested objects
+      decryptDeltaFields(value, ourKeyPair);
+    }
+  }
 }

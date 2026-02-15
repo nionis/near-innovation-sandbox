@@ -747,9 +747,9 @@ function ThreadDetail() {
                         isLastMessage={isLastMessage}
                         status={status}
                         reasoningContainerRef={reasoningContainerRef}
-                    onRegenerate={handleRegenerate}
-                    onEdit={handleEditMessage}
-                    onDelete={handleDeleteMessage}
+                        onRegenerate={handleRegenerate}
+                        onEdit={handleEditMessage}
+                        onDelete={handleDeleteMessage}
                       />
                     )
                   })}
@@ -811,10 +811,7 @@ function ThreadDetail() {
               onModeChange={setChatMode}
               disabled={status === 'streaming' || status === 'submitted'}
             />
-            <VerifyPanel
-              threadId={threadId}
-              chatMessages={chatMessages}
-            />
+            <VerifyPanel threadId={threadId} chatMessages={chatMessages} />
           </div>
         ) : (
           <div className="flex flex-1 flex-col overflow-hidden py-2 mx-auto w-full md:w-4/5 xl:w-4/6">

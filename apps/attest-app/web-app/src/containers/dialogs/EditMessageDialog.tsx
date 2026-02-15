@@ -132,7 +132,7 @@ export function EditMessageDialog({
               disabled={
                 (draft === message &&
                   JSON.stringify(imageUrls || []) ===
-                  JSON.stringify(keptImages)) ||
+                    JSON.stringify(keptImages)) ||
                 !draft.trim()
               }
               onClick={handleSave}
