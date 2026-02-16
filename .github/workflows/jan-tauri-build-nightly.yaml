@@ -73,42 +73,33 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/template-get-update-version.yml
 
-  # build-macos:
-  #   uses: ./.github/workflows/template-tauri-build-macos.yml
-  #   needs: [get-update-version, set-public-provider]
-  #   if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-  #   secrets: inherit
-  #   with:
-  #     ref: ${{ needs.set-public-provider.outputs.ref }}
-  #     public_provider: ${{ needs.set-public-provider.outputs.public_provider }}
-  #     new_version: ${{ needs.get-update-version.outputs.new_version }}
-  #     channel: nightly
-  #     cortex_api_port: '39261'
-
-  build-windows-x64:
-    uses: ./.github/workflows/template-tauri-build-windows-x64.yml
-    secrets: inherit
+  build-macos-external:
+    uses: ./.github/workflows/template-tauri-build-macos-external.yml
     needs: [get-update-version, set-public-provider]
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     with:
       ref: ${{ needs.set-public-provider.outputs.ref }}
-      public_provider: ${{ needs.set-public-provider.outputs.public_provider }}
       new_version: ${{ needs.get-update-version.outputs.new_version }}
       channel: nightly
-      cortex_api_port: '39261'
 
-  # build-linux-x64:
-  #   uses: ./.github/workflows/template-tauri-build-linux-x64.yml
-  #   secrets: inherit
-  #   needs: [get-update-version, set-public-provider]
-  #   if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-  #   with:
-  #     ref: ${{ needs.set-public-provider.outputs.ref }}
-  #     public_provider: ${{ needs.set-public-provider.outputs.public_provider }}
-  #     new_version: ${{ needs.get-update-version.outputs.new_version }}
-  #     channel: nightly
-  #     cortex_api_port: '39261'
-  #     disable_updater: ${{ github.event.inputs.disable_updater == 'true' }}
+  build-windows-x64-external:
+    uses: ./.github/workflows/template-tauri-build-windows-x64-external.yml
+    needs: [get-update-version, set-public-provider]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    with:
+      ref: ${{ needs.set-public-provider.outputs.ref }}
+      new_version: ${{ needs.get-update-version.outputs.new_version }}
+      channel: nightly
+
+  build-linux-x64-external:
+    uses: ./.github/workflows/template-tauri-build-linux-x64-external.yml
+    needs: [get-update-version, set-public-provider]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    with:
+      ref: ${{ needs.set-public-provider.outputs.ref }}
+      new_version: ${{ needs.get-update-version.outputs.new_version }}
+      channel: nightly
+      disable_updater: ${{ github.event.inputs.disable_updater == 'true' }}
 
   # sync-temp-to-latest:
   #   needs:
