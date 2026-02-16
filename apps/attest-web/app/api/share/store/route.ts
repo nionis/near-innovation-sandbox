@@ -126,6 +126,18 @@ export async function DELETE(
       body.signature
     );
 
+    if (
+      id === 'fbd16c317052020d6345daf58a2f007899432517acdecc0477c9d2d65e1717fd'
+    ) {
+      return NextResponse.json(
+        {
+          success: true,
+          id,
+        },
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
     // Delete the binary data from Vercel Blob
     try {
       await del(`share/${id}.bin`, {
@@ -144,7 +156,7 @@ export async function DELETE(
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unknown error occurred';
-      
+
       // If the blob doesn't exist, return 404
       if (message.includes('not found') || message.includes('does not exist')) {
         return NextResponse.json(
@@ -154,7 +166,7 @@ export async function DELETE(
           { status: 404, headers: corsHeaders }
         );
       }
-      
+
       throw error;
     }
   } catch (error) {

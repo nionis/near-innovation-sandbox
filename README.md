@@ -62,6 +62,8 @@ Using [NEAR AI private inference](https://www.near.org/ai), printable QR proofs,
   </tr>
 </table>
 
+> AttestAI is not yet signed with an Apple Developer certificate, see [how to allow it](https://support.apple.com/en-us/102445)
+
 ### Features
 
 - **Private Inference**: E2EE is always on, using NEAR AI's most private models
@@ -70,6 +72,23 @@ Using [NEAR AI private inference](https://www.near.org/ai), printable QR proofs,
 - **Local Embeddings**: Your documents remain on-device
 - **Custom Assistants**: Create specialized AI assistants for your tasks
 - **Privacy First**: Tailored for privacy preserving requirements
+
+<details>
+
+<summary>Try it out</summary>
+
+### Scan these QRs with the application to verify a document
+
+#### Document QR
+
+![QR](./docs/main-qr.png)
+
+#### References
+
+![reference-1](./docs/reference-1.png)
+![reference-2](./docs/reference-2.png)
+
+</details>
 
 #### Why audits are essential for public sector AI?
 
@@ -107,7 +126,7 @@ QR code generation and attachment features were added explicitly after direct co
 - Revoke / Delete: User can delete the blob from the server at any time (via app or direct link), rendering shares invalid.
 
 No persistent central database; sharing is opt-in and ephemeral by design.
-For any on-chain elements (ex: attestation notarization hashes in /contracts/), only public metadata is recorded—sensitive content stays off-chain.
+For any on-chain elements (ex: attestation notarization hashes in /contracts/), only public metadata is recorded sensitive content stays off-chain.
 
 ### Breakdown
 
