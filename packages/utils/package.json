@@ -4,6 +4,10 @@
   "type": "module",
   "private": true,
   "exports": {
+    "./contracts/attestations": {
+      "types": "./dist/contracts/attestations.d.ts",
+      "import": "./dist/contracts/attestations.js"
+    },
     "./crypto": {
       "types": "./dist/crypto/index.d.ts",
       "import": "./dist/crypto/index.js"

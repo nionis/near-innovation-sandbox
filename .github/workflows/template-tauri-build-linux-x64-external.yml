@@ -77,7 +77,7 @@ jobs:
       - name: Build monorepo dependencies
         run: |
           yarn install --frozen-lockfile
-          yarn build -- --filter="./packages/*" --filter="./contracts/*"
+          yarn build -- --filter="./packages/*"
         env:
           NODE_OPTIONS: "--max-old-space-size=4196"
 
@@ -136,12 +136,13 @@ jobs:
             .github/scripts/rename-workspace.sh ./apps/attest-app/package.json ${{ inputs.channel }}
           fi
 
-      - name: Regenerate attest-app lockfile after version updates
+      - name: Config Yarn in app
         run: |
           cd apps/attest-app
-          yarn install
-        env:
-          NODE_OPTIONS: "--max-old-space-size=4196"
+          corepack enable
+          corepack prepare yarn@4.5.3 --activate
+          yarn --version
+          yarn config set -H enableImmutableInstalls false
 
       - name: Build app
         run: |

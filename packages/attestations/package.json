@@ -32,7 +32,6 @@
   },
   "dependencies": {
     "@phala/dcap-qvl": "^0.3.9",
-    "@repo/contracts-attestations": "*",
     "@repo/packages-utils": "*",
     "micro-eth-signer": "^0.18.1",
     "near-api-js": "^7.0.1"

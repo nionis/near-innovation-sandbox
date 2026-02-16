@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 import { fetch as fetchTauri } from '@tauri-apps/plugin-http'
 import type { NearAIChatModelId } from '@repo/packages-utils/near'
 import type { NearBlockchainNetwork } from '@repo/packages-utils/near'
-import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment'
+import * as SMART_CONTRACTS from '@repo/packages-utils/contracts/attestations'
 import { SHARE_API_URL } from '@repo/packages-utils/share'
 
 const DEFAULT_ATTESTATION_API_URL = IS_DEV

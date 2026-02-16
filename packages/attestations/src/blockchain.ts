@@ -1,5 +1,5 @@
 import type { BlockchainConfig } from './types.js';
-import type { AttestationRecord } from '@repo/contracts-attestations/types';
+import type { AttestationRecord } from '@repo/packages-utils/contracts/attestations';
 import {
   type KeyPairString,
   JsonRpcProvider,

@@ -9,7 +9,7 @@ import type {
 import type { NearBlockchainNetwork } from '@repo/packages-utils/near';
 import { verify } from '@repo/packages-attestations';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
-import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
+import * as SMART_CONTRACTS from '@repo/packages-utils/contracts/attestations';
 import { fetchViaHost } from '../lib/utils';
 
 const NETWORK_ID: NearBlockchainNetwork = 'testnet';

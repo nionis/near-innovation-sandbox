@@ -1,5 +1,10 @@
-import type { AttestationRecord } from './types';
 import { NearBindgen, LookupMap, near, call, view, bytes } from 'near-sdk-js';
+
+// TODO: reuse from utils package
+interface AttestationRecord {
+  timestamp: number;
+  stored_by: string;
+}
 
 @NearBindgen({})
 class AttestationsStorage {

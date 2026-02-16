@@ -10,7 +10,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@repo/contracts-attestations": "*",
     "@repo/packages-attestations": "*",
     "@repo/packages-utils": "*",
     "@vercel/blob": "^2.2.0",

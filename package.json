@@ -22,12 +22,7 @@
     "packages": [
       "apps/attest-cli",
       "apps/attest-web",
-      "contracts/*",
       "packages/*"
-    ],
-    "nohoist": [
-      "**/near-sdk-js",
-      "**/near-sdk-js/**"
     ]
   }
 }

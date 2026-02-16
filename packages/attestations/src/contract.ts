@@ -1,4 +1,4 @@
-import type { AttestationRecord } from '@repo/contracts-attestations/types';
+import type { AttestationRecord } from '@repo/packages-utils/contracts/attestations';
 import type { Account, JsonRpcProvider } from 'near-api-js';
 
 /**

@@ -11,7 +11,7 @@ import {
   NearBlockchainNetwork,
   type NearAIChatModelId,
 } from '@repo/packages-utils/near';
-import * as SMART_CONTRACTS from '@repo/contracts-attestations/deployment';
+import * as SMART_CONTRACTS from '@repo/packages-utils/contracts/attestations';
 import { AttestationsBlockchain } from '@repo/packages-attestations/blockchain';
 import {
   type ChatExport,

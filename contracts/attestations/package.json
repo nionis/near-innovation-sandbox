@@ -3,10 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "exports": {
-    "./deployment": "./src/deployment.ts",
-    "./types": "./src/types.ts"
-  },
   "scripts": {
     "build": "near-sdk-js build ./src/contract.ts ./build/contract.wasm",
     "test": "ava -- ./build/contract.wasm",
@@ -17,8 +13,8 @@
     "near-sdk-js": "2.0.0"
   },
   "devDependencies": {
-    "@repo/packages-eslint-config": "*",
-    "@repo/packages-typescript-config": "*",
+    "@repo/packages-eslint-config": "link:../../packages/eslint-config",
+    "@repo/packages-typescript-config": "link:../../packages/typescript-config",
     "ava": "^6.1.3",
     "eslint": "^9.25.1",
     "near-workspaces": "^3.5.0",
