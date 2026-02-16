@@ -27,7 +27,7 @@
   </p>
 </div>
 
-<video src="docs/intro.mp4" width="630" height="300" controls></video>
+https://github.com/user-attachments/assets/00c9374c-a718-4e21-82a6-71e977e8b64a
 
 It's always striking how the most transformative technologies are adopted last by governments.<br/>
 Every day, millions of public officials collectively waste countless hours on repetitive, menial tasks that could be dramatically streamlined or even eliminated with the right tools.<br/>
