@@ -39,6 +39,29 @@ Using [NEAR AI private inference](https://www.near.org/ai), printable QR proofs,
 
 ## Download
 
+<table>
+  <tr>
+    <td><b>Platform</b></td>
+    <td><b>Download</b></td>
+  </tr>
+  <tr>
+    <td><b>Windows</b></td>
+    <td><a href='https://github.com/nionis/near-innovation-sandbox/actions/runs/22065137377/artifacts/5526564565'>attestai.exe</a></td>
+  </tr>
+  <tr>
+    <td><b>macOS</b></td>
+    <td><a href='https://github.com/nionis/near-innovation-sandbox/actions/runs/22065137377/artifacts/5526385303'>attestai.dmg</a></td>
+  </tr>
+  <tr>
+    <td><b>Linux (deb)</b></td>
+    <td><a href='https://github.com/nionis/near-innovation-sandbox/actions/runs/22065137377/artifacts/5526401426'>attestai.deb</a></td>
+  </tr>
+  <tr>
+    <td><b>Linux (AppImage)</b></td>
+    <td><a href='https://github.com/nionis/near-innovation-sandbox/actions/runs/22065137377/artifacts/5526402620'>attestai.AppImage</a></td>
+  </tr>
+</table>
+
 ### Features
 
 - **Private Inference**: E2EE is always on, using NEAR AI's most private models
@@ -47,6 +70,44 @@ Using [NEAR AI private inference](https://www.near.org/ai), printable QR proofs,
 - **Local Embeddings**: Your documents remain on-device
 - **Custom Assistants**: Create specialized AI assistants for your tasks
 - **Privacy First**: Tailored for privacy preserving requirements
+
+#### Why audits are essential for public sector AI?
+
+Public sector adoption of LLMs is severely limited today, not just by lack of auditability (no transparent record of prompts, models, or influence on decisions), but also by missing privacy guarantees and bias/unbias assurances.
+
+AttestAI addresses this head-on using NEAR AI's private inference:
+
+- Every interaction runs inside Trusted Execution Environments (TEEs) with hardware-backed isolation (Intel TDX / NVIDIA Confidential Computing).
+- Prompts, content, and outputs remain confidential, inaccessible to the cloud provider, model host, or even NEAR AI.
+- Cryptographic attestation provides verifiable proof that execution occurred in a genuine, unmodified secure enclave.
+- This combination enables high-trust use cases (e.g., processing citizen PII, internal policy drafts, legal reviews) where standard hosted AI would be non-compliant or risky.
+- Auditability is built-in via signed receipts, making AI usage transparent and accountable without compromising privacy.
+- For bias concerns: users can inspect prompts/responses locally and identify which models were used.
+
+Without these verified confidentiality properties, governments cannot responsibly integrate AI into daily workflows. AttestAI makes privacy the default and the enabler of safe, auditable public-sector AI.
+
+#### Why QR codes?
+
+QR codes serve a dual purpose tailored to government realities:
+
+- Physical world bridge: Officials can print and attach QR codes directly to paper documents (still dominant in many public administrations), creating a permanent, scannable link to the AI provenance.
+- Verifiable digital trail: Each QR encodes a reference to an encrypted blob containing the full conversation history, signed receipt, and cryptographic attestation report from the TEE.
+
+QR code generation and attachment features were added explicitly after direct conversations with students at the University of Nicosia.
+
+#### Data Ownership & Controls
+
+- All documents, embeddings, and local chats remain on-device (local vector store, no automatic upload).
+- Inspect: View full conversation history, embeddings, and metadata directly in the app.
+- Export: Download conversations as JSON or PDF (with embedded QR proof when generated).
+- Delete: One-click per-conversation or bulk deletion; wiped from local storage.
+- Share (optional): If a user chooses to share a conversation (e.g., for collaboration or audit):
+- An encrypted blob is uploaded to a simple web server (user controls the link/passphrase).
+- No plaintext data is ever stored server-side.
+- Revoke / Delete: User can delete the blob from the server at any time (via app or direct link), rendering shares invalid.
+
+No persistent central database; sharing is opt-in and ephemeral by design.
+For any on-chain elements (ex: attestation notarization hashes in /contracts/), only public metadata is recorded—sensitive content stays off-chain.
 
 ### Breakdown
 
