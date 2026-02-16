@@ -52,7 +52,7 @@ jobs:
 
       - name: Build monorepo dependencies
         run: |
-          yarn install
+          yarn install --frozen-lockfile
           yarn build -- --filter="./packages/*" --filter="./contracts/*"
         env:
           NODE_OPTIONS: "--max-old-space-size=4196"
