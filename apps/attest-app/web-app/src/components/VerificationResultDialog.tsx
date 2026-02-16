@@ -187,7 +187,8 @@ export function VerificationResultDialog() {
       const contentToShare = JSON.stringify({
         chatData,
         receipt,
-        timestamp: Date.now(),
+        timestamp: receipt.timestamp,
+        version: '0.0.1-app',
       })
 
       // Encrypt the content using the original passphrase

@@ -349,7 +349,8 @@ export function VerifyPanel({
       const contentToShare = JSON.stringify({
         chatData,
         receipt,
-        timestamp: Date.now(),
+        timestamp: receipt.timestamp,
+        version: '0.0.1-app',
       })
 
       const encryptedBinary = encryptString(contentToShare, passphrase)

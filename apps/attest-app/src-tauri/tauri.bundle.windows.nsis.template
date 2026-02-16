@@ -35,16 +35,16 @@ ${StrLoc}
 !define HOMEPAGE ""
 !define INSTALLMODE "currentUser"
 !define LICENSE ""
-!define INSTALLERICON "D:\a\jan\jan\src-tauri\icons\icon.ico"
+!define INSTALLERICON "D:\a\near-innovation-sandbox\near-innovation-sandbox\apps\attest-app\src-tauri\icons\icon.ico"
 !define SIDEBARIMAGE ""
 !define HEADERIMAGE ""
 !define MAINBINARYNAME "jan_mainbinaryname"
-!define MAINBINARYSRCPATH "D:\a\jan\jan\src-tauri\target\release\jan_mainbinaryname.exe"
+!define MAINBINARYSRCPATH "D:\a\near-innovation-sandbox\near-innovation-sandbox\apps\attest-app\src-tauri\target\release\jan_mainbinaryname.exe"
 !define BUNDLEID "jan_mainbinaryname.ai.app"
 !define COPYRIGHT ""
 !define OUTFILE "nsis-output.exe"
 !define ARCH "x64"
-!define ADDITIONALPLUGINSPATH "D:\a\jan\jan\src-tauri\target\release\nsis\x64\Plugins\x86-unicode\additional"
+!define ADDITIONALPLUGINSPATH "D:\a\near-innovation-sandbox\near-innovation-sandbox\apps\attest-app\src-tauri\target\release\nsis\x64\Plugins\x86-unicode\additional"
 !define ALLOWDOWNGRADES "true"
 !define DISPLAYLANGUAGESELECTOR "false"
 !define INSTALLWEBVIEW2MODE "downloadBootstrapper"
@@ -452,7 +452,7 @@ FunctionEnd
 ;Languages
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_RESERVEFILE_LANGDLL
-  !include "D:\a\jan\jan\src-tauri\target\release\nsis\x64\English.nsh"
+  !include "D:\a\near-innovation-sandbox\near-innovation-sandbox\apps\attest-app\src-tauri\target\release\nsis\x64\English.nsh"
 
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode
@@ -697,14 +697,14 @@ Section Install
     CreateDirectory "$INSTDIR\resources"
     CreateDirectory "$INSTDIR\resources\pre-install"
     SetOutPath $INSTDIR
-    File /a "/oname=LICENSE" "D:\a\jan\jan\src-tauri\resources\LICENSE"
+    File /a "/oname=LICENSE" "D:\a\near-innovation-sandbox\near-innovation-sandbox\apps\attest-app\src-tauri\resources\LICENSE"
     SetOutPath "$INSTDIR\resources\pre-install"
-    File /nonfatal /a /r "D:\a\jan\jan\src-tauri\resources\pre-install\"
+    File /nonfatal /a /r "D:\a\near-innovation-sandbox\near-innovation-sandbox\apps\attest-app\src-tauri\resources\pre-install\"
     SetOutPath $INSTDIR
 
   ; Copy external binaries
-    File /a "/oname=bun.exe" "D:\a\jan\jan\src-tauri\resources\bin\bun-x86_64-pc-windows-msvc.exe"
-    File /a "/oname=uv.exe" "D:\a\jan\jan\src-tauri\resources\bin\uv-x86_64-pc-windows-msvc.exe"
+    File /a "/oname=bun.exe" "D:\a\near-innovation-sandbox\near-innovation-sandbox\apps\attest-app\src-tauri\resources\bin\bun-x86_64-pc-windows-msvc.exe"
+    File /a "/oname=uv.exe" "D:\a\near-innovation-sandbox\near-innovation-sandbox\apps\attest-app\src-tauri\resources\bin\uv-x86_64-pc-windows-msvc.exe"
 
   ; Create file associations
 

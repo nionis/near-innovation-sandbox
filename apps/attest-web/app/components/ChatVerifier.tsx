@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type {
   ChatExport,
   VerifyOutput,
@@ -23,13 +23,24 @@ type VerifyState =
 
 interface ChatVerifierProps {
   onVerificationComplete?: (results: VerifyOutput) => void;
+  initialJson?: string;
 }
 
-export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
-  const [chatExportJson, setChatExportJson] = useState('');
+export function ChatVerifier({
+  onVerificationComplete,
+  initialJson,
+}: ChatVerifierProps) {
+  const [chatExportJson, setChatExportJson] = useState(initialJson || '');
   const [verifyState, setVerifyState] = useState<VerifyState>({
     status: 'idle',
   });
+
+  // Update chatExportJson when initialJson changes
+  useEffect(() => {
+    if (initialJson) {
+      setChatExportJson(initialJson);
+    }
+  }, [initialJson]);
 
   const verifyChat = useCallback(async (chatExport: ChatExport) => {
     const blockchain = new AttestationsBlockchain({
@@ -52,7 +63,6 @@ export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
 
     // Validate required fields
     const requiredFields: (keyof ChatExport)[] = [
-      'version',
       'timestamp',
       'model',
       'signature',
@@ -74,7 +84,7 @@ export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
     setVerifyState({ status: 'loading', step: 'Initializing verification...' });
 
     try {
-      setVerifyState({ status: 'loading', step: 'Verifying attestations...' });
+      setVerifyState({ status: 'loading', step: 'Verifying...' });
       const results = await verifyChat(chatExport);
 
       setVerifyState({ status: 'success', results });
@@ -88,11 +98,6 @@ export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
     }
   };
 
-  const handleLoadExample = () => {
-    setChatExportJson(EXAMPLE_CHAT_EXPORT);
-    setVerifyState({ status: 'idle' });
-  };
-
   const handleClear = () => {
     setChatExportJson('');
     setVerifyState({ status: 'idle' });
@@ -103,23 +108,20 @@ export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
       {/* Input Section */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <label
-            htmlFor="receipt-json"
-            className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Receipt JSON
-          </label>
-          <div className="flex gap-2">
-            <button
-              onClick={handleLoadExample}
-              className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+          <div className="flex items-center gap-2">
+            <DocumentIcon />
+            <label
+              htmlFor="receipt-json"
+              className="text-sm font-medium text-purple-700 dark:text-purple-300"
             >
-              Load Example
-            </button>
-            <span className="text-zinc-300 dark:text-zinc-600">|</span>
+              Receipt JSON
+            </label>
+          </div>
+          <div className="flex gap-2">
+            <span className="text-purple-300 dark:text-purple-600">|</span>
             <button
               onClick={handleClear}
-              className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+              className="text-sm text-purple-500 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-200 transition-colors"
             >
               Clear
             </button>
@@ -135,7 +137,7 @@ export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
             }
           }}
           placeholder="Paste your receipt JSON here..."
-          className="h-64 w-full resize-none rounded-lg border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:focus:border-zinc-600 dark:focus:ring-zinc-800"
+          className="h-64 w-full resize-none rounded-xl border border-purple-200 bg-white/80 backdrop-blur-sm p-4 font-mono text-sm text-purple-900 placeholder:text-purple-400 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200 shadow-sm dark:border-purple-800 dark:bg-[oklch(0.2_0.04_285)]/80 dark:text-purple-100 dark:placeholder:text-purple-600 dark:focus:border-purple-600 dark:focus:ring-purple-800"
         />
       </div>
 
@@ -143,7 +145,7 @@ export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
       <button
         onClick={handleVerify}
         disabled={!chatExportJson.trim() || verifyState.status === 'loading'}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 text-white font-medium transition-all hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-purple-600 to-violet-600 text-white font-medium transition-all hover:from-purple-700 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
       >
         {verifyState.status === 'loading' ? (
           <>
@@ -151,13 +153,16 @@ export function ChatVerifier({ onVerificationComplete }: ChatVerifierProps) {
             {verifyState.step}
           </>
         ) : (
-          'Verify Receipt'
+          <>
+            <ShieldCheckIcon />
+            Verify Receipt
+          </>
         )}
       </button>
 
       {/* Results Section */}
       {verifyState.status === 'error' && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
+        <div className="rounded-xl border border-red-200 bg-red-50/80 backdrop-blur-sm p-4 shadow-lg dark:border-red-900/50 dark:bg-red-950/80">
           <div className="flex items-center gap-2">
             <ErrorIcon />
             <span className="font-medium text-red-800 dark:text-red-200">
@@ -182,10 +187,10 @@ function VerificationResults({ results }: { results: VerifyOutput }) {
     <div className="flex flex-col gap-4">
       {/* Overall Result */}
       <div
-        className={`rounded-lg border p-4 ${
+        className={`rounded-xl border p-4 shadow-lg backdrop-blur-sm ${
           results.result.valid
-            ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950'
-            : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950'
+            ? 'border-green-200 bg-green-50/80 dark:border-green-900/50 dark:bg-green-950/80'
+            : 'border-red-200 bg-red-50/80 dark:border-red-900/50 dark:bg-red-950/80'
         }`}
       >
         <div className="flex items-center gap-2">
@@ -197,7 +202,7 @@ function VerificationResults({ results }: { results: VerifyOutput }) {
                 : 'text-red-800 dark:text-red-200'
             }`}
           >
-            {results.result.valid ? 'Receipt Verified' : 'Verification Failed'}
+            {results.result.valid ? '✓ Verified Successfully' : 'Verification Failed'}
           </span>
         </div>
         {results.result.message && (
@@ -214,13 +219,13 @@ function VerificationResults({ results }: { results: VerifyOutput }) {
       </div>
 
       {/* Detailed Results */}
-      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800">
-        <div className="border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-          <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
+      <div className="rounded-xl border border-purple-200 bg-white/80 backdrop-blur-sm shadow-lg dark:border-purple-800/50 dark:bg-[oklch(0.2_0.04_285)]/80">
+        <div className="border-b border-purple-200 px-4 py-3 dark:border-purple-800/50">
+          <h3 className="font-medium text-purple-900 dark:text-purple-100">
             Verification Details
           </h3>
         </div>
-        <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+        <div className="divide-y divide-purple-200 dark:divide-purple-800/50">
           <VerificationRow label="Chat Attestation" result={results.chat} />
           <VerificationRow
             label="Blockchain Notarization"
@@ -262,23 +267,23 @@ function VerificationRow({
   return (
     <div className="flex items-center justify-between px-4 py-3">
       <div className="flex flex-col gap-1">
-        <span className="text-sm text-zinc-700 dark:text-zinc-300">
+        <span className="text-sm text-purple-700 dark:text-purple-300">
           {label}
         </span>
         {result.message && (
-          <span className="text-xs text-zinc-500 dark:text-zinc-500">
+          <span className="text-xs text-purple-500 dark:text-purple-500">
             {result.message}
           </span>
         )}
       </div>
       <div className="flex items-center gap-2">
         {result.valid ? (
-          <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+          <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 shadow-sm dark:bg-green-900 dark:text-green-300">
             <CheckIcon />
             Valid
           </span>
         ) : (
-          <span className="flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900 dark:text-red-300">
+          <span className="flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 shadow-sm dark:bg-red-900 dark:text-red-300">
             <XIcon />
             Invalid
           </span>
@@ -288,23 +293,10 @@ function VerificationRow({
   );
 }
 
-const EXAMPLE_CHAT_EXPORT = `{
-  "version": "1.0.0",
-  "timestamp": 1770459386903,
-  "txHash": "FhWiwPpDjSgkuV6i6Bc35ZV48h5gp5yzs5dKVzuovQTj",
-  "model": "deepseek-ai/DeepSeek-V3.1",
-  "requestBody": "{\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"messages\":[{\"role\":\"user\",\"content\":\"Explain blockchain in one sentence\"}],\"stream\":true}",
-  "responseBody": "data: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":12,\"completion_tokens\":0},\"prompt_token_ids\":null}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"A\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":13,\"completion_tokens\":1}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" blockchain is a decentralized, immutable\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":19,\"completion_tokens\":7}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" digital ledger that securely records transactions\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":25,\"completion_tokens\":13}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" across a distributed network of computers.\",\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":32,\"completion_tokens\":20}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning_content\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"stop_reason\":null,\"token_ids\":null}],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":33,\"completion_tokens\":21}}\n\ndata: {\"id\":\"chatcmpl-8687bbd89685b81e\",\"object\":\"chat.completion.chunk\",\"created\":1770459385,\"model\":\"deepseek-ai/DeepSeek-V3.1\",\"choices\":[],\"usage\":{\"prompt_tokens\":12,\"total_tokens\":33,\"completion_tokens\":21}}\n\ndata: [DONE]\n\n",
-  "signature": "0xf34e2abc9f19073e43a425f5a0bf68b8af56379214b8a270fe634938a0f8f8424b42dbb7eaba77ff44963e8bd3072c8337df989a22ab4c1bdafc2eeb9c52d21e1c",
-  "signingAddress": "0x34B7BcB4b2b61FCF9fA14715ba8708AC0dBC8Be5",
-  "signingAlgo": "ecdsa",
-  "e2ee": false
-}`;
-
 function LoadingSpinner() {
   return (
     <svg
-      className="h-5 w-5 animate-spin"
+      className="h-5 w-5 animate-spin text-white"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -321,6 +313,42 @@ function LoadingSpinner() {
         className="opacity-75"
         fill="currentColor"
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+}
+
+function DocumentIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-purple-600 dark:text-purple-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+}
+
+function ShieldCheckIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
       />
     </svg>
   );

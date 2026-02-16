@@ -3,8 +3,8 @@
 REPORT_PORTAL_URL ?= ""
 REPORT_PORTAL_API_KEY ?= ""
 REPORT_PORTAL_PROJECT_NAME ?= ""
-REPORT_PORTAL_LAUNCH_NAME ?= "Jan App"
-REPORT_PORTAL_DESCRIPTION ?= "Jan App report"
+REPORT_PORTAL_LAUNCH_NAME ?= "AttestAI App"
+REPORT_PORTAL_DESCRIPTION ?= "AttestAI App report"
 
 # Default target, does nothing
 all:
