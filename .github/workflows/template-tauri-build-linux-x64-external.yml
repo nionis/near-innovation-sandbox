@@ -149,6 +149,7 @@ jobs:
           cd apps/attest-app
           make build
         env:
+          NODE_OPTIONS: "--max-old-space-size=4196"
           RELEASE_CHANNEL: '${{ inputs.channel }}'
           AUTO_UPDATER_DISABLED: ${{ inputs.disable_updater && 'true' || 'false' }}
 
