@@ -1,6 +1,11 @@
 name: get-update-version
 on:
   workflow_call:
+    inputs:
+      manual_tag:
+        description: 'Manual tag/version to use (e.g., v1.0.0 or 1.0.0)'
+        required: false
+        type: string
     outputs:
       new_version:
         description: 'The new version of the app'
@@ -45,7 +50,13 @@ jobs:
             exit 1
           }
 
-            if ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}; then
+            if [ -n "${{ inputs.manual_tag }}" ]; then
+            echo "Manual tag provided: ${{ inputs.manual_tag }}"
+            sanitized_tag="${{ inputs.manual_tag }}"
+            # Remove the 'v' prefix if it exists
+            sanitized_tag="${sanitized_tag#v}"
+            echo "::set-output name=new_version::$sanitized_tag"
+          elif ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}; then
             echo "Tag detected, set output follow tag"
             sanitized_tag="${{ steps.tag.outputs.tag }}"
             # Remove the 'v' prefix if it exists
