@@ -108,6 +108,13 @@ jobs:
             .github/scripts/rename-workspace.sh ./apps/attest-app/package.json ${{ inputs.channel }}
           fi
 
+      - name: Regenerate attest-app lockfile after version updates
+        run: |
+          cd apps/attest-app
+          yarn install
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4196"
+
       - name: Build app
         run: |
           cd apps/attest-app

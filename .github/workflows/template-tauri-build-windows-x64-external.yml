@@ -164,6 +164,13 @@ jobs:
           echo "---------nsis.template---------"
           cat ./apps/attest-app/src-tauri/tauri.bundle.windows.nsis.template
 
+      - name: Regenerate attest-app lockfile after version updates
+        run: |
+          cd apps/attest-app
+          yarn install
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4196"
+
       - name: Build app
         shell: bash
         run: |
