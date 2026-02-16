@@ -28,8 +28,7 @@ jobs:
         if: inputs.channel != 'stable'
         shell: bash
         run: |
-          echo "Debug: pwd: $(pwd)"
-          echo "Debug: ls -la: $(ls -la)"
+          mkdir -p apps/attest-app/src-tauri/icons
           cp .github/scripts/icon-${{ inputs.channel }}.png apps/attest-app/src-tauri/icons/icon.png
 
       - name: Installing node
