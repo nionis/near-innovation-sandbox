@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
 import { computeProofHash } from '@repo/packages-attestations/crypto';
 
 const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN!;
@@ -7,7 +7,7 @@ const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN!;
 // CORS headers for cross-origin requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
@@ -91,6 +91,74 @@ export async function POST(
     );
   } catch (error) {
     console.error('Failed to store binary data:', error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : 'Unknown error occurred',
+      },
+      { status: 500, headers: corsHeaders }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request
+): Promise<NextResponse<{ success: boolean; id: string } | { error: string }>> {
+  try {
+    // Parse request body
+    const body = (await request.json()) as Partial<ShareStoreRequest>;
+
+    // Validate required fields
+    if (!body.requestHash || !body.responseHash || !body.signature) {
+      return NextResponse.json(
+        {
+          error:
+            'Missing required fields: requestHash, responseHash, and signature are required',
+        },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    // Compute the same ID used for storage
+    const id = computeProofHash(
+      body.requestHash,
+      body.responseHash,
+      body.signature
+    );
+
+    // Delete the binary data from Vercel Blob
+    try {
+      await del(`share/${id}.bin`, {
+        token: BLOB_READ_WRITE_TOKEN,
+      });
+
+      console.log(`Deleted binary data with id: ${id}`);
+
+      return NextResponse.json(
+        {
+          success: true,
+          id,
+        },
+        { status: 200, headers: corsHeaders }
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // If the blob doesn't exist, return 404
+      if (message.includes('not found') || message.includes('does not exist')) {
+        return NextResponse.json(
+          {
+            error: `Binary data with id ${id} not found`,
+          },
+          { status: 404, headers: corsHeaders }
+        );
+      }
+      
+      throw error;
+    }
+  } catch (error) {
+    console.error('Failed to delete binary data:', error);
     return NextResponse.json(
       {
         error:

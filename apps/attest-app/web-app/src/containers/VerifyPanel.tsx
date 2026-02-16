@@ -20,11 +20,20 @@ import {
   XCircle,
   Download,
   Scan,
+  Trash2,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { SelectableConversation } from '@/components/SelectableConversation'
 import { ReferenceQR } from '@/components/ReferenceQR'
 import { ScanReferenceDialog } from '@/components/ScanReferenceDialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   encryptString,
   uploadBinary,
@@ -86,6 +95,8 @@ export function VerifyPanel({
   const [isVerifyingAll, setIsVerifyingAll] = useState(false)
   const [showScanDialog, setShowScanDialog] = useState(false)
   const [includePassphrase, setIncludePassphrase] = useState(true)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // Calculate attestation status for all assistant messages
   const attestationStatus = useMemo(() => {
@@ -385,6 +396,54 @@ export function VerifyPanel({
     setStoreShareUrl,
     updateReferencesShareId,
   ])
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!latestAttestedMessage) return
+
+    try {
+      setIsDeleting(true)
+      setShowDeleteDialog(false)
+      const msgState = getMessageState(latestAttestedMessage.id)
+      if (!msgState?.receipt) {
+        throw new Error('Missing receipt')
+      }
+
+      const { receipt } = msgState
+
+      // Call the DELETE endpoint
+      const response = await fetch(`${SHARE_API_URL}/api/share/store`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          requestHash: receipt.requestHash,
+          responseHash: receipt.responseHash,
+          signature: receipt.signature,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete')
+      }
+
+      // Clear the share URL from state and store
+      setShareUrl(null)
+      setStoreShareUrl(latestAttestedMessage.id, '', '')
+
+      toast.success('Shared conversation deleted successfully!')
+    } catch (error) {
+      console.error('Failed to delete shared conversation:', error)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to delete. Please try again.'
+      )
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [latestAttestedMessage, getMessageState, setStoreShareUrl])
 
   const handleCopyUrl = useCallback(async () => {
     if (displayUrl) {
@@ -807,6 +866,24 @@ export function VerifyPanel({
           </Button>
         )}
 
+        {/* Delete Shared Conversation */}
+        {shareUrl && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowDeleteDialog(true)}
+            disabled={isBusy || isDeleting}
+            className="text-destructive hover:text-destructive"
+          >
+            {isDeleting ? (
+              <IconLoader2 size={14} className="mr-1.5 animate-spin" />
+            ) : (
+              <Trash2 size={14} className="mr-1.5" />
+            )}
+            {isDeleting ? 'Deleting...' : 'Delete Share'}
+          </Button>
+        )}
+
         {/* Scan Reference */}
         {activeMessageState &&
           activeMessageState.receipt &&
@@ -1014,6 +1091,48 @@ export function VerifyPanel({
         verificationResult={activeMessageState?.verificationResult}
         onReferenceImported={handleReferenceImported}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Shared Conversation?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete the encrypted data from the server.
+              Once deleted, the share URL will no longer work and others will
+              not be able to access this conversation.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <IconLoader2 size={14} className="mr-1.5 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 size={14} className="mr-1.5" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
