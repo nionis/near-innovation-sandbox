@@ -185,3 +185,9 @@ Built on the shoulders of giants:
 - [Llama.cpp](https://github.com/ggerganov/llama.cpp)
 - [Tauri](https://tauri.app/)
 - [Scalar](https://github.com/scalar/scalar)
+
+## Roadmap
+
+- [] use [nova](https://nova-sdk.com/) for file hosting
+- [] intergrate to NEAR AI using NEAR social (whenever it's supported)
+- [] import files
