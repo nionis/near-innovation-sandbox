@@ -54,7 +54,7 @@ jobs:
         shell: bash
         run: |
           yarn install
-          yarn build
+          yarn build -- --filter="./packages/*" --filter="./contracts/*"
         env:
           NODE_OPTIONS: "--max-old-space-size=4196"
 
