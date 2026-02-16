@@ -46,19 +46,19 @@ Using [NEAR AI private inference](https://www.near.org/ai), printable QR proofs,
   </tr>
   <tr>
     <td><b>Windows</b></td>
-    <td><a href='https://github.com/nionis/near-innovation-sandbox/actions/runs/22065137377/artifacts/5526564565'>attestai.exe</a></td>
+    <td><a href='https://github.com/nionis/near-innovation-sandbox/releases/download/0.0.1/AttestAI-nightly_0.0.1_x64-setup.exe'>attestai.exe</a></td>
   </tr>
   <tr>
     <td><b>macOS</b></td>
-    <td><a href='https://github.com/nionis/near-innovation-sandbox/actions/runs/22065137377/artifacts/5526385303'>attestai.dmg</a></td>
+    <td><a href='https://github.com/nionis/near-innovation-sandbox/releases/download/0.0.1/AttestAI-nightly_0.0.1_universal.dmg'>attestai.dmg</a></td>
   </tr>
   <tr>
     <td><b>Linux (deb)</b></td>
-    <td><a href='https://github.com/nionis/near-innovation-sandbox/actions/runs/22065137377/artifacts/5526401426'>attestai.deb</a></td>
+    <td><a href='https://github.com/nionis/near-innovation-sandbox/releases/download/0.0.1/AttestAI-nightly_0.0.1_amd64.deb'>attestai.deb</a></td>
   </tr>
   <tr>
     <td><b>Linux (AppImage)</b></td>
-    <td><a href='https://github.com/nionis/near-innovation-sandbox/actions/runs/22065137377/artifacts/5526402620'>attestai.AppImage</a></td>
+    <td><a href='https://github.com/nionis/near-innovation-sandbox/releases/download/0.0.1/AttestAI-nightly_0.0.1_amd64.AppImage'>attestai.AppImage</a></td>
   </tr>
 </table>
 
