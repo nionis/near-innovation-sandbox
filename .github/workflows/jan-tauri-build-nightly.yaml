@@ -5,6 +5,10 @@ on:
     - cron: '0 20 * * 1,2,3' # At 8 PM UTC on Monday, Tuesday, and Wednesday which is 3 AM UTC+7 Tuesday, Wednesday, and Thursday
   workflow_dispatch:
     inputs:
+      manual_tag:
+        type: string
+        description: 'Manual tag/version to use (e.g., v1.0.0 or 1.0.0). Leave empty to use latest release tag.'
+        required: false
       public_provider:
         type: choice
         description: 'Public Provider'
@@ -72,6 +76,8 @@ jobs:
   get-update-version:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/template-get-update-version.yml
+    with:
+      manual_tag: ${{ github.event.inputs.manual_tag }}
 
   build-macos-external:
     uses: ./.github/workflows/template-tauri-build-macos-external.yml
