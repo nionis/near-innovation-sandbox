@@ -27,6 +27,8 @@
   </p>
 </div>
 
+<video src="docs/intro.mp4" width="630" height="300" controls></video>
+
 It's always striking how the most transformative technologies are adopted last by governments.<br/>
 Every day, millions of public officials collectively waste countless hours on repetitive, menial tasks that could be dramatically streamlined or even eliminated with the right tools.<br/>
 While some individual employees may quietly use large language models (LLMs) to boost their personal productivity, this approach lacks transparency: there's no record of how AI was applied, which model was used, what prompts were given, or how decisions were influenced.
