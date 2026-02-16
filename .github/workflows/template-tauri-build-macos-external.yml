@@ -28,10 +28,8 @@ jobs:
         if: inputs.channel != 'stable'
         shell: bash
         run: |
-          # debug
-          echo "Debug: inputs.channel: ${{ inputs.channel }}"
-          echo "Debug: .github/scripts/icon-${{ inputs.channel }}.png: $(ls -la .github/scripts/icon-${{ inputs.channel }}.png)"
-          echo "Debug: apps/attest-app/src-tauri/icons/icon.png: $(ls -la apps/attest-app/src-tauri/icons/icon.png)"
+          echo "Debug: pwd: $(pwd)"
+          echo "Debug: ls -la: $(ls -la)"
           cp .github/scripts/icon-${{ inputs.channel }}.png apps/attest-app/src-tauri/icons/icon.png
 
       - name: Installing node
