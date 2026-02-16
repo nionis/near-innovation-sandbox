@@ -34,7 +34,7 @@ jobs:
       - name: Installing node
         uses: actions/setup-node@v1
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install jq
         uses: dcarbone/install-jq-action@v2.0.1
